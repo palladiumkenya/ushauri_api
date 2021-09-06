@@ -3,7 +3,7 @@ logs
 .env
 .vscode
 .history
-.env.save
+.env
 core
 .core
 /node_modules
