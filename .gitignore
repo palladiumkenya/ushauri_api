@@ -1,0 +1,11 @@
+node_modules
+logs
+.env
+.vscode
+.history
+.env.save
+core
+.core
+/node_modules
+report
+.idea
