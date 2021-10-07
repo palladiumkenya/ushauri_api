@@ -61,6 +61,7 @@ router.post("/", async(req, res) => {
         const variables = decoded_message.split("*");
 
         const upn = variables[1];
+	console.log(result)
         if (result.code === 200) {
             await TodayAppointments.destroy({
                 where: {
