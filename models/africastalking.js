@@ -16,7 +16,7 @@ function sendSMS(number, msg) {
         num = "+254" + num;
     }
     const options = {
-        from: "40146",
+        from: "40149",
         to: num,
         message: msg
     };
