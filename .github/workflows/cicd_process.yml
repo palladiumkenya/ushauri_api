@@ -1,0 +1,31 @@
+name: deploy to test instance
+on:
+  push:
+    branches: [ main ]
+jobs:
+
+  build:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote connection
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.CICD_SECRET }}
+        port: ${{ secrets.PORT }}
+        script: |
+          git config --global --add safe.directory /apps/github-workflows/mhealth-apps/ushauri_api/      
+          cd /apps/github-workflows/mhealth-apps/ushauri_api/
+          git pull origin main
+          git status
+          cp  /apps/configs/ushauri_api/node.dockerfile /apps/github-workflows/mhealth-apps/ushauri_api/
+          cp  /apps/configs/ushauri_api/.env /apps/github-workflows/mhealth-apps/ushauri_api/
+          cp  /apps/configs/ushauri_api/nginx.dockerfile /apps/github-workflows/mhealth-apps/ushauri_api/
+          cp -r /apps/configs/ushauri_api/nginx/ /apps/github-workflows/mhealth-apps/ushauri_api/
+          cp  /apps/configs/ushauri_api/docker-compose.yml /apps/github-workflows/mhealth-apps/ushauri_api/
+          docker-compose down
+          docker-compose rm -f
+          docker-compose up -d
+          
