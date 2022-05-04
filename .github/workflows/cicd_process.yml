@@ -23,7 +23,7 @@ jobs:
           cp  /apps/configs/ushauri_api/node.dockerfile /apps/github-workflows/mhealth-apps/ushauri_api/
           cp  /apps/configs/ushauri_api/.env /apps/github-workflows/mhealth-apps/ushauri_api/
           cp  /apps/configs/ushauri_api/nginx.dockerfile /apps/github-workflows/mhealth-apps/ushauri_api/
-          cp -r cp  /apps/configs/ushauri_api/nginx/ /apps/github-workflows/mhealth-apps/ushauri_api/
+          cp -r /apps/configs/ushauri_api/nginx/ /apps/github-workflows/mhealth-apps/ushauri_api/
           cp  /apps/configs/ushauri_api/docker-compose.yml /apps/github-workflows/mhealth-apps/ushauri_api/
           docker-compose up -d
           
