@@ -1,7 +1,7 @@
 name: deploy to test instance
 on:
   push:
-    branches: [ cicd ]
+    branches: [ main ]
 jobs:
 
   build:
@@ -25,5 +25,7 @@ jobs:
           cp  /apps/configs/ushauri_api/nginx.dockerfile /apps/github-workflows/mhealth-apps/ushauri_api/
           cp -r /apps/configs/ushauri_api/nginx/ /apps/github-workflows/mhealth-apps/ushauri_api/
           cp  /apps/configs/ushauri_api/docker-compose.yml /apps/github-workflows/mhealth-apps/ushauri_api/
+          docker-compose down
+          docker-compose rm -f
           docker-compose up -d
           
