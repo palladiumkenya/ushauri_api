@@ -17,6 +17,7 @@ const dfc = require("./routes/processes/process_dfc");
 const pmtct = require("./routes/processes/process_pmtct");
 const editApps = require("./routes/processes/edit_appointment");
 const terms = require("./routes/terms");
+const conf = require("./routes/configs");
 // app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -45,6 +46,9 @@ app.use("/api/process_pmtct", pmtct)
 app.use("/api/edit_appointment", editApps)
 //terms and conditions
 app.use("/terms", terms)
+//configs
+app.use("/config", conf)
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
