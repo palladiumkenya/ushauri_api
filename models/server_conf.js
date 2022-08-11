@@ -10,7 +10,8 @@ const ServerConfig = sequelize.sequelize.define(
       autoIncrement: true
     },
     stage: Sequelize.STRING,
-    url: Sequelize.STRING
+    url: Sequelize.STRING,
+    application: Sequelize.STRING
   },
   {
     timestamps: true,
