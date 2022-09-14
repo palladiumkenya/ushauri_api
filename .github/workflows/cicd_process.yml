@@ -29,4 +29,4 @@ jobs:
           # cp -r /apps/configs/ushauri_api/nginx/ /apps/github-workflows/mhealth-apps/ushauri_api/
           # cp  /apps/configs/ushauri_api/docker-compose.yml /apps/github-workflows/mhealth-apps/ushauri_api/
           docker build -t ushauri_api:latest .
-          docker run -p 7002:5000 -d --restart always ushauri_api:latest         
+          docker run -p 7002:5000 --name ushauri_api -d --restart always ushauri_api:latest         
