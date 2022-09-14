@@ -62,3 +62,18 @@ create `.env` then edit it with your environment variable. use `.env.save` as a 
 ## Or for npm. Running the project
 
     $ npm start
+## docker option
+
+* Create a image using 
+ ```sh
+  docker build -t ushauri_api:latest .
+ ```
+ * Run the image creates
+ ```sh
+    docker run -p 7002:5000 --name ushauri_api -d --restart always ushauri_api:latest        
+ ```
+ * Access the service via [localhost](http://127.0.0.1:7002)
+ * stoping the service use
+ ```sh
+  docker stop ushauri_api
+  ```
