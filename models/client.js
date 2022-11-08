@@ -69,6 +69,8 @@ const Client = sequelize.sequelize.define(
         clnd_dob: Sequelize.DATEONLY,
         clinic_id: Sequelize.INTEGER,
         national_id: Sequelize.STRING,
+        upi_no: Sequelize.STRING,
+        birth_cert_no: Sequelize.STRING,
         file_no: Sequelize.STRING,
         locator_county: Sequelize.STRING,
         locator_sub_county: Sequelize.STRING,

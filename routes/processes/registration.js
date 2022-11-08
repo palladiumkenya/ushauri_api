@@ -33,7 +33,7 @@ async function registerClient(message, user) {
 
     const variables = decoded_message.split("*");
     console.log(variables.length);
-    if (variables.length != 28)
+    if (variables.length != 30)
         return {
             code: 400,
             message: variables.length
@@ -47,26 +47,29 @@ async function registerClient(message, user) {
     const l_name = variables[5]; //LAST NAME 6
     let dob = variables[6]; //DATE OF BIRTH 7
     const national_id = variables[7]; //NATIONAL ID OR PASSOPRT NO 8
-    const gender = variables[8]; //GENDER 9
-    const marital = variables[9]; //MARITAL STATUS 10
-    let condition = variables[10]; //CONDITION 11
-    let enrollment_date = variables[11]; //ENROLLMENT DATE 12
-    let art_start_date = variables[12]; //ART START DATE 13
-    const primary_phone_no = variables[13]; //PHONE NUMBER 14
-    const alt_phone_no = variables[14]; //PHONE NUMBER 14
-    const trtmnt_buddy_phone_no = variables[15]; //PHONE NUMBER 14
-    let language = variables[16]; //LANGUAGE 16
-    let sms_enable = variables[17]; //SMS ENABLE 15
-    const motivation_enable = variables[18]; //MOTIVATIONAL ALERTS ENABLE 18
-    const messaging_time = variables[19]; //MESSAGING TIME 17
-    const client_status = variables[20]; //CLIENT STATUS 19
-    const transaction_type = variables[21]; //TRANSACTION TYPE 20
-    const grouping = variables[22]; //GROUPING
-    let locator_county = variables[23]; //LOCATOR COUNTY INFO
-    let locator_sub_county = variables[24]; //LOCATOR SUB COUNTY INFO
-    let locator_ward = variables[25]; //LOCATOR WARD INFO
-    let locator_village = variables[26]; // LOCATOR VILLAGE INFO
-    let locator_location = variables[27]; //LOCATOR LOCATION
+    const upi_no = variables[8]; //MOH UPI NUMBER
+    const birth_cert_no = variables[9]; //MOH UPI NUMBER
+    const gender = variables[10]; //GENDER 9
+    const marital = variables[11]; //MARITAL STATUS 10
+    let condition = variables[12]; //CONDITION 11
+    let enrollment_date = variables[13]; //ENROLLMENT DATE 12
+    let art_start_date = variables[14]; //ART START DATE 13
+    const primary_phone_no = variables[15]; //PHONE NUMBER 14
+    const alt_phone_no = variables[16]; //PHONE NUMBER 14
+    const trtmnt_buddy_phone_no = variables[17]; //PHONE NUMBER 14
+    let language = variables[18]; //LANGUAGE 16
+    let sms_enable = variables[19]; //SMS ENABLE 15
+    const motivation_enable = variables[20]; //MOTIVATIONAL ALERTS ENABLE 18
+    const messaging_time = variables[21]; //MESSAGING TIME 17
+    const client_status = variables[22]; //CLIENT STATUS 19
+    const transaction_type = variables[23]; //TRANSACTION TYPE 20
+    const grouping = variables[24]; //GROUPING
+    let locator_county = variables[25]; //LOCATOR COUNTY INFO
+    let locator_sub_county = variables[26]; //LOCATOR SUB COUNTY INFO
+    let locator_ward = variables[27]; //LOCATOR WARD INFO
+    let locator_village = variables[28]; // LOCATOR VILLAGE INFO
+    let locator_location = variables[29]; //LOCATOR LOCATION
+
 
     const mfl_code = user.facility_id;
     const clinic_id = user.clinic_id;
@@ -232,6 +235,8 @@ async function registerClient(message, user) {
                 motivational_enable: motivational_enable,
                 wellness_enable: motivational_enable,
                 national_id: national_id,
+                upi_no: upi_no,
+                birth_cert_no:birth_cert_no,
                 file_no: serial_no,
                 clnd_dob: dob,
                 clinic_id: clinic_id,
@@ -330,6 +335,8 @@ async function registerClient(message, user) {
             motivational_enable: motivational_enable,
             wellness_enable: motivational_enable,
             national_id: national_id,
+            upi_no: upi_no,
+            birth_cert_no:birth_cert_no,
             file_no: serial_no,
             locator_county: locator_county,
             locator_sub_county: locator_sub_county,
