@@ -2,6 +2,8 @@
 
 Apis for ushauri mobile application
 
+[![deploy to test instance](https://github.com/palladiumkenya/ushauri_api/actions/workflows/cicd_process.yml/badge.svg)](https://github.com/palladiumkenya/ushauri_api/actions/workflows/cicd_process.yml)
+
 ---
 ## Requirements
 
