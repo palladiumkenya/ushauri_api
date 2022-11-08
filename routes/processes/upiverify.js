@@ -256,7 +256,7 @@ router.post("/getUPI", async (req, res_) => {
       +'"maritalStatus": "single", "gender": "female","occupation": "", "religion": "", "educationLevel": "","country": "KE", '
       +'"countyOfBirth": "012", "isAlive": true, "originFacilityKmflCode": "'+mfl_code+'", "isOnART":  '+upi_art+',  "nascopCCCNumber": "'+upi_ccc+'",'
       + '"residence": { "county": "039", "subCounty": "kimilili","ward": "kamukuywa", "village": "'+locator_village+'", "landMark": "", "address": "" },'
-     +' "identifications": [ { "countryCode": "KE", "identificationType": "'+identification_type+'", "identificationNumber": "1291342221" }],'
+     +' "identifications": [ { "countryCode": "KE", "identificationType": "'+identification_type+'", "identificationNumber": "'+identification_value+'" }],'
      +'"contact": { "primaryPhone": "'+primary_phone_no+'", "secondaryPhone": "", "emailAddress": "" },'
      +' "nextOfKins": []}';
 
