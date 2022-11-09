@@ -14,6 +14,7 @@ const base64 = require("base64util");
 const client_secret = process.env.CLIENT_SECRET;
 const grant_type = process.env.GRANT_TYPE;
 const scope = process.env.SCOPE;
+const scope_verify = process.env.SCOPE_VERIFY;
 const client_id = process.env.CLIENT_ID;
 
 //URLS
@@ -52,6 +53,34 @@ function getAccessToken(url, callback) {
 
 }
 
+function getAccessToken_verify(url, callback) {
+  var token='';
+  request.post({
+      url: token_url,
+      form: {
+          client_secret: client_secret,
+          grant_type: grant_type,
+          scope: scope_verify,
+          client_id: client_id
+      },
+      headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }, function (err, httpResponse, body) { 
+      //return token=httpResponse.body;
+      var statusCode = httpResponse.statusCode;
+      finalData = httpResponse.body;
+      
+      callback(finalData);
+      // we are done
+      return;
+  })
+ // return;
+   //console.log(token_generated);
+
+}
+
+
 
 router.post("/verify", async (req, res) => {
 
@@ -64,7 +93,7 @@ router.post("/verify", async (req, res) => {
     var token_generated_='';
     var verified_data='';
 
-    getAccessToken('url_invalid',function(token_generated){
+    getAccessToken_verify('url_invalid',function(token_generated){
         //Parse Token
         parsedBody= JSON.parse(token_generated);
         token_generated_=parsedBody.access_token;
