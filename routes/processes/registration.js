@@ -33,7 +33,7 @@ async function registerClient(message, user) {
 
     const variables = decoded_message.split("*");
     console.log(variables.length);
-    if (variables.length != 30)
+    if (variables.length != 32)
         return {
             code: 400,
             message: variables.length
