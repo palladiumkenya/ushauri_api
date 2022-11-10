@@ -13,6 +13,7 @@ const todaysAppointments = require("./routes/processes/process_today_appointment
 const pastAppointments = require("./routes/processes/process_past_appointment");
 const sender = require("./routes/processes/sender");
 const verifyupi = require("./routes/processes/upiverify");
+const locator_info = require("./routes/processes/locator");
 const mlab = require("./routes/processes/mlab");
 const dfc = require("./routes/processes/process_dfc");
 const pmtct = require("./routes/processes/process_pmtct");
@@ -27,6 +28,8 @@ app.use(bodyParser.urlencoded({
 
 //verify upi 
 app.use('/mohupi',verifyupi);
+//locator information
+app.use('/locator',locator_info);
 
 app.use("/clients", clients);
 //moves appointments to defaulter diary
