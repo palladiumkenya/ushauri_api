@@ -64,11 +64,14 @@ async function registerClient(message, user) {
     const client_status = variables[22]; //CLIENT STATUS 19
     const transaction_type = variables[23]; //TRANSACTION TYPE 20
     const grouping = variables[24]; //GROUPING
-    let locator_county = variables[25]; //LOCATOR COUNTY INFO
-    let locator_sub_county = variables[26]; //LOCATOR SUB COUNTY INFO
-    let locator_ward = variables[27]; //LOCATOR WARD INFO
-    let locator_village = variables[28]; // LOCATOR VILLAGE INFO
-    let locator_location = variables[29]; //LOCATOR LOCATION
+    let citizenship = variables[25]; //LOCATOR COUNTY INFO
+    let county_birth = variables[26]; //LOCATOR COUNTY INFO
+    let locator_county = variables[27]; //LOCATOR COUNTY INFO
+    let locator_sub_county = variables[28]; //LOCATOR SUB COUNTY INFO
+    let locator_village = variables[29]; // LOCATOR VILLAGE INFO
+
+    let locator_ward = variables[30]; //LOCATOR WARD INFO
+    let locator_location = variables[31]; //LOCATOR LOCATION
 
 
     const mfl_code = user.facility_id;
@@ -208,9 +211,9 @@ async function registerClient(message, user) {
             },
             defaults: {
                 mfl_code: mfl_code,
-                f_name: f_name,
-                m_name: m_name,
-                l_name: l_name,
+                f_name: f_name.toUpperCase(),
+                m_name: m_name.toUpperCase(),
+                l_name: l_name.toUpperCase(),
                 dob: dob,
                 gender: gender,
                 marital: marital,
@@ -243,8 +246,11 @@ async function registerClient(message, user) {
                 locator_county: locator_county,
                 locator_sub_county: locator_sub_county,
                 locator_ward: locator_ward,
-                locator_village: locator_village,
-                locator_location: locator_location
+                locator_village: locator_village.toUpperCase(),
+                locator_location: locator_location.toUpperCase(),
+                citizenship: citizenship,
+                county_birth: county_birth
+
             }
 
         })
@@ -313,9 +319,9 @@ async function registerClient(message, user) {
 
     } else if (transaction_type == 2) {
         let update_array = {
-            f_name: f_name,
-            m_name: m_name,
-            l_name: l_name,
+            f_name: f_name.toUpperCase(),
+            m_name: m_name.toUpperCase(),
+            l_name: l_name.toUpperCase(),
             dob: dob,
             gender: gender,
             marital: marital,
@@ -341,8 +347,10 @@ async function registerClient(message, user) {
             locator_county: locator_county,
             locator_sub_county: locator_sub_county,
             locator_ward: locator_ward,
-            locator_village: locator_village,
-            locator_location: locator_location
+            locator_village: locator_village.toUpperCase(),
+            locator_location: locator_location.toUpperCase(),
+            citizenship: citizenship,
+            county_birth: county_birth
         };
 
         let clean_object = await cleanUpdateObject(update_array);

@@ -79,7 +79,10 @@ const Client = sequelize.sequelize.define(
         locator_village: Sequelize.STRING,
         created_by: Sequelize.INTEGER,
         updated_by: Sequelize.INTEGER,
-        hei_no: Sequelize.STRING
+        hei_no: Sequelize.STRING,
+        citizenship: Sequelize.INTEGER,
+        county_birth: Sequelize.INTEGER
+        
     }, {
         timestamps: true,
         paranoid: true,

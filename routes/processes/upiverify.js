@@ -1,10 +1,26 @@
 const { User } = require("../../models/user");
+const {
+    County
+} = require("../../models/counties");
+const {
+    SCounty
+} = require("../../models/sub_counties");
+
+
+const {
+    Ward
+} = require("../../models/wards");
+
+const {
+    Country
+} = require("../../models/countries");
 const express = require("express");
 const router = express.Router();
 const request = require('request');
 //process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 const https = require('https');
 require("dotenv").config();
+const _ = require("lodash");
 
 const moment = require("moment");
 const base64 = require("base64util");
@@ -136,7 +152,7 @@ router.post("/getUPI", async (req, res_) => {
 
         const variables = decoded_message.split("*");
       //  console.log(variables.length);
-        if (variables.length != 30)
+        if (variables.length != 32)
             return {
                 code: 400,
                 message: variables.length
@@ -167,15 +183,18 @@ router.post("/getUPI", async (req, res_) => {
             const client_status = variables[22]; //CLIENT STATUS 19
             const transaction_type = variables[23]; //TRANSACTION TYPE 20
             const grouping = variables[24]; //GROUPING
-            let locator_county = variables[25]; //LOCATOR COUNTY INFO
-            let locator_sub_county = variables[26]; //LOCATOR SUB COUNTY INFO
-            let locator_ward = variables[27]; //LOCATOR WARD INFO
-            let locator_village = variables[28]; // LOCATOR VILLAGE INFO
-            let locator_location = variables[29]; //LOCATOR LOCATION
+            let citizenship = variables[25]; //LOCATOR COUNTY INFO
+            let county_birth = variables[26]; //LOCATOR COUNTY INFO
+            let locator_county = variables[27]; //LOCATOR COUNTY INFO
+            let locator_sub_county = variables[28]; //LOCATOR SUB COUNTY INFO
+            let locator_village = variables[29]; // LOCATOR VILLAGE INFO
+
+            let locator_ward = variables[30]; //LOCATOR WARD INFO
+            let locator_location = variables[31]; //LOCATOR LOCATION
 
         //const mfl_code = user.facility_id;
-        //const mfl_code = user_mfl;
-        const mfl_code = '15205';
+        const mfl_code = user_mfl;
+        //const mfl_code = '15205';
 
 
         //const clinic_id = user.clinic_id;
@@ -225,6 +244,88 @@ router.post("/getUPI", async (req, res_) => {
             //Paeds
             group_id = 3;
         }
+
+        if (parseInt(gender) == 1) {
+            upi_gender = "female";
+        } else if (parseInt(gender) == 2) {
+            upi_gender = "male";
+        }else
+        {
+            upi_gender = "unspecified";
+
+        }
+
+
+        //Citizenship Code
+        const country = await Country.findByPk(citizenship);
+        if (!_.isEmpty(country))
+        {
+            upi_citizen=country.code;
+        }else
+        {
+            upi_citizen='';
+
+
+        }
+        //County of Birth
+        const county_birth_ = await County.findByPk(county_birth);
+        if (!_.isEmpty(county_birth_))
+        {
+            upi_c_birth=county_birth_.code;
+        }else
+        {
+            upi_c_birth='';
+
+
+        }
+        //County of Residence
+        const county_residence = await County.findByPk(locator_county);
+        if (!_.isEmpty(county_residence))
+        {
+            upi_c_residence=county_residence.code;
+        }else
+        {
+            upi_c_residence='';
+
+        }
+        //Sub-County
+        const scounty_residence = await SCounty.findByPk(locator_sub_county);
+        if (!_.isEmpty(scounty_residence))
+        {
+            upi_sc_res=scounty_residence.name;
+        }else
+        {
+            upi_sc_res='';
+
+        }
+        //Ward
+        const ward_residence = await Ward.findByPk(locator_ward);
+        if (!_.isEmpty(ward_residence))
+        {
+            upi_ward_res=ward_residence.name;
+        }else
+        {
+            upi_ward_res='';
+        }
+
+
+
+
+        if (parseInt(marital) == 1) {
+            upi_marital = "single";
+        } else if ((parseInt(marital) == 2)|| (parseInt(marital) == 8)) {
+            upi_marital = "married";
+
+        }else if (parseInt(marital) == 3) {
+            upi_marital = "divorced";
+        
+        } else if (parseInt(marital) == 4) {
+            upi_marital = "widowed";
+        }else
+        {
+            upi_marital = "unknown";
+        }
+
         if (parseInt(sms_enable) == 1) {
             sms_enable = "Yes";
         } else if (parseInt(sms_enable) == 2) {
@@ -279,19 +380,20 @@ router.post("/getUPI", async (req, res_) => {
           identification_value=birth_cert_no;
  
         }
-
+//console.log(upi_sc_res);
+//console.log(upi_ward_res);
 
     client_payload='{"clientNumber": "", "firstName": "'+f_name+'", "middleName": "'+m_name+'", "lastName": "'+l_name+'", "dateOfBirth": "'+dob+'",'
-      +'"maritalStatus": "single", "gender": "female","occupation": "", "religion": "", "educationLevel": "","country": "KE", '
-      +'"countyOfBirth": "012", "isAlive": true, "originFacilityKmflCode": "'+mfl_code+'", "isOnART":  '+upi_art+',  "nascopCCCNumber": "'+upi_ccc+'",'
-      + '"residence": { "county": "039", "subCounty": "kimilili","ward": "kamukuywa", "village": "'+locator_village+'", "landMark": "", "address": "" },'
-     +' "identifications": [ { "countryCode": "KE", "identificationType": "'+identification_type+'", "identificationNumber": "'+identification_value+'" }],'
+      +'"maritalStatus": "'+upi_marital+'", "gender": "'+upi_gender+'","occupation": "", "religion": "", "educationLevel": "","country": "'+upi_citizen+'", '
+      +'"countyOfBirth": "'+upi_c_birth+'", "isAlive": true, "originFacilityKmflCode": "'+mfl_code+'", "isOnART":  '+upi_art+',  "nascopCCCNumber": "'+upi_ccc+'",'
+      + '"residence": { "county": "'+upi_c_residence+'", "subCounty": "'+upi_sc_res.toLowerCase()+'","ward": "'+upi_ward_res.toLowerCase()+'", "village": "'+locator_village.toLowerCase()+'", "landMark": "", "address": "" },'
+     +' "identifications": [ { "countryCode": "'+upi_citizen+'", "identificationType": "'+identification_type+'", "identificationNumber": "'+identification_value+'" }],'
      +'"contact": { "primaryPhone": "'+primary_phone_no+'", "secondaryPhone": "", "emailAddress": "" },'
      +' "nextOfKins": []}';
 
-   //res.send(JSON.parse(client_payload));
+   //res_.send(JSON.parse(client_payload));
 
-      var token_generated_='';
+    var token_generated_='';
     var verified_data='';
 
     getAccessToken('url_invalid',function(token_generated){
