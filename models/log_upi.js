@@ -10,6 +10,7 @@ const Log_upi = sequelize.sequelize.define(
         },
         mfl_code: Sequelize.TEXT,
         response: Sequelize.TEXT,
+        payload:Sequelize.TEXT,
     }, {
         timestamps: true,
         paranoid: true,

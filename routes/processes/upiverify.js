@@ -424,7 +424,7 @@ router.post("/getUPI", async (req, res_) => {
       // console.log(res.body)
 
       //Log Response
-        var log_upi_=Log_upi.create({ mfl_code: mfl_code, response: JSON.stringify(body)});
+        var log_upi_=Log_upi.create({ mfl_code: mfl_code, response: JSON.stringify(body), payload:client_payload});
         //log_upi_.save();
 
      
