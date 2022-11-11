@@ -12,6 +12,10 @@ const {
 } = require("../../models/wards");
 
 const {
+    Log_upi
+} = require("../../models/log_upi");
+
+const {
     Country
 } = require("../../models/countries");
 const express = require("express");
@@ -418,6 +422,12 @@ router.post("/getUPI", async (req, res_) => {
           return console.log(err)
         }
       // console.log(res.body)
+
+      //Log Response
+        var log_upi_=Log_upi.create({ mfl_code: mfl_code, response: JSON.stringify(body)});
+        //log_upi_.save();
+
+     
 
        if(res.statusCode==400)
        {
