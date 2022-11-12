@@ -2,7 +2,7 @@ const sequelize = require("../db_config");
 const Sequelize = require("sequelize");
 
 const SCounty = sequelize.sequelize.define(
-    "tbl_sub_county", {
+    "tbl_sub_county_upi", {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
@@ -15,7 +15,7 @@ const SCounty = sequelize.sequelize.define(
         paranoid: true,
         underscored: true,
         freezeTableName: true,
-        tableName: "tbl_sub_county"
+        tableName: "tbl_sub_county_upi"
     }
 );
 exports.SCounty = SCounty;

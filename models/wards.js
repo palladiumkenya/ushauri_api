@@ -2,7 +2,7 @@ const sequelize = require("../db_config");
 const Sequelize = require("sequelize");
 
 const Ward = sequelize.sequelize.define(
-    "tbl_ward", {
+    "tbl_ward_upi", {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
@@ -15,7 +15,7 @@ const Ward = sequelize.sequelize.define(
         paranoid: true,
         underscored: true,
         freezeTableName: true,
-        tableName: "tbl_ward"
+        tableName: "tbl_ward_upi"
     }
 );
 exports.Ward = Ward;
