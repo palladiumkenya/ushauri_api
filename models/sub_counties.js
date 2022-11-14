@@ -9,6 +9,7 @@ const SCounty = sequelize.sequelize.define(
             autoIncrement: true
         },
         name: Sequelize.TEXT,
+        value_upi: Sequelize.TEXT,
         county_id: Sequelize.INTEGER,
     }, {
         timestamps: true,

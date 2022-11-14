@@ -9,6 +9,7 @@ const Ward = sequelize.sequelize.define(
             autoIncrement: true
         },
         name: Sequelize.TEXT,
+        value_upi: Sequelize.TEXT,
         scounty_id: Sequelize.INTEGER,
     }, {
         timestamps: true,

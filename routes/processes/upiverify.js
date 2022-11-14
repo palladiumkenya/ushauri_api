@@ -296,7 +296,7 @@ router.post("/getUPI", async (req, res_) => {
         const scounty_residence = await SCounty.findByPk(locator_sub_county);
         if (!_.isEmpty(scounty_residence))
         {
-            upi_sc_res=scounty_residence.name;
+            upi_sc_res=scounty_residence.value_upi;
         }else
         {
             upi_sc_res='';
@@ -306,7 +306,7 @@ router.post("/getUPI", async (req, res_) => {
         const ward_residence = await Ward.findByPk(locator_ward);
         if (!_.isEmpty(ward_residence))
         {
-            upi_ward_res=ward_residence.name;
+            upi_ward_res=ward_residence.value_upi;
         }else
         {
             upi_ward_res='';
