@@ -34,7 +34,7 @@ const base64 = require("base64util");
 const client_secret = process.env.CLIENT_SECRET;
 const grant_type = process.env.GRANT_TYPE;
 const scope = process.env.SCOPE;
-const scope_verify = process.env.SCOPE_VERIFY;
+const scope_verify = process.env.SCOPE;
 const client_id = process.env.CLIENT_ID;
 
 //URLS
@@ -117,14 +117,37 @@ router.post("/verify", async (req, res) => {
         //Parse Token
         parsedBody= JSON.parse(token_generated);
         token_generated_=parsedBody.access_token;
+        //console.log(token_generated_); 
       //Call Verification Endpoint
     request.get(verify_url+identifier+'/'+value,{ 'auth':{
         'bearer': token_generated_
       }} , function (err, respond) {
-        verified_data=JSON.parse(respond.body)
+        //console.log(respond); 
         //console.log(verified_data); 
+        if(res.statusCode==400)
+        {
+         res.send(respond);
         
-        res.send(verified_data);
+        }else if (res.statusCode==200)
+        {
+            verified_data=JSON.parse(respond.body);
+            res.send(verified_data);
+
+
+            
+ 
+        }else if(res.statusCode==500)
+        {
+ 
+         res.send(respond);
+
+       }else if(res.statusCode==401)
+       {
+         res.send(respond);
+ 
+        }
+        
+       //res.send(respond);
     });
 
     });
