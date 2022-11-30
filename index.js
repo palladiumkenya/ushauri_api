@@ -13,6 +13,8 @@ const todaysAppointments = require("./routes/processes/process_today_appointment
 const pastAppointments = require("./routes/processes/process_past_appointment");
 const sender = require("./routes/processes/sender");
 const verifyupi = require("./routes/processes/upiverify");
+const calendarupi = require("./routes/processes/calendar");
+
 const locator_info = require("./routes/processes/locator");
 const mlab = require("./routes/processes/mlab");
 const dfc = require("./routes/processes/process_dfc");
@@ -28,6 +30,8 @@ app.use(bodyParser.urlencoded({
 
 //verify upi 
 app.use('/mohupi',verifyupi);
+//verify upi 
+app.use('/appnt',calendarupi);
 //locator information
 app.use('/locator',locator_info);
 
