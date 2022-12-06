@@ -397,7 +397,7 @@ router.post("/getUPI", async (req, res_) => {
         }
 
         //Generate UPI Indentification Type and Numbers
-        if(national_id !="")
+        if(national_id !="-1")
         {
           identification_type='national-id';
           identification_value=national_id;
