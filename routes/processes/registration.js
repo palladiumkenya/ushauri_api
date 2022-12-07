@@ -33,132 +33,213 @@ async function registerClient(message, user) {
 
     const variables = decoded_message.split("*");
     console.log(variables.length);
-    if (variables.length != 32)
+    if ((variables.length != 32) && (variables.length != 28))
         return {
             code: 400,
             message: variables.length
         };
+     //UPI Ushauri Version
+     let reg = '';
+     let upn = '';
+     let serial_no = '';
+     let f_name = '';
+     let m_name = '';
+     let l_name = '';
+     let dob = '';
+     let national_id = '';
+     let upi_no = '';
+     let birth_cert_no = '';
+     let gender = '';
+     let marital = '';
+     let condition = '';
+     let enrollment_date ='';
+     let art_start_date = '';
+     let primary_phone_no = '';
+     let alt_phone_no = '';
+     let trtmnt_buddy_phone_no = '';
+     let language = '';
+     let sms_enable = '';
+     let motivation_enable = '';
+     let messaging_time = '';
+     let client_status = '';
+     let transaction_type = '';
+     let grouping = '';
+     let citizenship = '';
+     let county_birth = '';
+     let locator_county = '';
+     let locator_sub_county = '';
+     let locator_village = '';
+     let locator_ward = '';
+     let locator_location = '';
 
-    const reg = variables[0]; //CODE = REG : REGISTRATION 1
-    const upn = variables[1]; //UPN/CCC NO 2
-    const serial_no = variables[2]; //SERIAL NO 3
-    const f_name = variables[3]; //FIRST NAME 4
-    const m_name = variables[4]; //MIDDLE NAME 5
-    const l_name = variables[5]; //LAST NAME 6
-    let dob = variables[6]; //DATE OF BIRTH 7
-    const national_id = variables[7]; //NATIONAL ID OR PASSOPRT NO 8
-    const upi_no = variables[8]; //MOH UPI NUMBER
-    const birth_cert_no = variables[9]; //MOH UPI NUMBER
-    const gender = variables[10]; //GENDER 9
-    const marital = variables[11]; //MARITAL STATUS 10
-    let condition = variables[12]; //CONDITION 11
-    let enrollment_date = variables[13]; //ENROLLMENT DATE 12
-    let art_start_date = variables[14]; //ART START DATE 13
-    const primary_phone_no = variables[15]; //PHONE NUMBER 14
-    const alt_phone_no = variables[16]; //PHONE NUMBER 14
-    const trtmnt_buddy_phone_no = variables[17]; //PHONE NUMBER 14
-    let language = variables[18]; //LANGUAGE 16
-    let sms_enable = variables[19]; //SMS ENABLE 15
-    const motivation_enable = variables[20]; //MOTIVATIONAL ALERTS ENABLE 18
-    const messaging_time = variables[21]; //MESSAGING TIME 17
-    const client_status = variables[22]; //CLIENT STATUS 19
-    const transaction_type = variables[23]; //TRANSACTION TYPE 20
-    const grouping = variables[24]; //GROUPING
-    let citizenship = variables[25]; //LOCATOR COUNTY INFO
-    let county_birth = variables[26]; //LOCATOR COUNTY INFO
-    let locator_county = variables[27]; //LOCATOR COUNTY INFO
-    let locator_sub_county = variables[28]; //LOCATOR SUB COUNTY INFO
-    let locator_village = variables[29]; // LOCATOR VILLAGE INFO
+    if(variables.length == 32)
+    {
+        //UPI Ushauri Version
+        reg = variables[0]; //CODE = REG : REGISTRATION 1
+        upn = variables[1]; //UPN/CCC NO 2
+        serial_no = variables[2]; //SERIAL NO 3
+        f_name = variables[3]; //FIRST NAME 4
+        m_name = variables[4]; //MIDDLE NAME 5
+        l_name = variables[5]; //LAST NAME 6
+        dob = variables[6]; //DATE OF BIRTH 7
+        national_id = variables[7]; //NATIONAL ID OR PASSOPRT NO 8
+        upi_no = variables[8]; //MOH UPI NUMBER
+        birth_cert_no = variables[9]; //MOH UPI NUMBER
+        gender = variables[10]; //GENDER 9
+        marital = variables[11]; //MARITAL STATUS 10
+        condition = variables[12]; //CONDITION 11
+        enrollment_date = variables[13]; //ENROLLMENT DATE 12
+        art_start_date = variables[14]; //ART START DATE 13
+        primary_phone_no = variables[15]; //PHONE NUMBER 14
+        alt_phone_no = variables[16]; //PHONE NUMBER 14
+        trtmnt_buddy_phone_no = variables[17]; //PHONE NUMBER 14
+        language = variables[18]; //LANGUAGE 16
+        sms_enable = variables[19]; //SMS ENABLE 15
+        motivation_enable = variables[20]; //MOTIVATIONAL ALERTS ENABLE 18
+        messaging_time = variables[21]; //MESSAGING TIME 17
+        client_status = variables[22]; //CLIENT STATUS 19
+        transaction_type = variables[23]; //TRANSACTION TYPE 20
+        grouping = variables[24]; //GROUPING
+        citizenship = variables[25]; //LOCATOR COUNTY INFO
+        county_birth = variables[26]; //LOCATOR COUNTY INFO
+        locator_county = variables[27]; //LOCATOR COUNTY INFO
+        locator_sub_county = variables[28]; //LOCATOR SUB COUNTY INFO
+        locator_village = variables[29]; // LOCATOR VILLAGE INFO
+    
+        locator_ward = variables[30]; //LOCATOR WARD INFO
+        locator_location = variables[31]; //LOCATOR LOCATION
 
-    let locator_ward = variables[30]; //LOCATOR WARD INFO
-    let locator_location = variables[31]; //LOCATOR LOCATION
+    }else
+    {
+
+        //Ushauri Without  UPI Verfication Version- Intention is to support both version as users upgrade
+        reg = variables[0]; //CODE = REG : REGISTRATION 1
+        upn = variables[1]; //UPN/CCC NO 2
+        serial_no = variables[2]; //SERIAL NO 3
+        f_name = variables[3]; //FIRST NAME 4
+        m_name = variables[4]; //MIDDLE NAME 5
+        l_name = variables[5]; //LAST NAME 6
+        dob = variables[6]; //DATE OF BIRTH 7
+        national_id = variables[7]; //NATIONAL ID OR PASSOPRT NO 8
+        gender = variables[8]; //GENDER 9
+        marital = variables[9]; //MARITAL STATUS 10
+        condition = variables[10]; //CONDITION 11
+        enrollment_date = variables[11]; //ENROLLMENT DATE 12
+        art_start_date = variables[12]; //ART START DATE 13
+        primary_phone_no = variables[13]; //PHONE NUMBER 14
+        alt_phone_no = variables[14]; //PHONE NUMBER 14
+        trtmnt_buddy_phone_no = variables[15]; //PHONE NUMBER 14
+        language = variables[16]; //LANGUAGE 16
+        sms_enable = variables[17]; //SMS ENABLE 15
+        motivation_enable = variables[18]; //MOTIVATIONAL ALERTS ENABLE 18
+        messaging_time = variables[19]; //MESSAGING TIME 17
+        client_status = variables[20]; //CLIENT STATUS 19
+        transaction_type = variables[21]; //TRANSACTION TYPE 20
+        grouping = variables[22]; //GROUPING
+        locator_county = variables[23]; //LOCATOR COUNTY INFO
+        locator_sub_county = variables[24]; //LOCATOR SUB COUNTY INFO
+        locator_ward = variables[25]; //LOCATOR WARD INFO
+        locator_village = variables[26]; // LOCATOR VILLAGE INFO
+        locator_location = variables[27]; //LOCATOR LOCATION
+
+        //Additional 
+        upi_no = '-1'; //MOH UPI NUMBER
+        birth_cert_no = '-1'; //MOH UPI NUMBER
+        citizenship = '-1'; //LOCATOR COUNTY INFO
+        county_birth = '-1'; //LOCATOR COUNTY INFO
 
 
-    const mfl_code = user.facility_id;
-    const clinic_id = user.clinic_id;
-    const partner_id = user.partner_id;
-    const user_id = user.id;
 
-
-
-    let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
-
-    if (!upn) return {
-        code: 400,
-        message: "Clinic Number not provided"
-    };
-    if (!f_name) return {
-        code: 400,
-        message: "First Name not provided"
-    };
-    if (!l_name) return {
-        code: 400,
-        message: "Last Name not provided"
-    };
-    if (!dob) return {
-        code: 400,
-        message: "Date of Birth not provided"
-    };
-    if (enrollment_date != '-1') {
-        enrollment_date = moment(enrollment_date, "DD/MM/YYYY").format("YYYY-MM-DD");
     }
 
-    if (art_start_date != "-1") {
-        art_start_date = moment(art_start_date, "DD/MM/YYYY").format("YYYY-MM-DD");
-    }
-    if (dob != "-1") {
-        dob = moment(dob, "DD/MM/YYYY").format("YYYY-MM-DD");
-    }
+        //console.log(upi_no)
 
-    var b = moment(new Date());
-    var diffDays = b.diff(dob, "days");
-    console.log(diffDays)
-    let group_id;
-    if (diffDays >= 3650 && diffDays <= 6935) {
-        //Adolescent
-        group_id = 2;
-    } else if (diffDays >= 7300) {
-        //Adult
-        group_id = 1;
-    } else {
-        //Paeds
-        group_id = 3;
-    }
-    if (parseInt(sms_enable) == 1) {
-        sms_enable = "Yes";
-    } else if (parseInt(sms_enable) == 2) {
-        sms_enable = "No";
-    }
-    if (parseInt(condition) == 1) {
-        condition = "ART";
-    } else if (parseInt(condition) == 2) {
-        condition = "Pre-Art";
-        art_start_date = null;
-    }
-    let status;
-    if (client_status != "-1") {
-        if (parseInt(client_status) == 1) {
-            status = "Active";
-        } else if (parseInt(client_status) == 2) {
-            status = "Disabled";
-        } else if (parseInt(client_status) == 3) {
-            status = "Deceased";
-        } else if (parseInt(client_status) == 4) {
-            status = "Transfer Out";
+
+        const mfl_code = user.facility_id;
+        const clinic_id = user.clinic_id;
+        const partner_id = user.partner_id;
+        const user_id = user.id;
+
+
+
+        let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+
+        if (!upn) return {
+            code: 400,
+            message: "Clinic Number not provided"
+        };
+        if (!f_name) return {
+            code: 400,
+            message: "First Name not provided"
+        };
+        if (!l_name) return {
+            code: 400,
+            message: "Last Name not provided"
+        };
+        if (!dob) return {
+            code: 400,
+            message: "Date of Birth not provided"
+        };
+        if (enrollment_date != '-1') {
+            enrollment_date = moment(enrollment_date, "DD/MM/YYYY").format("YYYY-MM-DD");
         }
-    }
-    let motivational_enable;
-    if (parseInt(motivation_enable) == 1) {
-        motivational_enable = "Yes";
-    } else if (parseInt(motivation_enable) == 2) {
-        motivational_enable = "No";
-    }
-    let client_type;
-    if (transaction_type == 3) {
-        client_type = "Transfer";
-    } else if (transaction_type == 1) {
-        client_type = "New";
-    }
+
+        if (art_start_date != "-1") {
+            art_start_date = moment(art_start_date, "DD/MM/YYYY").format("YYYY-MM-DD");
+        }
+        if (dob != "-1") {
+            dob = moment(dob, "DD/MM/YYYY").format("YYYY-MM-DD");
+        }
+
+        var b = moment(new Date());
+        var diffDays = b.diff(dob, "days");
+        console.log(diffDays)
+        let group_id;
+        if (diffDays >= 3650 && diffDays <= 6935) {
+            //Adolescent
+            group_id = 2;
+        } else if (diffDays >= 7300) {
+            //Adult
+            group_id = 1;
+        } else {
+            //Paeds
+            group_id = 3;
+        }
+        if (parseInt(sms_enable) == 1) {
+            sms_enable = "Yes";
+        } else if (parseInt(sms_enable) == 2) {
+            sms_enable = "No";
+        }
+        if (parseInt(condition) == 1) {
+            condition = "ART";
+        } else if (parseInt(condition) == 2) {
+            condition = "Pre-Art";
+            art_start_date = null;
+        }
+        let status;
+        if (client_status != "-1") {
+            if (parseInt(client_status) == 1) {
+                status = "Active";
+            } else if (parseInt(client_status) == 2) {
+                status = "Disabled";
+            } else if (parseInt(client_status) == 3) {
+                status = "Deceased";
+            } else if (parseInt(client_status) == 4) {
+                status = "Transfer Out";
+            }
+        }
+        let motivational_enable;
+        if (parseInt(motivation_enable) == 1) {
+            motivational_enable = "Yes";
+        } else if (parseInt(motivation_enable) == 2) {
+            motivational_enable = "No";
+        }
+        let client_type;
+        if (transaction_type == 3) {
+            client_type = "Transfer";
+        } else if (transaction_type == 1) {
+            client_type = "New";
+        }
 
 
 
