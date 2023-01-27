@@ -14,7 +14,7 @@ const pastAppointments = require("./routes/processes/process_past_appointment");
 const sender = require("./routes/processes/sender");
 const verifyupi = require("./routes/processes/upiverify");
 const calendarupi = require("./routes/processes/calendar");
-
+const pmtct_new = require("./routes/processes/pmtct");
 const locator_info = require("./routes/processes/locator");
 const mlab = require("./routes/processes/mlab");
 const dfc = require("./routes/processes/process_dfc");
@@ -32,6 +32,9 @@ app.use(bodyParser.urlencoded({
 app.use('/mohupi',verifyupi);
 //verify upi 
 app.use('/appnt',calendarupi);
+
+//PMTCT Module
+app.use('/pmtct',pmtct_new);
 //locator information
 app.use('/locator',locator_info);
 
