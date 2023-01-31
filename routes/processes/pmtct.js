@@ -22,6 +22,7 @@ const {
     Clinic
 } = require("../../models/clinic");
 
+
 //Fetch Client Details
 router.get('/search',  async (req, res) => {
     const clinic_number = req.query.ccc;
@@ -131,10 +132,25 @@ router.get('/search',  async (req, res) => {
   });
 
 
-  router.get('/applist', (req, res) => {
-    const vFrom = req.query.start;
+  router.post('/anc', (req, res) => {
+    const message = req.body.msg;
+    const telephone = req.body.telephone;
+
+    //console.log(telephone)
+    
+   // message = message.split("*");
+  //  message = message[1];
+
+   // message = message.split("#");
+
+   // let decoded_message = await base64.decode(message[0].trim());
+
+    //decoded_message = "anc*" + decoded_message;
+
+
+   // const variables = decoded_message.split("*");
    // const vTo = req.query.end;
-    const vTelephone=req.query.telephone;
+    //const vTelephone=req.body.telephone;
 
     //console.log(vTelephone)
 
@@ -151,17 +167,178 @@ router.get('/search',  async (req, res) => {
             multipleStatements: true,
           });
           
-         let  sql = `CALL sp_appointmentcalendar_list(?,?)`;
-         let todo = [vFrom, vTelephone];
-          conn.query(sql,todo, (error, results, fields) => {
+         let  sql = `CALL sp_log(?)`;
+         let todo = [message];
+          conn.query(sql,todo, (error, results) => {
             if (error) {
-                return console.error(error.message);
+                return res.json({
+                    success: false,
+                    message: `Error. ANC Record could not be created`
+                })
+                
+                //return console.error(error.message);
                 conn.end();
+
+
 
               }
               //console.log(results[0]);
 
-              res.send(results[0]);
+           
+            return res.json({
+                success: true,
+                message: `ANC Record was created successfully`
+            })
+
+            //  res.send(results[0]);
+         
+           
+            conn.end();
+          });
+    
+       
+   
+
+    }catch(err){
+
+    }
+
+
+  });
+
+  router.post('/lad', (req, res) => {
+    const message = req.body.msg;
+    const telephone = req.body.telephone;
+
+    //console.log(telephone)
+    
+   // message = message.split("*");
+  //  message = message[1];
+
+   // message = message.split("#");
+
+   // let decoded_message = await base64.decode(message[0].trim());
+
+    //decoded_message = "anc*" + decoded_message;
+
+
+   // const variables = decoded_message.split("*");
+   // const vTo = req.query.end;
+    //const vTelephone=req.body.telephone;
+
+    //console.log(vTelephone)
+
+    try{
+
+        const conn = mysql.createPool({
+            connectionLimit: 10,
+            host: process.env.DB_SERVER,
+            port: process.env.DB_PORT,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+            debug: true,
+            multipleStatements: true,
+          });
+          
+         let  sql = `CALL sp_log(?)`;
+         let todo = [message];
+          conn.query(sql,todo, (error, results) => {
+            if (error) {
+                return res.json({
+                    success: false,
+                    message: `Error. Labour & Delivery Record could not be created`
+                })
+                
+                //return console.error(error.message);
+                conn.end();
+
+
+
+              }
+              //console.log(results[0]);
+
+           
+            return res.json({
+                success: true,
+                message: `Labour & Delivery Record was created successfully`
+            })
+
+            //  res.send(results[0]);
+         
+           
+            conn.end();
+          });
+    
+       
+   
+
+    }catch(err){
+
+    }
+
+
+  });
+
+  router.post('/pnc', (req, res) => {
+    const message = req.body.msg;
+    const telephone = req.body.telephone;
+
+    //console.log(telephone)
+    
+   // message = message.split("*");
+  //  message = message[1];
+
+   // message = message.split("#");
+
+   // let decoded_message = await base64.decode(message[0].trim());
+
+    //decoded_message = "anc*" + decoded_message;
+
+
+   // const variables = decoded_message.split("*");
+   // const vTo = req.query.end;
+    //const vTelephone=req.body.telephone;
+
+    //console.log(vTelephone)
+
+    try{
+
+        const conn = mysql.createPool({
+            connectionLimit: 10,
+            host: process.env.DB_SERVER,
+            port: process.env.DB_PORT,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+            debug: true,
+            multipleStatements: true,
+          });
+          
+         let  sql = `CALL sp_log(?)`;
+         let todo = [message];
+          conn.query(sql,todo, (error, results) => {
+            if (error) {
+                return res.json({
+                    success: false,
+                    message: `Error. PNC Record could not be created`
+                })
+                
+                //return console.error(error.message);
+                conn.end();
+
+
+
+              }
+              //console.log(results[0]);
+
+           
+            return res.json({
+                success: true,
+                message: `PNC Record was created successfully`
+            })
+
+            //  res.send(results[0]);
          
            
             conn.end();
