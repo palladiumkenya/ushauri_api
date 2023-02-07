@@ -13,7 +13,7 @@ const pmtct_pnc = sequelize.sequelize.define(
         visit_number: Sequelize.TEXT,
         clinic_number: Sequelize.TEXT,
         date_visit: Sequelize.DATEONLY,
-        counselled_on_fp: Sequelize.DATEONLY,
+        counselled_on_fp: Sequelize.TEXT,
         fp_method: Sequelize.STRING,
         created_by: Sequelize.INTEGER,
         updated_by: Sequelize.INTEGER,

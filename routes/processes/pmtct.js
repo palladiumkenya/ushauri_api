@@ -544,7 +544,7 @@ router.get('/search',  async (req, res) => {
             client_id:client.id,
             visit_number:pnc_visit_no,
             clinic_number:pnc_clinic_no,
-            date_visit:visit_date,
+            date_visit:moment(visit_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
             counselled_on_fp:client_counselled,
             fp_method:fp_method,
             created_by:check_user.id,
