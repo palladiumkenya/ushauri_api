@@ -1,20 +1,20 @@
 const sequelize = require("../db_config");
 const Sequelize = require("sequelize");
 
-const pmtct_lad = sequelize.sequelize.define(
-    "tbl_pmtct_delivery", {
+const pmtct_baby = sequelize.sequelize.define(
+    "tbl_pmtct_babies", {
         delivery_id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true
         },
        
-        client_id: Sequelize.INTEGER,
-        visit_number: Sequelize.TEXT,
-        clinic_number: Sequelize.TEXT,
-        date_visit: Sequelize.DATEONLY,
-        counselled_on_fp: Sequelize.DATEONLY,
-        fp_method: Sequelize.STRING,
+        delivery_id: Sequelize.INTEGER,
+        baby_delivered: Sequelize.STRING,
+        date_died: Sequelize.DATEONLY,
+        cause_of_death: Sequelize.STRING,
+        baby_sex: Sequelize.STRING,
+        date_birth : Sequelize.DATEONLY,
         created_by: Sequelize.INTEGER,
         updated_by: Sequelize.INTEGER,
     }, {
@@ -22,7 +22,7 @@ const pmtct_lad = sequelize.sequelize.define(
         paranoid: true,
         underscored: true,
         freezeTableName: true,
-        tableName: "tbl_pmtct_delivery"
+        tableName: "tbl_pmtct_babies"
     }
 );
-exports.pmtct_lad = pmtct_lad;
+exports.pmtct_baby = pmtct_baby;

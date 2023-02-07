@@ -10,11 +10,13 @@ const pmtct_lad = sequelize.sequelize.define(
         },
        
         client_id: Sequelize.INTEGER,
-        visit_number: Sequelize.TEXT,
-        clinic_number: Sequelize.TEXT,
-        date_visit: Sequelize.DATEONLY,
-        counselled_on_fp: Sequelize.DATEONLY,
-        fp_method: Sequelize.STRING,
+        delivery_mode: Sequelize.TEXT,
+        admission_date: Sequelize.DATEONLY,
+        delivery_place: Sequelize.TEXT,
+        delivery_outcome: Sequelize.TEXT,
+        mother_condition: Sequelize.TEXT,
+        date_death: Sequelize.DATEONLY,
+        mother_current_regimen: Sequelize.TEXT,
         created_by: Sequelize.INTEGER,
         updated_by: Sequelize.INTEGER,
     }, {

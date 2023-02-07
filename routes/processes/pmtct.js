@@ -31,6 +31,14 @@ const {
     pmtct_pnc
 } = require("../../models/pmtct_new_pnc");
 
+const {
+    pmtct_lad
+} = require("../../models/pmtct_new_lad");
+
+const {
+    pmtct_baby
+} = require("../../models/pmtct_new_baby");
+
 
 
 //Fetch Client Details
@@ -159,6 +167,7 @@ router.get('/search',  async (req, res) => {
     let variables = decoded_message.split("*");
 
     let msg_type=variables[0]; //Message Type ANC
+
     
     let clinic_number=variables[1]; //CC No
     //console.log(clinic_number);
@@ -283,77 +292,165 @@ router.get('/search',  async (req, res) => {
 
   });
 
-  router.post('/lad', (req, res) => {
-    const message = req.body.msg;
-    const telephone = req.body.telephone;
+  router.post('/lad', async (req, res) => {
+    let message = req.body.msg;
+    let baby = req.body.baby;
+    let phone_no = req.body.phone_no;
 
-    //console.log(telephone)
-    
-   // message = message.split("*");
-  //  message = message[1];
-
-   // message = message.split("#");
-
-   // let decoded_message = await base64.decode(message[0].trim());
-
-    //decoded_message = "anc*" + decoded_message;
-
-
-   // const variables = decoded_message.split("*");
-   // const vTo = req.query.end;
-    //const vTelephone=req.body.telephone;
-
-    //console.log(vTelephone)
-
-    try{
-
-        const conn = mysql.createPool({
-            connectionLimit: 10,
-            host: process.env.DB_SERVER,
-            port: process.env.DB_PORT,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
-            debug: true,
-            multipleStatements: true,
-          });
-          
-         let  sql = `CALL sp_log(?)`;
-         let todo = [message];
-          conn.query(sql,todo, (error, results) => {
-            if (error) {
-                return res.json({
-                    success: false,
-                    message: `Error. Labour & Delivery Record could not be created`
-                })
-                
-                //return console.error(error.message);
-                conn.end();
-
-
-
-              }
-              //console.log(results[0]);
-
-           
-            return res.json({
-                success: true,
-                message: `Labour & Delivery Record was created successfully`
-            })
-
-            //  res.send(results[0]);
-         
-           
-            conn.end();
-          });
-    
-       
+    message = message.split("*");
    
 
-    }catch(err){
+    let decoded_message = await base64.decode(message[1].trim());
 
-    }
+    decoded_message = "lad*" + decoded_message;
 
+
+    let variables = decoded_message.split("*");
+
+    let msg_type=variables[0]; //Message Type PNC
+    let ccc_no=variables[1]; //CCC No
+    let anc_visits=variables[1]; //ANC Visits
+    let m_hiv_tested=variables[2]; // Mother HIV Tested
+    let m_hiv_result=variables[2]; // Mother HIV Result
+    let delivery_date=variables[3]; //Delivery Date
+    let delivery_mode=variables[4]; //Delivery Mode
+    let delivery_place=variables[5]; //Delivery Place
+    let delivery_outcome=variables[6]; //Delivery Outcome
+    //Baby One
+    let baby_delivered_1=variables[7]; //Baby Delivery Status
+    let baby_death_date_1=variables[8]; //Baby Death
+    let baby_cause_of_death_1=variables[9]; //Baby Cause of Death
+    let baby_date_of_birth_1=variables[10]; //Baby DOB
+    let baby_sex_1=variables[11]; //Baby 
+    //Baby Two
+    let baby_delivered_2=variables[12]; //Baby Delivery Status
+    let baby_death_date_2=variables[13]; //Baby Death
+    let baby_cause_of_death_2=variables[14]; //Baby Cause of Death
+    let baby_date_of_birth_2=variables[15]; //Baby DOB
+    let baby_sex_2=variables[16]; //Baby 
+    //Baby Three
+    let baby_delivered_3=variables[17]; //Baby Delivery Status
+    let baby_death_date_3=variables[18]; //Baby Death
+    let baby_cause_of_death_3=variables[19]; //Baby Cause of Death
+    let baby_date_of_birth_3=variables[20]; //Baby DOB
+    let baby_sex_3=variables[21]; //Baby 
+    //Baby Four
+    let baby_delivered_4=variables[22]; //Baby Delivery Status
+    let baby_death_date_4=variables[23]; //Baby Death
+    let baby_cause_of_death_4=variables[24]; //Baby Cause of Death
+    let baby_date_of_birth_4=variables[25]; //Baby DOB
+    let baby_sex_4=variables[26]; //Baby 
+    //Baby Five
+    let baby_delivered_5=variables[27]; //Baby Delivery Status
+    let baby_death_date_5=variables[28]; //Baby Death
+    let baby_cause_of_death_5=variables[29]; //Baby Cause of Death
+    let baby_date_of_birth_5=variables[30]; //Baby DOB
+    let baby_sex_5=variables[31]; //Baby 
+
+    let mother_outcome=variables[32]; //Mother Outcome
+
+
+   let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+
+   //Validate Standard Parameters- Telephone Number And Client
+   let check_user = await User.findOne({
+    where: {
+        phone_no,
+    },
+    })
+    if (!check_user)
+        return res.json({
+            success: false,
+            message: `Phone number ${phone_no} does not exist in the system`
+        })
+    let client = await Client.findOne({
+        where: {
+            clinic_number,
+        },
+    })
+    if (!client)
+    return res.json({
+        success: false,
+        message: `Clinic number ${clinic_number} does not exist in the system`
+    })
+    let get_facility = await masterFacility.findOne({
+        where: {
+            code: client.mfl_code
+        },
+        attributes: ["code", "name"],
+    })
+    let get_clinic = await Clinic.findOne({
+        where: {
+            id: client.clinic_id
+        },
+        attributes: ["id", "name"],
+    })
+    let get_user_clinic = await Clinic.findOne({
+        where: {
+            id: check_user.clinic_id
+        },
+        attributes: ["id", "name"],
+    })
+
+    if (client.mfl_code != check_user.facility_id)
+        return res.json({
+            success: false,
+            message: `Client ${clinic_number} does not belong in your facility, the client is mapped to ${get_facility.name}`
+        })
+    if (client.clinic_id != check_user.clinic_id)
+        return res.json({
+            success: false,
+            message: `Client ${clinic_number} is not mapped to your clinic, the client is mapped in ${get_clinic.name} and the current phone number is mapped in ${get_user_clinic.name}`
+        })
+    if (client.status != "Active")
+        return res.json({
+            success: false,
+            message: `Client: ${clinic_number} is not active in the system.`
+        })
+
+        const delivery_details = {
+            name: req.body.title,
+            description: req.body.description,
+        }
+
+        const baby_details = {
+            name: req.body.title,
+            description: req.body.description,
+        }
+
+        //Initiate Transaction
+        var pmtct_babies = new Array();
+
+        const t = await sequelize.transaction();
+        try {
+            const result_delivery = await   pmtct_lad.create(post, { transaction: t })
+            
+            for(var i=1;i<delivery_outcome;i++){
+
+                pmtct_babies.push({ delivery_id: result_delivery.id,
+                    baby_delivered:baby_delivered_+''+i,
+                    date_died: baby_death_date_+''+i,
+                    cause_of_death: baby_cause_of_death_+''+i,
+                    baby_sex: baby_sex_+''+i,
+                    date_birth : baby_date_of_birth_+''+i,
+                    created_by:check_user.id,
+                    created_at:today,
+                    updated_at:today,
+                    updated_by:check_user.id});
+            }
+            const baby_details = await pmtct_baby.create(pmtct_babies, {transaction: t})
+            await t.commit();
+            return res.json({
+                code: 200,
+                message: `Labour & Delivery Visit Record for ${clinic_number} was created successfully`
+            });
+        }catch (error) {
+            return res.json({
+                code: 500,
+                message: "An error occurred, could not create Labour & Delivery Record"
+            });
+            //console.log(error || 'Error occured in transaction');
+        }
 
   });
 
