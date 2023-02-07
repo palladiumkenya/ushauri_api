@@ -438,7 +438,7 @@ router.get('/search',  async (req, res) => {
                     updated_at:today,
                     updated_by:check_user.id});
             }
-            const baby_details = await pmtct_baby.create(pmtct_babies, {transaction: t})
+            const baby_details = await pmtct_baby.bulkCreate(pmtct_babies, {transaction: t})
             await t.commit();
             return res.json({
                 code: 200,
@@ -473,7 +473,7 @@ router.get('/search',  async (req, res) => {
     let variables = decoded_message.split("*");
 
     let msg_type=variables[0]; //Message Type PNC
-    let ccc_no=variables[1]; //CCC No
+    let clinic_number=variables[1]; //CCC No
     let visit_date=variables[1]; //CCC No
     let pnc_visit_no=variables[2]; // PNC Visit No
     let pnc_clinic_no=variables[3]; //PNC Clinic No
