@@ -28,7 +28,7 @@ const {
 
 
 const {
-    Pmtct_pnc
+    pmtct_pnc
 } = require("../../models/pmtct_new_pnc");
 
 
@@ -259,8 +259,8 @@ router.get('/search',  async (req, res) => {
             lmp_date:moment(lmp_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
             edd: moment(edd_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
             created_by:check_user.id,
-            created_date:today,
-            updated_date:today,
+            created_at:today,
+            updated_at:today,
             updated_by:check_user.id,
             is_syphyilis:syphilis_result,
             syphilis_treatment:syphilis_treatment,
@@ -358,20 +358,22 @@ router.get('/search',  async (req, res) => {
   });
 
   router.post('/pnc', async(req, res) => {
-    const message = req.body.msg;
-    const telephone = req.body.telephone;
+    let message = req.body.msg;
+    let phone_no = req.body.phone_no;
 
     message = message.split("*");
-    message = message[1];
+   // message = message[1];
 
-    message = message.split("#");
+    //message = message.split("#");
 
-    let decoded_message = await base64.decode(message[0].trim());
+    let decoded_message = await base64.decode(message[1].trim());
+
+   
 
     decoded_message = "pnc*" + decoded_message;
 
 
-    const variables = decoded_message.split("*");
+    let variables = decoded_message.split("*");
 
     let msg_type=variables[0]; //Message Type PNC
     let ccc_no=variables[1]; //CCC No
@@ -386,7 +388,7 @@ router.get('/search',  async (req, res) => {
    //Validate Standard Parameters- Telephone Number And Client
    let check_user = await User.findOne({
     where: {
-        telephone,
+        phone_no,
     },
     })
     if (!check_user)
@@ -396,13 +398,13 @@ router.get('/search',  async (req, res) => {
         })
     let client = await Client.findOne({
         where: {
-            ccc_no,
+            clinic_number,
         },
     })
     if (!client)
     return res.json({
         success: false,
-        message: `Clinic number ${ccc_no} does not exist in the system`
+        message: `Clinic number ${clinic_number} does not exist in the system`
     })
     let get_facility = await masterFacility.findOne({
         where: {
@@ -426,21 +428,22 @@ router.get('/search',  async (req, res) => {
     if (client.mfl_code != check_user.facility_id)
         return res.json({
             success: false,
-            message: `Client ${ccc_no} does not belong in your facility, the client is mapped to ${get_facility.name}`
+            message: `Client ${clinic_number} does not belong in your facility, the client is mapped to ${get_facility.name}`
         })
     if (client.clinic_id != check_user.clinic_id)
         return res.json({
             success: false,
-            message: `Client ${ccc_no} is not mapped to your clinic, the client is mapped in ${get_clinic.name} and the current phone number is mapped in ${get_user_clinic.name}`
+            message: `Client ${clinic_number} is not mapped to your clinic, the client is mapped in ${get_clinic.name} and the current phone number is mapped in ${get_user_clinic.name}`
         })
     if (client.status != "Active")
         return res.json({
             success: false,
-            message: `Client: ${ccc_no} is not active in the system.`
+            message: `Client: ${clinic_number} is not active in the system.`
         })
 
-        //Save PMTCT Variables
-        return Pmtct_pnc.create({
+
+        //Save PMTCT PNC Variables
+        const new_pnc_visit = await pmtct_pnc.create({
             client_id:client.id,
             visit_number:pnc_visit_no,
             clinic_number:pnc_clinic_no,
@@ -448,20 +451,24 @@ router.get('/search',  async (req, res) => {
             counselled_on_fp:client_counselled,
             fp_method:fp_method,
             created_by:check_user.id,
-            created_date:today,
-            updated_date:today,
+            created_at:today,
+            updated_at:today,
             updated_by:check_user.id
-        }).then(async (new_pnc_visit) => {
-         return {
-                code: 200,
-                message: `PNC Visit Record for ${ccc_no} was created successfully`
-            };
-        }).catch(e => {
-            return {
-                code: 500,
-                message: "An error occurred, could not create PNC Record"
-            };
-        })
+        });
+        
+         //console.log(new_anc_visit);
+         if(new_pnc_visit){
+            return res.json({
+                   code: 200,
+                   message: `PNC Visit Record for ${clinic_number} was created successfully`
+               });
+           }else{
+               return res.json({
+                   code: 500,
+                   message: "An error occurred, could not create PNC Record"
+               });
+           }
+      
 
   });
 
