@@ -23,7 +23,7 @@ const {
 } = require("../../models/clinic");
 
 const {
-    Pmtct_anc
+    pmtct_anc
 } = require("../../models/pmtct_new_anc");
 
 
@@ -248,7 +248,7 @@ router.get('/search',  async (req, res) => {
         })
 
         //Save PMTCT Variables
-        return Pmtct_anc.create({
+        return pmtct_anc.create({
             client_id:client.id,
             visit_number:anc_visit_no,
             clinic_number:anc_clinic_no,
@@ -269,7 +269,7 @@ router.get('/search',  async (req, res) => {
         }).then(async (new_anc_visit) => {
          return {
                 code: 200,
-                message: `ANC Visit Record for ${ccc_no} was created successfully`
+                message: `ANC Visit Record for ${clinic_number} was created successfully`
             };
         }).catch(e => {
             return {
