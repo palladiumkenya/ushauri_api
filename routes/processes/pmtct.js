@@ -248,7 +248,7 @@ router.get('/search',  async (req, res) => {
         })
 
         //Save PMTCT Variables
-        return pmtct_anc.create({
+       const new_anc_visit = await pmtct_anc.create({
             client_id:client.id,
             visit_number:anc_visit_no,
             clinic_number:anc_clinic_no,
@@ -266,17 +266,20 @@ router.get('/search',  async (req, res) => {
             syphilis_treatment:syphilis_treatment,
             hepatitis_b:hepatisis,
             gestation:gestation
-        }).then(async (new_anc_visit) => {
-         return {
+        });
+         
+        //console.log(new_anc_visit);
+        if(new_anc_visit){
+         return res.json({
                 code: 200,
                 message: `ANC Visit Record for ${clinic_number} was created successfully`
-            };
-        }).catch(e => {
-            return {
+            });
+        }else{
+            return res.json({
                 code: 500,
                 message: "An error occurred, could not create ANC Record"
-            };
-        })
+            });
+        }
 
   });
 
