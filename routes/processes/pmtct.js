@@ -42,6 +42,7 @@ const {
 const {
     pmtct_baby
 } = require("../../models/pmtct_new_baby");
+const { Sequelize } = require("sequelize");
 
 
 
@@ -425,7 +426,7 @@ router.get('/search',  async (req, res) => {
         //Initiate Transaction
         var pmtct_babies = new Array();
 
-        const t = await Op.Transaction();
+        const t = await Sequelize.Transaction();
         try {
             const result_delivery = await   pmtct_lad.create(post, { transaction: t })
             
