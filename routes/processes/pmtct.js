@@ -43,6 +43,7 @@ const {
     pmtct_baby
 } = require("../../models/pmtct_new_baby");
 const { Sequelize } = require("sequelize");
+const { sequelize } = require("../../db_config");
 
 
 
@@ -322,35 +323,35 @@ router.get('/search',  async (req, res) => {
     let delivery_place=variables[5]; //Delivery Place
     let delivery_outcome=variables[6]; //Delivery Outcome
     //Baby One
-    let baby_delivered_1=variables[7]; //Baby Delivery Status
-    let baby_death_date_1=variables[8]; //Baby Death
-    let baby_cause_of_death_1=variables[9]; //Baby Cause of Death
-    let baby_date_of_birth_1=variables[10]; //Baby DOB
-    let baby_sex_1=variables[11]; //Baby 
+    let baby_delivered_0=variables[7]; //Baby Delivery Status
+    let baby_death_date_0=variables[8]; //Baby Death
+    let baby_cause_of_death_0=variables[9]; //Baby Cause of Death
+    let baby_date_of_birth_0=variables[10]; //Baby DOB
+    let baby_sex_0=variables[11]; //Baby 
     //Baby Two
-    let baby_delivered_2=variables[12]; //Baby Delivery Status
-    let baby_death_date_2=variables[13]; //Baby Death
-    let baby_cause_of_death_2=variables[14]; //Baby Cause of Death
-    let baby_date_of_birth_2=variables[15]; //Baby DOB
-    let baby_sex_2=variables[16]; //Baby 
+    let baby_delivered_1=variables[12]; //Baby Delivery Status
+    let baby_death_date_1=variables[13]; //Baby Death
+    let baby_cause_of_death_1=variables[14]; //Baby Cause of Death
+    let baby_date_of_birth_1=variables[15]; //Baby DOB
+    let baby_sex_1=variables[16]; //Baby 
     //Baby Three
-    let baby_delivered_3=variables[17]; //Baby Delivery Status
-    let baby_death_date_3=variables[18]; //Baby Death
-    let baby_cause_of_death_3=variables[19]; //Baby Cause of Death
-    let baby_date_of_birth_3=variables[20]; //Baby DOB
-    let baby_sex_3=variables[21]; //Baby 
+    let baby_delivered_2=variables[17]; //Baby Delivery Status
+    let baby_death_date_2=variables[18]; //Baby Death
+    let baby_cause_of_death_2=variables[19]; //Baby Cause of Death
+    let baby_date_of_birth_2=variables[20]; //Baby DOB
+    let baby_sex_2=variables[21]; //Baby 
     //Baby Four
-    let baby_delivered_4=variables[22]; //Baby Delivery Status
-    let baby_death_date_4=variables[23]; //Baby Death
-    let baby_cause_of_death_4=variables[24]; //Baby Cause of Death
-    let baby_date_of_birth_4=variables[25]; //Baby DOB
-    let baby_sex_4=variables[26]; //Baby 
+    let baby_delivered_3=variables[22]; //Baby Delivery Status
+    let baby_death_date_3=variables[23]; //Baby Death
+    let baby_cause_of_death_3=variables[24]; //Baby Cause of Death
+    let baby_date_of_birth_3=variables[25]; //Baby DOB
+    let baby_sex_3=variables[26]; //Baby 
     //Baby Five
-    let baby_delivered_5=variables[27]; //Baby Delivery Status
-    let baby_death_date_5=variables[28]; //Baby Death
-    let baby_cause_of_death_5=variables[29]; //Baby Cause of Death
-    let baby_date_of_birth_5=variables[30]; //Baby DOB
-    let baby_sex_5=variables[31]; //Baby 
+    let baby_delivered_4=variables[27]; //Baby Delivery Status
+    let baby_death_date_4=variables[28]; //Baby Death
+    let baby_cause_of_death_4=variables[29]; //Baby Cause of Death
+    let baby_date_of_birth_4=variables[30]; //Baby DOB
+    let baby_sex_4=variables[31]; //Baby 
 
     let mother_outcome=variables[32]; //Mother Outcome
 
@@ -426,37 +427,66 @@ router.get('/search',  async (req, res) => {
         //Initiate Transaction
         var pmtct_babies = new Array();
 
-        const t = await Sequelize.Transaction();
+
+
+        var pmtct_lad_payload={
+            client_id:client.id,
+            anc_visits:anc_visits,
+            delivery_mode:delivery_mode,
+            admission_date:moment(delivery_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            delivery_place:delivery_place,
+            delivery_outcome:delivery_outcome,
+            mother_condition:mother_outcome,
+          
+            created_by:check_user.id,
+            created_at:today,
+            updated_at:today,
+            updated_by:check_user.id
+        };
+
+       
+        let transaction;
         try {
-            const result_delivery = await   pmtct_lad.create(post, { transaction: t })
-            
-            for(var i=1;i<delivery_outcome;i++){
+            transaction = await sequelize.transaction();
+            const result_delivery = await pmtct_lad.create(pmtct_lad_payload, { transaction });
+            for(var i=0;i<delivery_outcome;i++){
 
                 pmtct_babies.push({ delivery_id: result_delivery.id,
-                    baby_delivered:baby_delivered_+''+i,
-                    date_died: baby_death_date_+''+i,
-                    cause_of_death: baby_cause_of_death_+''+i,
-                    baby_sex: baby_sex_+''+i,
-                    date_birth : baby_date_of_birth_+''+i,
+                    baby_delivered:eval("baby_delivered_"+i),
+                    date_died:moment(eval("baby_death_date_"+i), "DD/MM/YYYY").format("YYYY-MM-DD"),
+                    cause_of_death: eval("baby_cause_of_death_"+i),
+                    baby_sex: eval("baby_sex_"+i),
+                    date_birth : moment(eval("baby_date_of_birth_"+i), "DD/MM/YYYY").format("YYYY-MM-DD"),
                     created_by:check_user.id,
                     created_at:today,
                     updated_at:today,
                     updated_by:check_user.id});
+                    //await pmtct_baby.create(pmtct_babies, { transaction });
+
             }
-            const baby_details = await pmtct_baby.bulkCreate(pmtct_babies, {transaction: t})
-            await t.commit();
+
+
+            await pmtct_baby.bulkCreate(pmtct_babies, { transaction });
+
+            // console.log('success');
+            await transaction.commit(); 
             return res.json({
                 code: 200,
                 message: `Labour & Delivery Visit Record for ${clinic_number} was created successfully`
             });
-        }catch (error) {
+
+        } catch (error) {
+          
+            if(transaction) {
+            await transaction.rollback();
+            }
             return res.json({
                 code: 500,
-                message: "An error occurred, could not create Labour & Delivery Record"
+                message: error+" An error occurred, could not create Labour & Delivery Record"
             });
-            //console.log(error || 'Error occured in transaction');
         }
 
+        
   });
 
   router.post('/pnc', async(req, res) => {

@@ -10,6 +10,7 @@ const pmtct_lad = sequelize.sequelize.define(
         },
        
         client_id: Sequelize.INTEGER,
+        anc_visits:Sequelize.TEXT,
         delivery_mode: Sequelize.TEXT,
         admission_date: Sequelize.DATEONLY,
         delivery_place: Sequelize.TEXT,
