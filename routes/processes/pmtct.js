@@ -5,6 +5,8 @@ const https = require('https');
 const moment = require("moment");
 const base64 = require("base64util");
 const Op = require("sequelize").Op;
+//const Sequelize = require('sequelize');
+
 
 require("dotenv").config();
 //var mysql = require("mysql");
@@ -421,7 +423,7 @@ router.get('/search',  async (req, res) => {
         //Initiate Transaction
         var pmtct_babies = new Array();
 
-        const t = await sequelize.transaction();
+        const t = await Op.transaction();
         try {
             const result_delivery = await   pmtct_lad.create(post, { transaction: t })
             
