@@ -317,43 +317,43 @@ router.get('/search',  async (req, res) => {
     let clinic_number=variables[1]; //CCC No
     let anc_visits=variables[1]; //ANC Visits
     let m_hiv_tested=variables[2]; // Mother HIV Tested
-    let m_hiv_result=variables[2]; // Mother HIV Result
-    let delivery_date=variables[3]; //Delivery Date
-    let delivery_mode=variables[4]; //Delivery Mode
-    let delivery_place=variables[5]; //Delivery Place
-    let delivery_outcome=variables[6]; //Delivery Outcome
+    let m_hiv_result=variables[3]; // Mother HIV Result
+    let delivery_date=variables[4]; //Delivery Date
+    let delivery_mode=variables[5]; //Delivery Mode
+    let delivery_place=variables[6]; //Delivery Place
+    let delivery_outcome=variables[7]; //Delivery Outcome
     //Baby One
-    let baby_delivered_0=variables[7]; //Baby Delivery Status
-    let baby_death_date_0=variables[8]; //Baby Death
-    let baby_cause_of_death_0=variables[9]; //Baby Cause of Death
-    let baby_date_of_birth_0=variables[10]; //Baby DOB
-    let baby_sex_0=variables[11]; //Baby 
+    let baby_delivered_0=variables[8]; //Baby Delivery Status
+    let baby_death_date_0=variables[9]; //Baby Death
+    let baby_cause_of_death_0=variables[10]; //Baby Cause of Death
+    let baby_date_of_birth_0=variables[11]; //Baby DOB
+    let baby_sex_0=variables[12]; //Baby 
     //Baby Two
-    let baby_delivered_1=variables[12]; //Baby Delivery Status
-    let baby_death_date_1=variables[13]; //Baby Death
-    let baby_cause_of_death_1=variables[14]; //Baby Cause of Death
-    let baby_date_of_birth_1=variables[15]; //Baby DOB
-    let baby_sex_1=variables[16]; //Baby 
+    let baby_delivered_1=variables[13]; //Baby Delivery Status
+    let baby_death_date_1=variables[14]; //Baby Death
+    let baby_cause_of_death_1=variables[15]; //Baby Cause of Death
+    let baby_date_of_birth_1=variables[16]; //Baby DOB
+    let baby_sex_1=variables[17]; //Baby 
     //Baby Three
-    let baby_delivered_2=variables[17]; //Baby Delivery Status
-    let baby_death_date_2=variables[18]; //Baby Death
-    let baby_cause_of_death_2=variables[19]; //Baby Cause of Death
-    let baby_date_of_birth_2=variables[20]; //Baby DOB
-    let baby_sex_2=variables[21]; //Baby 
+    let baby_delivered_2=variables[18]; //Baby Delivery Status
+    let baby_death_date_2=variables[19]; //Baby Death
+    let baby_cause_of_death_2=variables[20]; //Baby Cause of Death
+    let baby_date_of_birth_2=variables[21]; //Baby DOB
+    let baby_sex_2=variables[22]; //Baby 
     //Baby Four
-    let baby_delivered_3=variables[22]; //Baby Delivery Status
-    let baby_death_date_3=variables[23]; //Baby Death
-    let baby_cause_of_death_3=variables[24]; //Baby Cause of Death
-    let baby_date_of_birth_3=variables[25]; //Baby DOB
-    let baby_sex_3=variables[26]; //Baby 
+    let baby_delivered_3=variables[23]; //Baby Delivery Status
+    let baby_death_date_3=variables[24]; //Baby Death
+    let baby_cause_of_death_3=variables[25]; //Baby Cause of Death
+    let baby_date_of_birth_3=variables[26]; //Baby DOB
+    let baby_sex_3=variables[27]; //Baby 
     //Baby Five
-    let baby_delivered_4=variables[27]; //Baby Delivery Status
-    let baby_death_date_4=variables[28]; //Baby Death
-    let baby_cause_of_death_4=variables[29]; //Baby Cause of Death
-    let baby_date_of_birth_4=variables[30]; //Baby DOB
-    let baby_sex_4=variables[31]; //Baby 
+    let baby_delivered_4=variables[28]; //Baby Delivery Status
+    let baby_death_date_4=variables[29]; //Baby Death
+    let baby_cause_of_death_4=variables[30]; //Baby Cause of Death
+    let baby_date_of_birth_4=variables[31]; //Baby DOB
+    let baby_sex_4=variables[32]; //Baby 
 
-    let mother_outcome=variables[32]; //Mother Outcome
+    let mother_outcome=variables[33]; //Mother Outcome
 
 
    let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
@@ -461,7 +461,7 @@ router.get('/search',  async (req, res) => {
                     created_at:today,
                     updated_at:today,
                     updated_by:check_user.id});
-                    //await pmtct_baby.create(pmtct_babies, { transaction });
+                   // await pmtct_baby.create(pmtct_babies, { transaction });
 
             }
 
