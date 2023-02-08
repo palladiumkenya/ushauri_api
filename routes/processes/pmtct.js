@@ -294,7 +294,7 @@ router.get('/search',  async (req, res) => {
 
   router.post('/lad', async (req, res) => {
     let message = req.body.msg;
-    let baby = req.body.baby;
+    //let baby = req.body.baby;
     let phone_no = req.body.phone_no;
 
     message = message.split("*");
@@ -308,7 +308,7 @@ router.get('/search',  async (req, res) => {
     let variables = decoded_message.split("*");
 
     let msg_type=variables[0]; //Message Type PNC
-    let ccc_no=variables[1]; //CCC No
+    let clinic_number=variables[1]; //CCC No
     let anc_visits=variables[1]; //ANC Visits
     let m_hiv_tested=variables[2]; // Mother HIV Tested
     let m_hiv_result=variables[2]; // Mother HIV Result
