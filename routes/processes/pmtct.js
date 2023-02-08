@@ -312,48 +312,49 @@ router.get('/search',  async (req, res) => {
 
 
     let variables = decoded_message.split("*");
-
+    //console.log(variables);
     let msg_type=variables[0]; //Message Type PNC
     let clinic_number=variables[1]; //CCC No
-    let anc_visits=variables[1]; //ANC Visits
-    let m_hiv_tested=variables[2]; // Mother HIV Tested
-    let m_hiv_result=variables[3]; // Mother HIV Result
-    let delivery_date=variables[4]; //Delivery Date
-    let delivery_mode=variables[5]; //Delivery Mode
-    let delivery_place=variables[6]; //Delivery Place
-    let delivery_outcome=variables[7]; //Delivery Outcome
+    let anc_visits_=variables[2]; //ANC Visits
+    
+    let m_hiv_tested=variables[3]; // Mother HIV Tested
+    let m_hiv_result=variables[4]; // Mother HIV Result
+    let delivery_date=variables[5]; //Delivery Date
+    let delivery_mode=variables[6]; //Delivery Mode
+    let delivery_place=variables[7]; //Delivery Place
+    let delivery_outcome=variables[8]; //Delivery Outcome
     //Baby One
-    let baby_delivered_0=variables[8]; //Baby Delivery Status
-    let baby_death_date_0=variables[9]; //Baby Death
-    let baby_cause_of_death_0=variables[10]; //Baby Cause of Death
-    let baby_date_of_birth_0=variables[11]; //Baby DOB
-    let baby_sex_0=variables[12]; //Baby 
+    let baby_delivered_0=variables[9]; //Baby Delivery Status
+    let baby_death_date_0=variables[10]; //Baby Death
+    let baby_cause_of_death_0=variables[11]; //Baby Cause of Death
+    let baby_date_of_birth_0=variables[12]; //Baby DOB
+    let baby_sex_0=variables[13]; //Baby 
     //Baby Two
-    let baby_delivered_1=variables[13]; //Baby Delivery Status
-    let baby_death_date_1=variables[14]; //Baby Death
-    let baby_cause_of_death_1=variables[15]; //Baby Cause of Death
-    let baby_date_of_birth_1=variables[16]; //Baby DOB
-    let baby_sex_1=variables[17]; //Baby 
+    let baby_delivered_1=variables[14]; //Baby Delivery Status
+    let baby_death_date_1=variables[15]; //Baby Death
+    let baby_cause_of_death_1=variables[16]; //Baby Cause of Death
+    let baby_date_of_birth_1=variables[17]; //Baby DOB
+    let baby_sex_1=variables[18]; //Baby 
     //Baby Three
-    let baby_delivered_2=variables[18]; //Baby Delivery Status
-    let baby_death_date_2=variables[19]; //Baby Death
-    let baby_cause_of_death_2=variables[20]; //Baby Cause of Death
-    let baby_date_of_birth_2=variables[21]; //Baby DOB
-    let baby_sex_2=variables[22]; //Baby 
+    let baby_delivered_2=variables[19]; //Baby Delivery Status
+    let baby_death_date_2=variables[20]; //Baby Death
+    let baby_cause_of_death_2=variables[21]; //Baby Cause of Death
+    let baby_date_of_birth_2=variables[22]; //Baby DOB
+    let baby_sex_2=variables[23]; //Baby 
     //Baby Four
-    let baby_delivered_3=variables[23]; //Baby Delivery Status
-    let baby_death_date_3=variables[24]; //Baby Death
-    let baby_cause_of_death_3=variables[25]; //Baby Cause of Death
-    let baby_date_of_birth_3=variables[26]; //Baby DOB
-    let baby_sex_3=variables[27]; //Baby 
+    let baby_delivered_3=variables[24]; //Baby Delivery Status
+    let baby_death_date_3=variables[25]; //Baby Death
+    let baby_cause_of_death_3=variables[26]; //Baby Cause of Death
+    let baby_date_of_birth_3=variables[27]; //Baby DOB
+    let baby_sex_3=variables[28]; //Baby 
     //Baby Five
-    let baby_delivered_4=variables[28]; //Baby Delivery Status
-    let baby_death_date_4=variables[29]; //Baby Death
-    let baby_cause_of_death_4=variables[30]; //Baby Cause of Death
-    let baby_date_of_birth_4=variables[31]; //Baby DOB
-    let baby_sex_4=variables[32]; //Baby 
+    let baby_delivered_4=variables[29]; //Baby Delivery Status
+    let baby_death_date_4=variables[30]; //Baby Death
+    let baby_cause_of_death_4=variables[31]; //Baby Cause of Death
+    let baby_date_of_birth_4=variables[32]; //Baby DOB
+    let baby_sex_4=variables[33]; //Baby 
 
-    let mother_outcome=variables[33]; //Mother Outcome
+    let mother_outcome=variables[34]; //Mother Outcome
 
 
    let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
@@ -414,35 +415,29 @@ router.get('/search',  async (req, res) => {
             message: `Client: ${clinic_number} is not active in the system.`
         })
 
-        const delivery_details = {
-            name: req.body.title,
-            description: req.body.description,
-        }
-
-        const baby_details = {
-            name: req.body.title,
-            description: req.body.description,
-        }
-
+       
         //Initiate Transaction
-        var pmtct_babies = new Array();
+        const pmtct_babies = new Array();
 
 
 
-        var pmtct_lad_payload={
+        const pmtct_lad_payload={
             client_id:client.id,
-            anc_visits:anc_visits,
+            anc_visits:anc_visits_,
             delivery_mode:delivery_mode,
             admission_date:moment(delivery_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
             delivery_place:delivery_place,
             delivery_outcome:delivery_outcome,
             mother_condition:mother_outcome,
-          
             created_by:check_user.id,
             created_at:today,
             updated_at:today,
             updated_by:check_user.id
         };
+
+        
+
+        
 
        
         let transaction;
@@ -509,11 +504,11 @@ router.get('/search',  async (req, res) => {
 
     let msg_type=variables[0]; //Message Type PNC
     let clinic_number=variables[1]; //CCC No
-    let visit_date=variables[1]; //CCC No
-    let pnc_visit_no=variables[2]; // PNC Visit No
-    let pnc_clinic_no=variables[3]; //PNC Clinic No
-    let client_counselled=variables[4]; //Client Counselled on FP
-    let fp_method=variables[5]; //FP Method
+    let visit_date=variables[2]; //CCC No
+    let pnc_visit_no=variables[3]; // PNC Visit No
+    let pnc_clinic_no=variables[4]; //PNC Clinic No
+    let client_counselled=variables[5]; //Client Counselled on FP
+    let fp_method=variables[6]; //FP Method
     let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
  
 
