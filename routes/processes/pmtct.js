@@ -435,10 +435,6 @@ router.get('/search',  async (req, res) => {
             updated_by:check_user.id
         };
 
-        
-
-        
-
        
         let transaction;
         try {

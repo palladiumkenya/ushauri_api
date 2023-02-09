@@ -1,3 +1,6 @@
+const {
+    Client
+} = require("../../models/client");
 const { User } = require("../../models/user");
 const {
     County
@@ -42,8 +45,38 @@ const token_url = process.env.TOKEN_URL;
 const verify_url = process.env.VERIFY_URL;
 const search_url = process.env.SEARCH_URL;
 const post_url = process.env.POST_URL;
+const error_url = process.env.GET_ERROR_LIST;
 
 
+function getAccessTokenError(url, callback) {
+    var token='';
+    request.post({
+        url: token_url,
+        form: {
+            client_secret: client_secret,
+            grant_type: grant_type,
+            scope: scope,
+            client_id: client_id
+        },
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }, function (err, httpResponse, body) { 
+        //return token=httpResponse.body;
+       // console.log(httpResponse.body);
+        var statusCode = httpResponse.statusCode;
+        finalData = httpResponse.body;
+        
+        callback(finalData);
+        // we are done
+        return;
+    })
+
+    
+   // return;
+     //console.log(token_generated);
+
+}
 
 
 function getAccessToken(url, callback) {
@@ -68,6 +101,8 @@ function getAccessToken(url, callback) {
         // we are done
         return;
     })
+
+    
    // return;
      //console.log(token_generated);
 
@@ -107,14 +142,13 @@ router.post("/verify", async (req, res) => {
     //Get Passed Values
     const identifier = req.body.identifier;
     const value = req.body.identifier_value;
-
-    //res.send(verified_data);
     //Get Token
     var token_generated_='';
     var verified_data='';
 
     getAccessToken_verify('url_invalid',function(token_generated){
         //Parse Token
+      //  console.log(token_generated);
         parsedBody= JSON.parse(token_generated);
         token_generated_=parsedBody.access_token;
         //console.log(token_generated_); 
@@ -132,9 +166,6 @@ router.post("/verify", async (req, res) => {
         {
             verified_data=JSON.parse(respond.body);
             res.send(verified_data);
-
-
-            
  
         }else if(res.statusCode==500)
         {
@@ -476,4 +507,89 @@ router.post("/getUPI", async (req, res_) => {
     });
   
 });
+
+
+
+//Fetch UPI Verification Error List
+router.post("/geterrorlist", async (req, res) => {
+
+    //Get Passed Values
+    //const identifier = req.body.identifier;
+    const phone_no = req.body.phone_no;
+    let check_user = await User.findOne({
+        where: {
+            phone_no,
+        },
+        });
+    let mfl_code=check_user['facility_id'];
+    
+
+    //res.send(verified_data);
+    //Get Token
+    var token_generated_='';
+    var errorlist_data='';
+
+    getAccessTokenError('url_invalid',function(token_generated){
+        //Parse Token
+       //console.log(token_generated); 
+        parsedBody= JSON.parse(token_generated);
+        token_generated_=parsedBody.access_token;
+
+        //console.log(token_generated_);
+       
+      //Call Error List Endpoint
+      request.get(error_url+mfl_code,{ 'auth':{
+        'bearer': token_generated_
+      }} , async function (err, respond) {
+      
+        if(res.statusCode==400)
+        {
+         res.send(respond);
+        
+        }else if (res.statusCode==200)
+        {
+           // res.send(respond);
+
+            errorlist_data=JSON.parse(respond.body);
+            //console.log(errorlist_data);
+            //var _data='';
+            const error_nupi = new Array();
+            let client_detail_array = new Array();
+            //console.log(errorlist_data['results']);
+            for(var i=0;i<errorlist_data['results'].length;i++){
+                //Fetch Person Details
+                let client_detail_one = new Array();
+               //console.log(errorlist_data['results'][i]['clientNumber']);
+               //Search Person Details Using NUPI
+               let client_detail = await Client.findOne({
+                where: {
+                    upi_no: errorlist_data['results'][i]['clientNumber']
+                }
+              
+            })
+            
+              if(!(client_detail==null)){
+                client_detail_one=[client_detail,{upi_no: errorlist_data['results'][i]['clientNumber'], error: errorlist_data['results'][i]['errorDescription']}];
+                client_detail_array.push(client_detail_one);
+              }
+          
+            }
+           res.send(client_detail_array);
+
+        }else if(res.statusCode==500)
+        {
+ 
+         res.send(client_details);
+
+       }else if(res.statusCode==401)
+       {
+         res.send(respond);
+ 
+        }
+    });
+
+    });
+  
+});
+
 module.exports = router;
