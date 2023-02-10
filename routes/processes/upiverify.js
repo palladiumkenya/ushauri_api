@@ -943,4 +943,14 @@ router.post("/getupdateUPI", async (req, res_) => {
 });
 
 
+//Search Record for the person
+router.get('/search',  async (req, res) => {
+    const client_id = req.query.client_id;
+    //Search Record
+    let client_details = await Client.findByPk(client_id);
+    res.send(client_details);
+
+});
+
+
 module.exports = router;
