@@ -946,10 +946,33 @@ router.post("/getupdateUPI", async (req, res_) => {
 
 //Search Record for the person
 router.get('/search',  async (req, res) => {
-    const client_id = req.query.client_id;
+    const upi_no = req.query.client_id;
     //Search Record
-    let client_details = await Client.findByPk(client_id);
-    res.send(client_details);
+   // let client_details = await Client.findOne(client_id);
+    let client_details = await Client.findOne({
+               where: {
+                    upi_no: upi_no
+               }, 
+           //    attributes: ["id","clinic_number", "f_name","m_name", "l_name","upi_no"],
+           })
+    if(client_details)
+    {
+        res.send({
+            success: true,
+            message: client_details
+        });
+        
+
+    }else{
+
+        res.send({ 
+            success: false,
+            message: 'No Record Found'
+        });
+       
+
+    }
+  
 
 });
 
