@@ -581,30 +581,31 @@ router.post("/geterrorlist", async (req, res) => {
            // res.send(respond);
 
             errorlist_data=JSON.parse(respond.body);
-            //console.log(errorlist_data);
-            //var _data='';
-            const error_nupi = new Array();
-            let client_detail_array =[];
+           
+            //const error_nupi = new Array();
+            //let client_detail_array =[];
             //console.log(errorlist_data['results']);
-            for(var i=0;i<errorlist_data['results'].length;i++){
+            //for(var i=0;i<errorlist_data['results'].length;i++){
                 //Fetch Person Details
-                let client_detail_one = new Array();
+              //  let client_detail_one = new Array();
                //console.log(errorlist_data['results'][i]['clientNumber']);
                //Search Person Details Using NUPI
-               let client_detail = await Client.findOne({
-                where: {
-                    upi_no: errorlist_data['results'][i]['clientNumber']
-                }, 
-                attributes: ["id","clinic_number", "f_name","m_name", "l_name","upi_no"],
-            })
+             //  let client_detail = await Client.findOne({
+             //   where: {
+              //      upi_no: errorlist_data['results'][i]['clientNumber']
+             //   }, 
+           //     attributes: ["id","clinic_number", "f_name","m_name", "l_name","upi_no"],
+           // })
             
-              if(!(client_detail==null)){
-                client_detail_one={"person":[client_detail,{upi_no: errorlist_data['results'][i]['clientNumber'], error: errorlist_data['results'][i]['errorDescription']}]};
-                client_detail_array.push(client_detail_one);
-              }
+           //   if(!(client_detail==null)){
+            //    client_detail_one={"person":[client_detail,{upi_no: errorlist_data['results'][i]['clientNumber'], error: errorlist_data['results'][i]['errorDescription']}]};
+            //    client_detail_array.push(client_detail_one);
+            //  }
           
-            }
-           res.send(client_detail_array);
+          //  }
+          // res.send(client_detail_array);
+          res.send(errorlist_data);
+
 
         }else if(res.statusCode==500)
         {
