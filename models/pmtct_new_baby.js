@@ -14,6 +14,8 @@ const pmtct_baby = sequelize.sequelize.define(
         date_died: Sequelize.DATEONLY,
         cause_of_death: Sequelize.STRING,
         baby_sex: Sequelize.STRING,
+        prophylaxix_date: Sequelize.DATEONLY,
+        prophylaxis: Sequelize.STRING,
         date_birth : Sequelize.DATEONLY,
         created_by: Sequelize.INTEGER,
         updated_by: Sequelize.INTEGER,

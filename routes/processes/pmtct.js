@@ -329,32 +329,44 @@ router.get('/search',  async (req, res) => {
     let baby_cause_of_death_0=variables[11]; //Baby Cause of Death
     let baby_date_of_birth_0=variables[12]; //Baby DOB
     let baby_sex_0=variables[13]; //Baby 
-    //Baby Two
-    let baby_delivered_1=variables[14]; //Baby Delivery Status
-    let baby_death_date_1=variables[15]; //Baby Death
-    let baby_cause_of_death_1=variables[16]; //Baby Cause of Death
-    let baby_date_of_birth_1=variables[17]; //Baby DOB
-    let baby_sex_1=variables[18]; //Baby 
-    //Baby Three
-    let baby_delivered_2=variables[19]; //Baby Delivery Status
-    let baby_death_date_2=variables[20]; //Baby Death
-    let baby_cause_of_death_2=variables[21]; //Baby Cause of Death
-    let baby_date_of_birth_2=variables[22]; //Baby DOB
-    let baby_sex_2=variables[23]; //Baby 
-    //Baby Four
-    let baby_delivered_3=variables[24]; //Baby Delivery Status
-    let baby_death_date_3=variables[25]; //Baby Death
-    let baby_cause_of_death_3=variables[26]; //Baby Cause of Death
-    let baby_date_of_birth_3=variables[27]; //Baby DOB
-    let baby_sex_3=variables[28]; //Baby 
-    //Baby Five
-    let baby_delivered_4=variables[29]; //Baby Delivery Status
-    let baby_death_date_4=variables[30]; //Baby Death
-    let baby_cause_of_death_4=variables[31]; //Baby Cause of Death
-    let baby_date_of_birth_4=variables[32]; //Baby DOB
-    let baby_sex_4=variables[33]; //Baby 
+    let baby_prophylaxis_date_0=variables[14]; //Baby Prophylaxix Date
+    let baby_prophylaxis_0=variables[15]; //Baby Prophylaxis
 
-    let mother_outcome=variables[34]; //Mother Outcome
+    //Baby Two
+    let baby_delivered_1=variables[16]; //Baby Delivery Status
+    let baby_death_date_1=variables[17]; //Baby Death
+    let baby_cause_of_death_1=variables[18]; //Baby Cause of Death
+    let baby_date_of_birth_1=variables[19]; //Baby DOB
+    let baby_sex_1=variables[20]; //Baby 
+    let baby_prophylaxis_date_1=variables[21]; //Baby //Baby Prophylaxix Date
+    let baby_prophylaxis_1=variables[22]; //Baby Baby Prophylaxis
+
+    //Baby Three
+    let baby_delivered_2=variables[23]; //Baby Delivery Status
+    let baby_death_date_2=variables[24]; //Baby Death
+    let baby_cause_of_death_2=variables[25]; //Baby Cause of Death
+    let baby_date_of_birth_2=variables[26]; //Baby DOB
+    let baby_sex_2=variables[27]; //Baby 
+    let baby_prophylaxis_date_2=variables[28]; //Baby 
+    let baby_prophylaxis_2=variables[29]; //Baby 
+    //Baby Four
+    let baby_delivered_3=variables[30]; //Baby Delivery Status
+    let baby_death_date_3=variables[31]; //Baby Death
+    let baby_cause_of_death_3=variables[32]; //Baby Cause of Death
+    let baby_date_of_birth_3=variables[33]; //Baby DOB
+    let baby_sex_3=variables[34]; //Baby 
+    let baby_prophylaxis_date_3=variables[35]; //Baby 
+    let baby_prophylaxis_3=variables[36]; //Baby 
+    //Baby Five
+    let baby_delivered_4=variables[37]; //Baby Delivery Status
+    let baby_death_date_4=variables[38]; //Baby Death
+    let baby_cause_of_death_4=variables[39]; //Baby Cause of Death
+    let baby_date_of_birth_4=variables[40]; //Baby DOB
+    let baby_sex_4=variables[41]; //Baby 
+    let baby_prophylaxis_date_4=variables[42]; //Baby 
+    let baby_prophylaxis_4=variables[43]; //Baby 
+
+    let mother_outcome=variables[44]; //Mother Outcome
 
 
    let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
@@ -448,6 +460,8 @@ router.get('/search',  async (req, res) => {
                     cause_of_death: eval("baby_cause_of_death_"+i),
                     baby_sex: eval("baby_sex_"+i),
                     date_birth : moment(eval("baby_date_of_birth_"+i), "DD/MM/YYYY").format("YYYY-MM-DD"),
+                    prophylaxix_date:moment(eval("baby_prophylaxis_date_"+i), "DD/MM/YYYY").format("YYYY-MM-DD"),
+                    prophylaxis: eval("baby_prophylaxis_"+i),
                     created_by:check_user.id,
                     created_at:today,
                     updated_at:today,
