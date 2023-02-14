@@ -1,3 +1,6 @@
+const mysql = require('mysql2');
+//const https = require('https');
+
 const {
     PastAppointments
 } = require("../../models/past_appointment");
@@ -10,6 +13,9 @@ const {
     User
 } = require("../../models/user");
 const base64 = require("base64util");
+const { exitOnError } = require('winston');
+const array = require('joi/lib/types/array');
+require("dotenv").config();
 
 function isEmpty(myvalue) {
     let isNull = true;
@@ -27,7 +33,6 @@ function isEmpty(myvalue) {
 
 router.post("/", async (req, res) => {
     let phone_no = req.body.phone_no;
-
     let user = await User.findOne({
         where: {
             phone_no: phone_no
@@ -38,173 +43,221 @@ router.post("/", async (req, res) => {
 
     let mfl = user.facility_id;
     let clinic = user.clinic_id;
+    //console.log(clinic);
+    var appointments=Array();
 
-    let appointments = await PastAppointments.findAll({
-        where: {
-            facility_id: mfl,
-            clinic_id: clinic
-        }
-    });
-    let tracer_client = await TracerClients.findAll({
-        attributes: ['client_id'],
-        where: {
-            tracer_id: user.id
-        }
-    })
-    if (tracer_client.length) {
-        let client_id = []
-        tracer_client.forEach(x => client_id.push(x.client_id));
+    //let appointments = await PastAppointments.findAll({
+    //    where: {
+     //       facility_id: mfl,
+     //       clinic_id: clinic
+     //   }
+    //});
+   // return res.status(200).send('asdsad');
 
-        if (!appointments) res.status(400).send(`You do not have any past appointments`);
+   let tracer_client = await TracerClients.findAll({
+    attributes: ['client_id'],
+    where: {
+        tracer_id: user.id
+    }
+});
 
-        let message = new Array();
-        for (let i = 0; i < appointments.length; i++) {
-            if (!client_id.includes(appointments[i].client_id)) {
-                console.log(appointments[i].client_id)
-                continue;
+    try{
+    //Change Implementation to Consume Stored Procedure
+    const conn = mysql.createPool({
+        connectionLimit: 5,
+        host: process.env.DB_SERVER,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        debug: true,
+        multipleStatements: true,
+      });
+     //var appointments; 
+     let sql = `CALL sp_getpastappointments(?,?)`;
+     let todo = [mfl, clinic];
+
+
+     
+
+        conn.query(sql,todo, async (error, appointments, fields) =>  {
+
+            if (error) {
+                return res.status(400).send(`Error while fetching past appointments`);
+               conn.end();
             }
-            let facility_id = appointments[i].facility_id;
-            let user_phone_no = appointments[i].user_phone_no;
-            let mfl_code = appointments[i].facility_id;
-            let user_id = appointments[i].id;
-            let clinic_id = appointments[i].clinic_id;
-            let user_clinic = appointments[i].user_clinic;
-            let appointment_id = appointments[i].appointment_id;
-            let ccc = appointments[i].clinic_no;
-            let client_name = appointments[i].client_name;
-            let client_phone_no = appointments[i].client_phone_no;
-            let appointment_type = appointments[i].appointment_type;
-            let appointment_date = appointments[i].appntmnt_date;
-            let file_no = appointments[i].file_no;
-            let buddy_phone_no = appointments[i].buddy_phone_no;
-            let other_appointment_type = appointments[i].other_appointment_type;
-            //let hei_number = appointments[i].hei_number;
-            appointments[i].trmnt_buddy_phone_no = '';
-            if (isEmpty(buddy_phone_no)) {
-                appointments[i].trmnt_buddy_phone_no = '-1';
+            appointments=appointments[0];
+
+
+            if (tracer_client.length) {
+                let client_id = []
+                tracer_client.forEach(x => client_id.push(x.client_id));
+        
+                if (!appointments) res.status(400).send(`You do not have any past appointments`);
+        
+                let message = new Array();
+                for (let i = 0; i < appointments.length; i++) {
+                    if (!client_id.includes(appointments[i].client_id)) {
+                        console.log(appointments[i].client_id)
+                        continue;
+                    }
+                    let facility_id = appointments[i].facility_id;
+                    let user_phone_no = appointments[i].user_phone_no;
+                    let mfl_code = appointments[i].facility_id;
+                    let user_id = appointments[i].id;
+                    let clinic_id = appointments[i].clinic_id;
+                    let user_clinic = appointments[i].user_clinic;
+                    let appointment_id = appointments[i].appointment_id;
+                    let ccc = appointments[i].clinic_no;
+                    let client_name = appointments[i].client_name;
+                    let client_phone_no = appointments[i].client_phone_no;
+                    let appointment_type = appointments[i].appointment_type;
+                    let appointment_date = appointments[i].appntmnt_date;
+                    let file_no = appointments[i].file_no;
+                    let buddy_phone_no = appointments[i].buddy_phone_no;
+                    let other_appointment_type = appointments[i].other_appointment_type;
+                    //let hei_number = appointments[i].hei_number;
+                    appointments[i].trmnt_buddy_phone_no = '';
+                    if (isEmpty(buddy_phone_no)) {
+                        appointments[i].trmnt_buddy_phone_no = '-1';
+                    } else {
+                        appointments[i].trmnt_buddy_phone_no = appointments[i].buddy_phone_no;
+                    }
+        
+                    if (isEmpty(file_no)) {
+                        file_no = '-1';
+                    }
+                    if (isEmpty(other_appointment_type)) {
+                        other_appointment_type = '-1';
+                    }
+        
+                    if (isEmpty(client_name)) {
+                        appointments[i].client_name = '-1';
+                    }
+        
+                    if (isEmpty(client_phone_no)) {
+                        client_phone_no = '-1';
+                    }
+        
+                    if (isEmpty(appointment_type)) {
+                        appointment_type = '-1';
+                    }
+        
+                    if (isEmpty(appointment_id)) {
+                        appointment_id = '-1';
+                    }
+                    // if (isEmpty(hei_number)) {
+                    //     hei_number = "-1";
+                    // }
+        
+                    let outgoing_msg = ccc + "*" + client_name +
+                        "*" + client_phone_no +
+                        "*" + appointment_type +
+                        "*" + appointment_id +
+                        "*" + file_no +
+                        "*" + appointments[i].trmnt_buddy_phone_no +
+                        "*" + appointment_date;
+                    let encrypted_msg = "TOAPP*" + await base64.encode(outgoing_msg);
+                    let innerMessage = {};
+                    innerMessage.message = encrypted_msg;
+                    message.push(innerMessage);
+        
+                }
+        
+        
+                let result = {};
+                result.result = message;
+                res.status(200).send(result);
             } else {
-                appointments[i].trmnt_buddy_phone_no = appointments[i].buddy_phone_no;
+        
+                if (!appointments) res.status(400).send(`You do not have any past appointments`);
+        
+                let message = new Array();
+                for (let i = 0; i < appointments.length; i++) {
+                    let facility_id = appointments[i].facility_id;
+                    let user_phone_no = appointments[i].user_phone_no;
+                    let mfl_code = appointments[i].facility_id;
+                    let user_id = appointments[i].id;
+                    let clinic_id = appointments[i].clinic_id;
+                    let user_clinic = appointments[i].user_clinic;
+                    let appointment_id = appointments[i].appointment_id;
+                    let ccc = appointments[i].clinic_no;
+                    let client_name = appointments[i].client_name;
+                    let client_phone_no = appointments[i].client_phone_no;
+                    let appointment_type = appointments[i].appointment_type;
+                    let appointment_date = appointments[i].appntmnt_date;
+                    let file_no = appointments[i].file_no;
+                    let buddy_phone_no = appointments[i].buddy_phone_no;
+                    let other_appointment_type = appointments[i].other_appointment_type;
+                    //let hei_number = appointments[i].hei_number;
+                    appointments[i].trmnt_buddy_phone_no = '';
+                    if (isEmpty(buddy_phone_no)) {
+                        appointments[i].trmnt_buddy_phone_no = '-1';
+                    } else {
+                        appointments[i].trmnt_buddy_phone_no = appointments[i].buddy_phone_no;
+                    }
+        
+                    if (isEmpty(file_no)) {
+                        file_no = '-1';
+                    }
+                    if (isEmpty(other_appointment_type)) {
+                        other_appointment_type = '-1';
+                    }
+        
+                    if (isEmpty(client_name)) {
+                        appointments[i].client_name = '-1';
+                    }
+        
+                    if (isEmpty(client_phone_no)) {
+                        client_phone_no = '-1';
+                    }
+        
+                    if (isEmpty(appointment_type)) {
+                        appointment_type = '-1';
+                    }
+        
+                    if (isEmpty(appointment_id)) {
+                        appointment_id = '-1';
+                    }
+                    // if (isEmpty(hei_number)) {
+                    //     hei_number = "-1";
+                    // }
+        
+                    let outgoing_msg = ccc + "*" + client_name +
+                        "*" + client_phone_no +
+                        "*" + appointment_type +
+                        "*" + appointment_id +
+                        "*" + file_no +
+                        "*" + appointments[i].trmnt_buddy_phone_no +
+                        "*" + appointment_date;
+                    let encrypted_msg = "TOAPP*" + await base64.encode(outgoing_msg);
+                    let innerMessage = {};
+                    innerMessage.message = encrypted_msg;
+                    message.push(innerMessage);
+        
+                }
+        
+        
+                let result = {};
+                result.result = message;
+                res.status(200).send(result);
             }
+        
+           
+       
+        conn.end();
+        });
+    //console.log(appointments);
 
-            if (isEmpty(file_no)) {
-                file_no = '-1';
-            }
-            if (isEmpty(other_appointment_type)) {
-                other_appointment_type = '-1';
-            }
-
-            if (isEmpty(client_name)) {
-                appointments[i].client_name = '-1';
-            }
-
-            if (isEmpty(client_phone_no)) {
-                client_phone_no = '-1';
-            }
-
-            if (isEmpty(appointment_type)) {
-                appointment_type = '-1';
-            }
-
-            if (isEmpty(appointment_id)) {
-                appointment_id = '-1';
-            }
-            // if (isEmpty(hei_number)) {
-            //     hei_number = "-1";
-            // }
-
-            let outgoing_msg = ccc + "*" + client_name +
-                "*" + client_phone_no +
-                "*" + appointment_type +
-                "*" + appointment_id +
-                "*" + file_no +
-                "*" + appointments[i].trmnt_buddy_phone_no +
-                "*" + appointment_date;
-            let encrypted_msg = "TOAPP*" + await base64.encode(outgoing_msg);
-            let innerMessage = {};
-            innerMessage.message = encrypted_msg;
-            message.push(innerMessage);
-
-        }
-
-
-        let result = {};
-        result.result = message;
-        res.status(200).send(result);
-    } else {
-
-        if (!appointments) res.status(400).send(`You do not have any past appointments`);
-
-        let message = new Array();
-        for (let i = 0; i < appointments.length; i++) {
-            let facility_id = appointments[i].facility_id;
-            let user_phone_no = appointments[i].user_phone_no;
-            let mfl_code = appointments[i].facility_id;
-            let user_id = appointments[i].id;
-            let clinic_id = appointments[i].clinic_id;
-            let user_clinic = appointments[i].user_clinic;
-            let appointment_id = appointments[i].appointment_id;
-            let ccc = appointments[i].clinic_no;
-            let client_name = appointments[i].client_name;
-            let client_phone_no = appointments[i].client_phone_no;
-            let appointment_type = appointments[i].appointment_type;
-            let appointment_date = appointments[i].appntmnt_date;
-            let file_no = appointments[i].file_no;
-            let buddy_phone_no = appointments[i].buddy_phone_no;
-            let other_appointment_type = appointments[i].other_appointment_type;
-            //let hei_number = appointments[i].hei_number;
-            appointments[i].trmnt_buddy_phone_no = '';
-            if (isEmpty(buddy_phone_no)) {
-                appointments[i].trmnt_buddy_phone_no = '-1';
-            } else {
-                appointments[i].trmnt_buddy_phone_no = appointments[i].buddy_phone_no;
-            }
-
-            if (isEmpty(file_no)) {
-                file_no = '-1';
-            }
-            if (isEmpty(other_appointment_type)) {
-                other_appointment_type = '-1';
-            }
-
-            if (isEmpty(client_name)) {
-                appointments[i].client_name = '-1';
-            }
-
-            if (isEmpty(client_phone_no)) {
-                client_phone_no = '-1';
-            }
-
-            if (isEmpty(appointment_type)) {
-                appointment_type = '-1';
-            }
-
-            if (isEmpty(appointment_id)) {
-                appointment_id = '-1';
-            }
-            // if (isEmpty(hei_number)) {
-            //     hei_number = "-1";
-            // }
-
-            let outgoing_msg = ccc + "*" + client_name +
-                "*" + client_phone_no +
-                "*" + appointment_type +
-                "*" + appointment_id +
-                "*" + file_no +
-                "*" + appointments[i].trmnt_buddy_phone_no +
-                "*" + appointment_date;
-            let encrypted_msg = "TOAPP*" + await base64.encode(outgoing_msg);
-            let innerMessage = {};
-            innerMessage.message = encrypted_msg;
-            message.push(innerMessage);
-
-        }
-
-
-        let result = {};
-        result.result = message;
-        res.status(200).send(result);
+    }catch(err){
+        return res.status(400).send(`Error while fetching past appointments`);
+    
     }
 
+   
+   // console.log(tracer_client);
+   // process.exit();
+    
 });
 
 router.post("/new", async (req, res) => {
