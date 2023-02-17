@@ -768,6 +768,8 @@ router.post("/getupdateUPI", async (req, res__) => {
 
 
             }
+            upi_citizen=citizenship;
+
             //County of Birth
             const county_birth_ = await County.findByPk(county_birth);
             if (!_.isEmpty(county_birth_))
@@ -780,7 +782,7 @@ router.post("/getupdateUPI", async (req, res__) => {
 
             }
 
-            console.log(county_birth_);
+          //  console.log(county_birth_);
             //County of Residence
             const county_residence = await County.findByPk(locator_county);
             if (!_.isEmpty(county_residence))
