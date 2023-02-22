@@ -517,8 +517,16 @@ router.get('/search',  async (req, res) => {
     let visit_date=variables[2]; //CCC No
     let pnc_visit_no=variables[3]; // PNC Visit No
     let pnc_clinic_no=variables[4]; //PNC Clinic No
-    let client_counselled=variables[5]; //Client Counselled on FP
-    let fp_method=variables[6]; //FP Method
+    let delivery_mode=variables[5]; // Delivery Mode
+    let place_delivery=variables[6]; //Delivery Place
+    let mother_regimen=variables[7]; //Regimen
+    let baby_immunization=variables[8]; // Immunization
+    
+    let client_counselled=variables[9]; //Client Counselled on FP
+    let fp_method=variables[10]; //FP Method
+    let mother_outcome=variables[11]; //Mother Outcome
+    let date_died=variables[12]; //Date Died
+    let cause_of_death=variables[13]; //Cause of Death
     let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
  
 
@@ -587,6 +595,13 @@ router.get('/search',  async (req, res) => {
             date_visit:moment(visit_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
             counselled_on_fp:client_counselled,
             fp_method:fp_method,
+            delivery_mode:delivery_mode,
+            place_delivery:place_delivery,
+            mother_regimen:mother_regimen,
+            baby_immunization:baby_immunization,
+            mother_outcome:mother_outcome,
+            date_died:moment(date_died, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            cause_of_death:cause_of_death,
             created_by:check_user.id,
             created_at:today,
             updated_at:today,
