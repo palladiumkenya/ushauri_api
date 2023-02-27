@@ -18,6 +18,7 @@ const pmtct_pnc = sequelize.sequelize.define(
         delivery_mode: Sequelize.INTEGER,
         place_delivery: Sequelize.INTEGER,
         mother_regimen: Sequelize.INTEGER,
+        mother_regimen_other: Sequelize.TEXT,
         baby_immunization: Sequelize.INTEGER,
         mother_outcome: Sequelize.INTEGER,
         date_died: Sequelize.DATEONLY,
