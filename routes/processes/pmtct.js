@@ -180,27 +180,36 @@ router.get('/search',  async (req, res) => {
     let anc_visit_no=variables[2]; // ANC Visit No
     let anc_clinic_no=variables[3]; //ANC Clinic No
     let client_type=variables[4]; // Client Type
-    let parity_1=variables[5]; //Parity 1
-    let parity_2=variables[6]; // Parity 2
-    let gravida=variables[7]; // Gravida
-    let lmp_date= variables[8]; // LMP Date
-    let edd_date=variables[9];  //EDD date
-    let gestation=variables[10];  //Gestation date
-    let c_hiv_result=variables[11]; //HIV Result
-    let c_date_tested=variables[12]; //Client HIV Date Tested
-    let c_ccc_no=variables[13]; // Client CCC Number
-    let c_enrolment_date=variables[14]; //Client Enrolment Date
-    let c_art_start=variables[15]; // Client ART Start Date
-    let p_hiv_result= variables[16]; // Partner Result Code
-    let p_date_tested=variables[17]; //Partner Date Tested
-    let p_ccc_no=variables[18]; //Partner CCC Number
-    let p_enrolment_date= variables[19]; //Partner Enrolment Date
-    let p_art_start=variables[20]; //Partner ART date
-    let vl_date= variables[21]; //VL date
-    let vl_result=variables[22]; // VL Result
-    let syphilis_result=variables[23]; //Syphilis Result
-    let syphilis_treatment= variables[24]; // Syphilis Treatment
-    let hepatisis= variables[25]; //Hepatitis Result
+    let weight_ =variables[5]; // Client Type
+    let muac_ =variables[6]; // Client Type
+
+    let parity_1=variables[7]; //Parity 1
+    let parity_2=variables[8]; // Parity 2
+    let gravida=variables[9]; // Gravida
+    let lmp_date= variables[10]; // LMP Date
+    let edd_date=variables[11];  //EDD date
+    let gestation=variables[12];  //Gestation date
+    let c_hiv_status=variables[13]; //HIV Status
+    let c_hiv_tested=variables[14]; //HIV Tested
+    let c_hiv_result=variables[15]; //HIV Result
+    let c_date_tested=variables[16]; //Client HIV Date Tested
+    let c_ccc_no=variables[17]; // Client CCC Number
+    let c_enrolment_date=variables[18]; //Client Enrolment Date
+    let c_art_start=variables[19]; // Client ART Start Date
+    let p_hiv_result= variables[20]; // Partner Result Code
+    let p_date_tested_=variables[21]; //Partner Date Tested
+    let p_ccc_no=variables[22]; //Partner CCC Number
+    let p_enrolment_date_= variables[23]; //Partner Enrolment Date
+    let p_art_start=variables[24]; //Partner ART date
+    let syphilis_result=variables[25]; //Syphilis Result
+    let syphilis_treatment= variables[26]; // Syphilis Treatment
+    let hepatisis= variables[27]; //Hepatitis Result
+    let tb_outcome= variables[28]; //TB Outcome
+    let infant_prophylaxis= variables[29]; //Infant Prophylaxis
+    let vl_date= variables[30]; //VL date
+    let vl_result_=variables[31]; // VL Result
+    let vl_result_type_=variables[32]; // VL ResultType
+    
     let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
 
@@ -280,7 +289,26 @@ router.get('/search',  async (req, res) => {
             is_syphyilis:syphilis_result,
             syphilis_treatment:syphilis_treatment,
             hepatitis_b:hepatisis,
-            gestation:gestation
+            gestation:gestation,
+            weight:weight_,
+            muac:muac_,
+            hiv_testing_before_anc:c_hiv_status,
+            is_hiv_tested:c_hiv_tested,
+            m_status:c_hiv_result,
+            m_date_tested:moment(c_date_tested, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            m_ccc_number:c_ccc_no,
+            m_enrolment_date:moment(c_enrolment_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            m_art_start_date:moment(c_art_start, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            p_status:p_hiv_result,
+            p_date_tested:moment(p_date_tested_, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            p_ccc_number:p_ccc_no,
+            p_enrolment_date:moment(p_enrolment_date_, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            p_art_start_date:moment(p_art_start, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            tb_outcome:tb_outcome,
+            infant_prophylaxis:infant_prophylaxis,
+            vl_result:vl_result_,
+            vl_result_type:vl_result_type_,
+            vl_test_date:moment(vl_date, "DD/MM/YYYY").format("YYYY-MM-DD")
         });
          
         //console.log(new_anc_visit);
@@ -314,59 +342,83 @@ router.get('/search',  async (req, res) => {
     let variables = decoded_message.split("*");
     //console.log(variables);
     let msg_type=variables[0]; //Message Type PNC
-    let clinic_number=variables[1]; //CCC No
-    let anc_visits_=variables[2]; //ANC Visits
+    let weight_=variables[1];//Weight
+    let muac_=variables[2];//MUAC
+    let clinic_number=variables[3]; //CCC No
+    let anc_visits_=variables[4]; //ANC Visits
     
-    let m_hiv_tested=variables[3]; // Mother HIV Tested
-    let m_hiv_result=variables[4]; // Mother HIV Result
-    let delivery_date=variables[5]; //Delivery Date
-    let delivery_mode=variables[6]; //Delivery Mode
-    let delivery_place=variables[7]; //Delivery Place
-    let delivery_outcome=variables[8]; //Delivery Outcome
+    let m_hiv_status_delivery=variables[5]; // Mother HIV Tested
+    let m_hiv_tested_=variables[6]; // Mother HIV Tested
+    let m_hiv_result_=variables[7]; // Mother HIV Result
+    let m_date_tested_=variables[8]; // Mother Date Tested
+    let m_ccc_number_=variables[9]; // Mother CCC Number
+    let m_enrolment_date_=variables[10]; // Mother Enrolment Date
+    let m_art_start_date_=variables[11]; // Mother ART Start Date
+    let m_regimen_=variables[12]; // Mother Regimen
+
+    let p_hiv_result= variables[13]; // Partner Result Code
+    let p_date_tested_=variables[14]; //Partner Date Tested
+    let p_ccc_no=variables[15]; //Partner CCC Number
+    let p_enrolment_date_= variables[16]; //Partner Enrolment Date
+    let p_art_start=variables[17]; //Partner ART date
+
+    let syphilis_result=variables[18]; //Syphilis Result
+    let syphilis_treatment= variables[19]; // Syphilis Treatment
+    let hepatisis= variables[20]; //Hepatitis Result
+    let tb_outcome= variables[21]; //TB Outcome
+    let infant_prophylaxis= variables[22]; //Infant Prophylaxis
+
+    let m_haart= variables[23]; //Mother on HAART
+    let m_haart_at_anc= variables[24]; //Mother HAART at ANC
+
+    let delivery_date=variables[25]; //Delivery Date
+    let delivery_mode=variables[26]; //Delivery Mode
+    let delivery_place=variables[27]; //Delivery Place
+    let delivery_outcome=variables[28]; //Delivery Outcome
     //Baby One
-    let baby_delivered_0=variables[9]; //Baby Delivery Status
-    let baby_death_date_0=variables[10]; //Baby Death
-    let baby_cause_of_death_0=variables[11]; //Baby Cause of Death
-    let baby_date_of_birth_0=variables[12]; //Baby DOB
-    let baby_sex_0=variables[13]; //Baby 
-    let baby_prophylaxis_date_0=variables[14]; //Baby Prophylaxix Date
-    let baby_prophylaxis_0=variables[15]; //Baby Prophylaxis
+    let baby_delivered_0=variables[29]; //Baby Delivery Status
+    let baby_death_date_0=variables[30]; //Baby Death
+    let baby_cause_of_death_0=variables[31]; //Baby Cause of Death
+    let baby_date_of_birth_0=variables[32]; //Baby DOB
+    let baby_sex_0=variables[33]; //Baby 
+    let baby_prophylaxis_date_0=variables[34]; //Baby Prophylaxix Date
+    let baby_prophylaxis_0=variables[35]; //Baby Prophylaxis
 
     //Baby Two
-    let baby_delivered_1=variables[16]; //Baby Delivery Status
-    let baby_death_date_1=variables[17]; //Baby Death
-    let baby_cause_of_death_1=variables[18]; //Baby Cause of Death
-    let baby_date_of_birth_1=variables[19]; //Baby DOB
-    let baby_sex_1=variables[20]; //Baby 
-    let baby_prophylaxis_date_1=variables[21]; //Baby //Baby Prophylaxix Date
-    let baby_prophylaxis_1=variables[22]; //Baby Baby Prophylaxis
+    let baby_delivered_1=variables[36]; //Baby Delivery Status
+    let baby_death_date_1=variables[37]; //Baby Death
+    let baby_cause_of_death_1=variables[38]; //Baby Cause of Death
+    let baby_date_of_birth_1=variables[39]; //Baby DOB
+    let baby_sex_1=variables[40]; //Baby 
+    let baby_prophylaxis_date_1=variables[41]; //Baby //Baby Prophylaxix Date
+    let baby_prophylaxis_1=variables[42]; //Baby Baby Prophylaxis
 
     //Baby Three
-    let baby_delivered_2=variables[23]; //Baby Delivery Status
-    let baby_death_date_2=variables[24]; //Baby Death
-    let baby_cause_of_death_2=variables[25]; //Baby Cause of Death
-    let baby_date_of_birth_2=variables[26]; //Baby DOB
-    let baby_sex_2=variables[27]; //Baby 
-    let baby_prophylaxis_date_2=variables[28]; //Baby 
-    let baby_prophylaxis_2=variables[29]; //Baby 
+    let baby_delivered_2=variables[43]; //Baby Delivery Status
+    let baby_death_date_2=variables[44]; //Baby Death
+    let baby_cause_of_death_2=variables[45]; //Baby Cause of Death
+    let baby_date_of_birth_2=variables[46]; //Baby DOB
+    let baby_sex_2=variables[47]; //Baby 
+    let baby_prophylaxis_date_2=variables[48]; //Baby 
+    let baby_prophylaxis_2=variables[49]; //Baby 
     //Baby Four
-    let baby_delivered_3=variables[30]; //Baby Delivery Status
-    let baby_death_date_3=variables[31]; //Baby Death
-    let baby_cause_of_death_3=variables[32]; //Baby Cause of Death
-    let baby_date_of_birth_3=variables[33]; //Baby DOB
-    let baby_sex_3=variables[34]; //Baby 
-    let baby_prophylaxis_date_3=variables[35]; //Baby 
-    let baby_prophylaxis_3=variables[36]; //Baby 
+    let baby_delivered_3=variables[50]; //Baby Delivery Status
+    let baby_death_date_3=variables[51]; //Baby Death
+    let baby_cause_of_death_3=variables[52]; //Baby Cause of Death
+    let baby_date_of_birth_3=variables[53]; //Baby DOB
+    let baby_sex_3=variables[54]; //Baby 
+    let baby_prophylaxis_date_3=variables[55]; //Baby 
+    let baby_prophylaxis_3=variables[56]; //Baby 
     //Baby Five
-    let baby_delivered_4=variables[37]; //Baby Delivery Status
-    let baby_death_date_4=variables[38]; //Baby Death
-    let baby_cause_of_death_4=variables[39]; //Baby Cause of Death
-    let baby_date_of_birth_4=variables[40]; //Baby DOB
-    let baby_sex_4=variables[41]; //Baby 
-    let baby_prophylaxis_date_4=variables[42]; //Baby 
-    let baby_prophylaxis_4=variables[43]; //Baby 
+    let baby_delivered_4=variables[57]; //Baby Delivery Status
+    let baby_death_date_4=variables[58]; //Baby Death
+    let baby_cause_of_death_4=variables[59]; //Baby Cause of Death
+    let baby_date_of_birth_4=variables[60]; //Baby DOB
+    let baby_sex_4=variables[61]; //Baby 
+    let baby_prophylaxis_date_4=variables[62]; //Baby 
+    let baby_prophylaxis_4=variables[63]; //Baby 
 
-    let mother_outcome=variables[44]; //Mother Outcome
+    let mother_outcome=variables[64]; //Mother Outcome
 
 
    let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
@@ -441,6 +493,28 @@ router.get('/search',  async (req, res) => {
             delivery_place:delivery_place,
             delivery_outcome:delivery_outcome,
             mother_condition:mother_outcome,
+            weight:weight_,
+            muac:muac_,
+            delivery_hiv_status:m_hiv_status_delivery,
+            is_hiv_tested:m_hiv_tested,
+            m_status:m_hiv_result_,
+            m_date_tested:moment(m_date_tested_, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            m_ccc_number:m_ccc_number_,
+            m_enrolment_date:moment(m_enrolment_date_, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            m_art_start_date:moment(m_art_start_date_, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            m_regimen:m_regimen_,
+            p_status:p_hiv_result,
+            p_date_tested:moment(p_date_tested_, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            p_ccc_number:p_ccc_no,
+            p_enrolment_date:moment(p_enrolment_date_, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            p_art_start_date:moment(p_art_start, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            tb_outcome:tb_outcome,
+            infant_prophylaxis:infant_prophylaxis,
+            is_syphyilis:syphilis_result,
+            syphilis_treatment:syphilis_treatment,
+            hepatitis_b:hepatisis,
+            m_started_haart:m_haart,
+            m_on_haart_anc:m_haart_at_anc,
             created_by:check_user.id,
             created_at:today,
             updated_at:today,
