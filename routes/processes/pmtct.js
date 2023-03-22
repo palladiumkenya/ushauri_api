@@ -40,6 +40,15 @@ const {
 } = require("../../models/pmtct_new_lad");
 
 const {
+    pmtct_hei
+} = require("../../models/pmtct_new_hei");
+
+const {
+    pmtct_log
+} = require("../../models/pmtct_new_log");
+
+
+const {
     pmtct_baby
 } = require("../../models/pmtct_new_baby");
 const { Sequelize } = require("sequelize");
@@ -157,6 +166,13 @@ router.get('/search',  async (req, res) => {
   router.post('/anc', async(req, res) =>  {
     let message = req.body.msg;
     let phone_no = req.body.phone_no;
+
+
+    //Log Message Received
+    const new_anc_log = await pmtct_log.create({
+        log:message
+    });
+
 
     message = message.split("*");
    // message = message[1];
@@ -334,6 +350,11 @@ router.get('/search',  async (req, res) => {
     let message = req.body.msg;
     //let baby = req.body.baby;
     let phone_no = req.body.phone_no;
+
+      //Log Message Received
+      const new_anc_log = await pmtct_log.create({
+        log:message
+    });
 
     message = message.split("*");
    
@@ -582,6 +603,11 @@ router.get('/search',  async (req, res) => {
     let message = req.body.msg;
     let phone_no = req.body.phone_no;
 
+      //Log Message Received
+      const new_anc_log = await pmtct_log.create({
+        log:message
+    });
+
     message = message.split("*");
    // message = message[1];
 
@@ -754,6 +780,156 @@ router.get('/search',  async (req, res) => {
             return res.json({
                    code: 200,
                    message: `PNC Visit Record for ${clinic_number} was created successfully`
+               });
+           }else{
+               return res.json({
+                   code: 500,
+                   message: "An error occurred, could not create PNC Record"
+               });
+           }
+      
+
+  });
+
+
+
+  router.post('/hei', async(req, res) => {
+    let message = req.body.msg;
+    let phone_no = req.body.phone_no;
+
+      //Log Message Received
+      const new_anc_log = await pmtct_log.create({
+        log:message
+    });
+
+    message = message.split("*");
+   // message = message[1];
+
+    //message = message.split("#");
+
+    let decoded_message = await base64.decode(message[1].trim());
+
+   
+
+    decoded_message = "hei*" + decoded_message;
+
+
+    let variables = decoded_message.split("*");
+
+    let msg_type=variables[0]; //Message Type PNC
+    let clinic_number=variables[1]; //CCC No
+    let _infant_prophylaxis_azt= variables[2]; //Infant Prophylaxis AZT
+    let _infant_prophylaxis_nvp= variables[3]; //Infant Prophylaxis NVP
+    let _infant_prophylaxis_ctx= variables[4]; //Infant Prophylaxis CTX
+    let weight_=variables[5]; //Weight
+    let height_=variables[6]; //Height
+
+    let height_cat=variables[7]; //Height Category
+   
+    let muac_=variables[8]; //MUAC
+    
+    let tb_screening_=variables[9]; //TB Testing Outcome
+    let infant_feeding_=variables[10]; //Infant Feeding
+    let is_pcr_done_=variables[11]; //PCR Done
+    let eid_sample_date=variables[12]; //EID Sample Date
+    let is_eid_done=variables[13]; // EID Done
+    let pcr_result_=variables[14]; // PCR Result
+    let confirmatory_pcr_=variables[15]; //Confirmatory PCR
+   
+    let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+ 
+
+   //Validate Standard Parameters- Telephone Number And Client
+   let check_user = await User.findOne({
+    where: {
+        phone_no,
+    },
+    })
+    if (!check_user)
+        return res.json({
+            success: false,
+            message: `Phone number ${phone_no} does not exist in the system`
+        })
+    let client = await Client.findOne({
+        where: {
+            clinic_number,
+        },
+    })
+    if (!client)
+    return res.json({
+        success: false,
+        message: `Clinic number ${clinic_number} does not exist in the system`
+    })
+    let get_facility = await masterFacility.findOne({
+        where: {
+            code: client.mfl_code
+        },
+        attributes: ["code", "name"],
+    })
+    let get_clinic = await Clinic.findOne({
+        where: {
+            id: client.clinic_id
+        },
+        attributes: ["id", "name"],
+    })
+    let get_user_clinic = await Clinic.findOne({
+        where: {
+            id: check_user.clinic_id
+        },
+        attributes: ["id", "name"],
+    })
+
+    if (client.mfl_code != check_user.facility_id)
+        return res.json({
+            success: false,
+            message: `Client ${clinic_number} does not belong in your facility, the client is mapped to ${get_facility.name}`
+        })
+    if (client.clinic_id != check_user.clinic_id)
+        return res.json({
+            success: false,
+            message: `Client ${clinic_number} is not mapped to your clinic, the client is mapped in ${get_clinic.name} and the current phone number is mapped in ${get_user_clinic.name}`
+        })
+    if (client.status != "Active")
+        return res.json({
+            success: false,
+            message: `Client: ${clinic_number} is not active in the system.`
+        })
+
+
+        //Save PMTCT HEI Visit Variables
+        const new_hei_visit = await pmtct_hei.create({
+            client_id:client.id,
+                 
+            weight:weight_,
+            height:height_,
+            height_category:height_cat,
+            muac:muac_,
+            tb_screening:tb_screening_,
+          
+            infant_feeding:infant_feeding_,
+            was_pcr_done:is_pcr_done_,
+            date_eid_sample:moment(eid_sample_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
+            eid_test:is_eid_done,
+            pcr_result:pcr_result_,
+            confirm_pcr:confirmatory_pcr_,
+           infant_prophylaxis_azt:_infant_prophylaxis_azt,
+            infant_prophylaxis_nvp:_infant_prophylaxis_nvp,
+            infant_prophylaxis_ctx:_infant_prophylaxis_ctx,
+            
+
+
+            created_by:check_user.id,
+
+            created_at:today,
+            updated_at:today,
+            updated_by:check_user.id
+        });
+        
+         //console.log(new_anc_visit);
+         if(new_hei_visit){
+            return res.json({
+                   code: 200,
+                   message: `HEI Visit Record for ${clinic_number} was created successfully`
                });
            }else{
                return res.json({

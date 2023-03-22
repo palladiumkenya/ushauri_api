@@ -1,0 +1,22 @@
+const sequelize = require("../db_config");
+const Sequelize = require("sequelize");
+
+const pmtct_log = sequelize.sequelize.define(
+    "tbl_pmtct_log", {
+        id: {
+            type: Sequelize.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+       
+        log: Sequelize.TEXT,
+       
+    }, {
+        timestamps: true,
+        paranoid: true,
+        underscored: true,
+        freezeTableName: true,
+        tableName: "tbl_pmtct_log"
+    }
+);
+exports.pmtct_log = pmtct_log;
