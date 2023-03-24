@@ -524,7 +524,7 @@ router.get('/search',  async (req, res) => {
             weight:weight_,
             muac:muac_,
             delivery_hiv_status:m_hiv_status_delivery,
-            is_hiv_tested:m_hiv_tested,
+            is_hiv_tested:m_hiv_tested_,
             m_status:m_hiv_result_,
             m_date_tested:moment(m_date_tested_, "DD/MM/YYYY").format("YYYY-MM-DD"),
             m_ccc_number:m_ccc_number_,
