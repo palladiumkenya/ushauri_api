@@ -817,7 +817,7 @@ router.get('/search',  async (req, res) => {
     let variables = decoded_message.split("*");
 
     let msg_type=variables[0]; //Message Type PNC
-    let clinic_number=variables[1]; //CCC No
+    let hei_number=variables[1]; //HEI No
     let _infant_prophylaxis_azt= variables[2]; //Infant Prophylaxis AZT
     let _infant_prophylaxis_nvp= variables[3]; //Infant Prophylaxis NVP
     let _infant_prophylaxis_ctx= variables[4]; //Infant Prophylaxis CTX
@@ -852,13 +852,13 @@ router.get('/search',  async (req, res) => {
         })
     let client = await Client.findOne({
         where: {
-            clinic_number,
+            hei_no: hei_number
         },
     })
     if (!client)
     return res.json({
         success: false,
-        message: `Clinic number ${clinic_number} does not exist in the system`
+        message: `HEI number ${hei_number} does not exist in the system`
     })
     let get_facility = await masterFacility.findOne({
         where: {
@@ -882,17 +882,17 @@ router.get('/search',  async (req, res) => {
     if (client.mfl_code != check_user.facility_id)
         return res.json({
             success: false,
-            message: `Client ${clinic_number} does not belong in your facility, the client is mapped to ${get_facility.name}`
+            message: `HEI ${hei_number} does not belong in your facility, the client is mapped to ${get_facility.name}`
         })
     if (client.clinic_id != check_user.clinic_id)
         return res.json({
             success: false,
-            message: `Client ${clinic_number} is not mapped to your clinic, the client is mapped in ${get_clinic.name} and the current phone number is mapped in ${get_user_clinic.name}`
+            message: `HEI ${hei_number} is not mapped to your clinic, the client is mapped in ${get_clinic.name} and the current phone number is mapped in ${get_user_clinic.name}`
         })
     if (client.status != "Active")
         return res.json({
             success: false,
-            message: `Client: ${clinic_number} is not active in the system.`
+            message: `Client: ${hei_number} is not active in the system.`
         })
 
 
