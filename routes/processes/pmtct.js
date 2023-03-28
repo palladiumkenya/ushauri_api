@@ -892,7 +892,7 @@ router.get('/search',  async (req, res) => {
     if (client.status != "Active")
         return res.json({
             success: false,
-            message: `Client: ${hei_number} is not active in the system.`
+            message: `HEI: ${hei_number} is not active in the system.`
         })
 
 
@@ -929,7 +929,7 @@ router.get('/search',  async (req, res) => {
          if(new_hei_visit){
             return res.json({
                    code: 200,
-                   message: `HEI Visit Record for ${clinic_number} was created successfully`
+                   message: `HEI Visit Record for ${hei_number} was created successfully`
                });
            }else{
                return res.json({
