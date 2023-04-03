@@ -15,6 +15,7 @@ const sender = require("./routes/processes/sender");
 const verifyupi = require("./routes/processes/upiverify");
 const calendarupi = require("./routes/processes/calendar");
 const pmtct_new = require("./routes/processes/pmtct");
+const nishauri_new = require("./routes/processes/nishauri");
 const locator_info = require("./routes/processes/locator");
 const mlab = require("./routes/processes/mlab");
 const dfc = require("./routes/processes/process_dfc");
@@ -35,6 +36,9 @@ app.use('/appnt',calendarupi);
 
 //PMTCT Module
 app.use('/pmtct',pmtct_new);
+//Nishauri Module
+app.use('/nishauri',nishauri_new);
+
 //locator information
 app.use('/locator',locator_info);
 
