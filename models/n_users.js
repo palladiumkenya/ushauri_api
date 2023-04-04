@@ -16,11 +16,13 @@ const NUsers = sequelize.sequelize.define(
         last_name:Sequelize.STRING,
         email:Sequelize.STRING,
         is_active:Sequelize.STRING,
-        date_joined:Sequelize.DATEONLY,
+        date_joined:Sequelize.DATE,
         msisdn:Sequelize.STRING,
         terms_accepted:Sequelize.BOOLEAN,
         language_preference:Sequelize.STRING,
-        otp_number:Sequelize.STRING
+        otp_number:Sequelize.STRING,
+        otp_gen_date:Sequelize.DATEONLY,
+        otp_gen_hour: Sequelize.TIME
         
     }, {
         timestamps: true,
