@@ -19,6 +19,9 @@ const mysql = require('mysql2');
 const {
     NUsers
 } = require("../../models/n_users");
+const {
+    NUsersprograms
+} = require("../../models/n_user_programs");
 
 generateOtp = function (size) {
     const zeros = '0'.repeat(size - 1);
@@ -287,9 +290,9 @@ router.post('/resetpassword', async(req, res) =>  {
             },
           
             body: {
-                'destination': '0723863153',
+                'destination': check_username.msisdn,
                 'msg': 'Dear Nishauri User, Your OTP for password reset is '+vOTP+'. Valid for the next 24 hours.',
-                'sender_id': '0723863153',
+                'sender_id': check_username.msisdn,
                 'gateway': process.env.SMS_SHORTCODE
             }
         }
@@ -434,6 +437,47 @@ router.post('/updatepassword', async(req, res) =>  {
    
 });
 
+
+
+
+//Set Programs
+router.post('/setprogram', async(req, res) =>  {
+    let ccc_no = req.body.ccc_no;
+    let upi_no = req.body.upi_no;
+    let user_id = req.body.user_id;
+    let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
+    
+   
+      //Check If User Exists
+      let check_username= await NUsers.findOne({
+        where: {
+          [Op.and]: [
+            { is_active: '0'},
+            { id: base64.decode(user_id) }
+          ]
+        }
+      });
+
+    //User Is Not Active
+
+    if(check_username) //User Account Not Active- Show Page to Enter Program Indentification Details
+    {
+        //Search if Program Details Exist
+
+        //Save Program Details If Exist
+
+        
+    
+    }else{
+
+        //Show Error Message 
+
+    }
+    
+   
+  
+   
+});
 
 
 
