@@ -106,7 +106,7 @@ router.post('/signup', async(req, res) =>  {
     //Save Signup Details
     const password_hash=bcrypt.hashSync(password_1, 10);
 
-    console.log(password_hash);
+    //console.log(password_hash);
      const new_user = await NUsers.create({
         msisdn:phone,
         password:password_hash,
@@ -300,13 +300,14 @@ router.post('/resetpassword', async(req, res) =>  {
         request.post(header_details,  (err, res, body) => {
         if(err)
         {
+            console.log(err);
              //Error Sending OTP
-             return res
-             .status(200)
-             .json({
-                 success: false,
-                 msg: 'Error Sending OTP',
-             });
+            // return res
+           //  .status(200)
+           //  .json({
+              //   success: false,
+            //     msg: 'Error Sending OTP',
+           //  });
         }   
         });
 
@@ -444,6 +445,7 @@ router.post('/updatepassword', async(req, res) =>  {
 router.post('/setprogram', async(req, res) =>  {
     let ccc_no = req.body.ccc_no;
     let upi_no = req.body.upi_no;
+    let firstname = req.body.firstname;
     let user_id = req.body.user_id;
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
     
@@ -463,25 +465,64 @@ router.post('/setprogram', async(req, res) =>  {
     if(check_username) //User Account Not Active- Show Page to Enter Program Indentification Details
     {
         //Search if Program Details Exist
+        let check_program= await NUsersprograms.findOne({
+            where: {
+              [Op.and]: [
+                { is_active: '1'},
+                { user_id: base64.decode(user_id) },
+                { program_type: '1'} // Set 1 for HIV program
+              ]
+            }
+          });
 
+        if(check_program)
+        {
         //Save Program Details If Exist
-
+        const  new_user_program = await NUsersprograms.create({
+            user_id:phone,
+            program_type:'1',
+            program_identifier:ccc_no,
+            moh_upi_no:upi_no,
+            is_active:'1',
+            activation_date:today,
+            created_at:today,
+            updated_at:today,
+        });
+        
+        if(new_user_program){
+            return res
+            .status(200)
+            .json({
+                success: true,
+                msg: 'Program Registration Succesfully Done',
+            });
+        }else{
+             return res
+            .status(500)
+            .json({
+                success: false,
+                msg: 'An error occurred, could not create program record',
+            });
+        }
+       
+        }
         
     
     }else{
 
         //Show Error Message 
+        return res
+        .status(500)
+        .json({
+            success: false,
+            msg: 'Program registration record already exists',
+        });
 
     }
-    
-   
-  
    
 });
 
 
-
-
-
+//Fetch Home Details
 
 module.exports = router;

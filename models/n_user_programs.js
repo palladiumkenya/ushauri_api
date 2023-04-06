@@ -14,7 +14,6 @@ const NUserprograms = sequelize.sequelize.define(
         program_type:Sequelize.INTEGER,
         program_identifier:Sequelize.STRING,
         moh_upi_no:Sequelize.STRING,
-        email:Sequelize.STRING,
         is_active:Sequelize.STRING,
         activation_date:Sequelize.DATE
     }, {
