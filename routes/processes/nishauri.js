@@ -20,8 +20,12 @@ const {
     NUsers
 } = require("../../models/n_users");
 const {
-    NUsersprograms
+  NUserprograms
 } = require("../../models/n_user_programs");
+
+const {
+    Client
+} = require("../../models/client");
 
 generateOtp = function (size) {
     const zeros = '0'.repeat(size - 1);
@@ -449,8 +453,19 @@ router.post('/setprogram', async(req, res) =>  {
     let user_id = req.body.user_id;
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
     
-   
-      //Check If User Exists
+      //Check if CCC is 10 digits
+      if (ccc_no.length != 10 ) {
+
+        return res
+            .status(200)
+            .json({
+                success: false,
+                msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`,
+            });
+
+    }  
+    
+    //Check If User Exists
       let check_username= await NUsers.findOne({
         where: {
           [Op.and]: [
@@ -460,28 +475,50 @@ router.post('/setprogram', async(req, res) =>  {
         }
       });
 
+      
+
     //User Is Not Active
+    //Validate Program In HIV
+   let check_program_valid= await Client.findOne({
+       where: {
+         [Op.and]: [
+           { f_name: firstname},
+           { clinic_number: ccc_no}
+         ]
+      }
+     });
+
+     if(!check_program_valid)
+     {
+      return res
+      .status(200)
+      .json({
+          success: false,
+          msg: `Invalid CCC Number/ First Name Match: ${ccc_no}, The CCC Number/First Name does not match in Nishauri`,
+      });
+
+     }
 
     if(check_username) //User Account Not Active- Show Page to Enter Program Indentification Details
     {
         //Search if Program Details Exist
-        let check_program= await NUsersprograms.findOne({
+        let check_program= await NUserprograms.findOne({
             where: {
               [Op.and]: [
-                { is_active: '1'},
+                { program_identifier: check_program_valid.id},
                 { user_id: base64.decode(user_id) },
                 { program_type: '1'} // Set 1 for HIV program
               ]
             }
           });
 
-        if(check_program)
+        if(!check_program)
         {
         //Save Program Details If Exist
-        const  new_user_program = await NUsersprograms.create({
-            user_id:phone,
+        const  new_user_program = await NUserprograms.create({
+            user_id:base64.decode(user_id),
             program_type:'1',
-            program_identifier:ccc_no,
+            program_identifier:check_program_valid.id,
             moh_upi_no:upi_no,
             is_active:'1',
             activation_date:today,
@@ -494,7 +531,7 @@ router.post('/setprogram', async(req, res) =>  {
             .status(200)
             .json({
                 success: true,
-                msg: 'Program Registration Succesfully Done',
+                msg: 'Program Registration Succesfully. Please Login to access personalized data',
             });
         }else{
              return res
