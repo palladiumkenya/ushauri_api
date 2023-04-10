@@ -542,6 +542,15 @@ router.post('/setprogram', async(req, res) =>  {
             });
         }
        
+        }else
+        {
+          return res
+          .status(200)
+          .json({
+              success: true,
+              msg: 'Program Already Exist Succesfully. Please Login to access personalized data',
+          });
+
         }
         
     
