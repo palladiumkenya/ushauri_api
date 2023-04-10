@@ -304,14 +304,14 @@ router.post('/resetpassword', async(req, res) =>  {
         request.post(header_details,  (err, res, body) => {
         if(err)
         {
-            console.log(err);
+            //console.log(err);
              //Error Sending OTP
-            // return res
-           //  .status(200)
-           //  .json({
-              //   success: false,
-            //     msg: 'Error Sending OTP',
-           //  });
+            return res
+             .status(200)
+             .json({
+                success: false,
+               msg: 'Error Sending OTP',
+            });
         }   
         });
 
@@ -514,6 +514,13 @@ router.post('/setprogram', async(req, res) =>  {
 
         if(!check_program)
         {
+
+          //Update Login & Active Login
+
+          const log_active_login = await NUsers.update(
+            { is_active: '1' },
+            { where: { id:base64.decode(user_id)} }
+          );
         //Save Program Details If Exist
         const  new_user_program = await NUserprograms.create({
             user_id:base64.decode(user_id),
