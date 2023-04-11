@@ -210,10 +210,10 @@ router.post('/signin', async(req, res) =>  {
                   { last_login: today },
                   { where: { id: check_username.id } }
                 )
-                //Show Page To Add CCC or Program Number
+                //Go to home page
                 var l = {
                     user_id: base64.encode(check_username.id),
-                    page_id: 0,
+                    page_id: 1,
                 }
                 return res
                 .status(200)
@@ -445,7 +445,7 @@ router.post('/updatepassword', async(req, res) =>  {
 
 
 
-//Set Programs
+//Set Programs 
 router.post('/setprogram', async(req, res) =>  {
     let ccc_no = req.body.ccc_no;
     let upi_no = req.body.upi_no;
@@ -577,5 +577,15 @@ router.post('/setprogram', async(req, res) =>  {
 
 
 //Fetch Home Details
+
+
+//Fetch Home Upcoming Appointments
+
+//Fetch VL results
+
+
+//Fetch Dependants
+
+
 
 module.exports = router;
