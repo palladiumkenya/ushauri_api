@@ -304,7 +304,7 @@ router.post('/resetpassword', async(req, res) =>  {
         request.post(header_details,  (err, res, body) => {
         if(err)
         {
-            //console.log(err);
+            console.log(err);
              //Error Sending OTP
             return res
              .status(200)
