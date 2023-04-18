@@ -34,9 +34,18 @@ const pmtct_lad = sequelize.sequelize.define(
         p_enrolment_date: Sequelize.DATEONLY,
         p_art_start_date: Sequelize.DATEONLY,
         tb_outcome: Sequelize.STRING,
-        infant_prophylaxis_azt:Sequelize.STRING,
-        infant_prophylaxis_nvp:Sequelize.STRING,
-        infant_prophylaxis_ctx:Sequelize.STRING,
+        infant_prophylaxis_azt:{
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+          },
+        infant_prophylaxis_nvp:{
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+          },
+        infant_prophylaxis_ctx:{
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+          },
         is_syphyilis: Sequelize.STRING,
         syphilis_treatment: Sequelize.STRING,
         hepatitis_b: Sequelize.STRING,

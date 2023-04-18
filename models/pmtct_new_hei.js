@@ -25,9 +25,18 @@ const pmtct_hei = sequelize.sequelize.define(
         pcr_result:Sequelize.STRING,
         confirm_pcr:Sequelize.STRING,
         visit_date:Sequelize.DATEONLY,
-        infant_prophylaxis_azt:Sequelize.STRING,
-        infant_prophylaxis_nvp:Sequelize.STRING,
-        infant_prophylaxis_ctx:Sequelize.STRING,
+        infant_prophylaxis_azt:{
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+          },
+        infant_prophylaxis_nvp:{
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+          },
+        infant_prophylaxis_ctx:{
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+          },
     }, {
         timestamps: true,
         paranoid: true,
