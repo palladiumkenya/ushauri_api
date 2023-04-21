@@ -711,7 +711,7 @@ router.get('/appointment_trends',  async (req, res) => {
 
 //Missed Appointment by type
 
-outer.get('/appointment_missed',  async (req, res) => {
+router.get('/appointment_missed',  async (req, res) => {
   const userid = req.query.user_id;
   //console.log(userid);
   
