@@ -785,7 +785,7 @@ router.post('/reschedule', async(req, res) =>  {
         appointment_id:app_id,
         reason:reason_,
         request_date:today,
-        proposed_date:proposed_date_,
+        proposed_date:moment(proposed_date_, "DD/MM/YYYY").format("YYYY-MM-DD"),
         created_at:today,
         updated_at:today,
     });
