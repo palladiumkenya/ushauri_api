@@ -771,7 +771,7 @@ router.post('/reschedule', async(req, res) =>  {
    let check_reschedule_request_exists= await Napptreschedule.findOne({
     where: {
       [Op.and]: [
-        { appointment_id: ap_id.id},
+        { appointment_id: app_id},
         { status: '0'} // Set 1 for HIV program
       ]
     }
