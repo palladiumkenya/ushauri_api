@@ -26,6 +26,10 @@ const {
 const {
     Client
 } = require("../../models/client");
+const {
+  Napptreschedule
+} = require("../../models/n_appoint_reschedule");
+
 
 generateOtp = function (size) {
     const zeros = '0'.repeat(size - 1);
@@ -751,5 +755,78 @@ router.get('/appointment_missed',  async (req, res) => {
       }
   
 });
+
+
+//Reschedule Appointment
+router.post('/reschedule', async(req, res) =>  {
+  let app_id = req.body.appt_id;
+  let reason_ = req.body.reason;
+  let proposed_date_ = req.body.reschedule_date;
+  let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
+  
+  
+  //Check if we already have an existing reschedule request
+
+   //Search if Program Details Exist
+   let check_reschedule_request_exists= await Napptreschedule.findOne({
+    where: {
+      [Op.and]: [
+        { appointment_id: ap_id.id},
+        { status: '0'} // Set 1 for HIV program
+      ]
+    }
+  });
+  if(!check_reschedule_request_exists)
+  {
+
+    
+      //Save Program Details If Exist
+      const  new_appt_request = await Napptreschedule.create({
+        appointment_id:app_id,
+        reason:reason_,
+        request_date:today,
+        proposed_date:proposed_date_,
+        created_at:today,
+        updated_at:today,
+    });
+    
+    if(new_appt_request){
+        return res
+        .status(200)
+        .json({
+            success: true,
+            msg: 'Reschedule request submitted successfully. ',
+        });
+    }else{
+         return res
+        .status(500)
+        .json({
+            success: false,
+            msg: 'An error occurred, could not create appointment reschedule request',
+        });
+    }
+
+  }else{
+
+    //Return Appointment Reschedule Already exist
+       //Show Error Message 
+       return res
+       .status(500)
+       .json({
+           success: false,
+           msg: 'Appointment Reschedule Request Record Already Exists',
+       });
+
+
+  }
+
+      
+     
+    
+   
+ 
+});
+
+
 
 module.exports = router;
