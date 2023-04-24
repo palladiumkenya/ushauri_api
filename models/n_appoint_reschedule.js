@@ -12,7 +12,7 @@ const Napptreschedule = sequelize.sequelize.define(
       
         appointment_id:Sequelize.INTEGER,
         reason_type:Sequelize.INTEGER,
-        reason_type:Sequelize.STRING,
+        reason:Sequelize.STRING,
         request_date:Sequelize.DATE,
         proposed_date:Sequelize.DATE
     }, {
