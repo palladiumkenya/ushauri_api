@@ -647,11 +647,12 @@ router.get('/search',  async (req, res) => {
     let p_art_start=variables[18]; //Partner ART date
 
 
-    let tb_outcome_= variables[19]; //TB Outcome
+   
     //let infant_prophylaxis= variables[22]; //Infant Prophylaxis
-    let _infant_prophylaxis_azt= variables[20]; //Infant Prophylaxis AZT
-    let _infant_prophylaxis_nvp= variables[21]; //Infant Prophylaxis NVP
-    let _infant_prophylaxis_ctx= variables[22]; //Infant Prophylaxis CTX
+    let _infant_prophylaxis_azt= variables[19]; //Infant Prophylaxis AZT
+    let _infant_prophylaxis_nvp= variables[20]; //Infant Prophylaxis NVP
+    let _infant_prophylaxis_ctx= variables[21]; //Infant Prophylaxis CTX
+    let tb_outcome_= variables[22]; //TB Outcome
 
     let m_haart= variables[23]; //Mother on HAART
     let m_haart_at_anc= variables[24]; //Mother HAART at ANC
