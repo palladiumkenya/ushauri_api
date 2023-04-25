@@ -631,8 +631,8 @@ router.get('/search',  async (req, res) => {
    
     let anc_visits_=variables[5]; //ANC Visits
     
-    let m_hiv_status_pnc=variables[6]; // Mother HIV Tested
-    let m_is_hiv_tested=variables[7]; //Mother Tested for HIV
+    let m_hiv_status_pnc=variables[7]; // Mother HIV Tested
+    let m_is_hiv_tested=variables[6]; //Mother Tested for HIV
     let m_hiv_result_=variables[8]; // Mother HIV Result  
     let m_date_tested_=variables[9]; // Mother Date Tested
     let m_ccc_number_=variables[10]; // Mother CCC Number
@@ -647,7 +647,7 @@ router.get('/search',  async (req, res) => {
     let p_art_start=variables[18]; //Partner ART date
 
 
-    let tb_outcome= variables[19]; //TB Outcome
+    let tb_outcome_= variables[19]; //TB Outcome
     //let infant_prophylaxis= variables[22]; //Infant Prophylaxis
     let _infant_prophylaxis_azt= variables[20]; //Infant Prophylaxis AZT
     let _infant_prophylaxis_nvp= variables[21]; //Infant Prophylaxis NVP
@@ -759,7 +759,7 @@ router.get('/search',  async (req, res) => {
             p_ccc_number:p_ccc_no,
             p_enrolment_date:moment(p_enrolment_date_, "DD/MM/YYYY").format("YYYY-MM-DD"),
             p_art_start_date:moment(p_art_start, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            tb_outcome:tb_outcome,
+            tb_outcome:tb_outcome_,
            // infant_prophylaxis:infant_prophylaxis,
             infant_prophylaxis_azt:_infant_prophylaxis_azt,
             infant_prophylaxis_nvp:_infant_prophylaxis_nvp,
