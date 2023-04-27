@@ -909,5 +909,130 @@ router.get('/vl_load', async(req, res) =>  {
 });
 
 
+//Fetch Regimen
+router.get('/regimen', async(req, res) =>  {
+  const userid = req.query.user_id;
+  
+  let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
+  console.log(base64.decode(userid));
+  
+  //Check if we already have an existing reschedule request
+
+   //Search if Program Details Exist
+   let check_ccc_no= await NUserprograms.findOne({
+    where: {
+      [Op.and]: [
+        { user_id: base64.decode(userid) },
+        { program_type: '1'}, // Set 1 for HIV program
+        { is_active: '1'} // Set 1 for HIV program
+      ]
+    }
+  });
+ // console.log(check_ccc_no);
+  if(check_ccc_no)
+  {
+
+    //Get Client Details
+    let check_program_valid= await Client.findOne({
+      where: {
+        id: check_ccc_no.program_identifier
+     }
+    });
+
+  
+    if(check_program_valid)
+    {
+      //Call mLab Instance
+     // client_payload='{"ccc_number": "'+check_program_valid.clinic_number+'"}';
+    // http://prod.kenyahmis.org:8002/api/patient/1234567890/regimen
+      //request.get(process.env.ART_URL+'1234567890/regimen', (err, res_, body) => {
+
+      request.get(process.env.ART_URL+'patient/'+check_program_valid.clinic_number+'/regimen', (err, res_, body) => {
+        if (err) {
+          return console.log(err)
+        }
+       // res_.send(err);
+       // return console.log(body)
+       var obj = JSON.parse(body);
+      return res
+      .status(200)
+      .json({
+          success: true,
+          msg: obj.message,
+      });
+
+      });
+      
+
+    
+    }else
+    {
+      return res
+      .status(500)
+      .json({
+          success: false,
+          msg: 'Regimen Records Found',
+      });
+
+    }
+
+  }else{
+
+    return res
+      .status(500)
+      .json({
+          success: false,
+          msg: 'Regimen Records Found',
+      });
+      } 
+ 
+});
+
+
+//Fetch Regimen
+router.get('/artdirectory', async(req, res) =>  {
+  const art_search = req.query.search;
+  //console.log(art_search);
+
+  
+  let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
+  //console.log(base64.decode(userid));
+  if(!isNaN(art_search))
+  {
+    var param_search_num=art_search;
+    var param_search_string=' ';
+
+  }else
+  {
+    var param_search_string=art_search;
+    var param_search_num=' ';
+
+
+  }
+  
+  console.log(param_search_num);
+  console.log(param_search_string);
+  //param_search_num
+  //request.get(process.env.ART_URL+'directory/ /kenyatta', (err, res_, body) => {
+
+//var stringURL=process.env.ART_URL+'directory/'+param_search_num+'/'+param_search_string;
+//console.log(stringURL);
+   request.get(process.env.ART_URL+'directory/'+param_search_num+'/'+param_search_string, (err, res_, body) => {
+        if (err) {
+          return console.log(err)
+        }
+       //res_.send(err);
+       //return console.log(body)
+       var obj = JSON.parse(body);
+      return res
+      .status(200)
+      .json({
+          success: true,
+          msg: obj.message,
+      });
+
+      });
+      
+});
 
 module.exports = router;
