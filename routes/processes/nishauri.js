@@ -824,7 +824,7 @@ router.post('/reschedule', async(req, res) =>  {
 
 //Fetch Regimen
 
-router.get('/vl_load', async(req, res) =>  {
+router.get('/vl_result', async(req, res) =>  {
   const userid = req.query.user_id;
   
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
@@ -857,8 +857,8 @@ router.get('/vl_load', async(req, res) =>  {
     if(check_program_valid)
     {
       //Call mLab Instance
-     // client_payload='{"ccc_number": "'+check_program_valid.clinic_number+'"}';
-      client_payload='{"ccc_number": "1566100689"}';
+     client_payload='{"ccc_number": "'+check_program_valid.clinic_number+'"}';
+     // client_payload='{"ccc_number": "1409101178"}';
       const url_details = {
         url: process.env.MLAB_URL,
         json: true,
@@ -872,17 +872,234 @@ router.get('/vl_load', async(req, res) =>  {
         if (err) {
           return console.log(err)
         }
-       // res_.send(err);
-       // return console.log(body)
+      
+    
+     var obj_ = body;
+     //obj.messege.sort
+     
+      //return console.log(obj_)
+     if (obj_.message === 'No results for the given CCC Number were found') 
+     {
+            var l = {
+              viral_load:'Not Available',
+          }
+
+     }else
+     {
+      var obj2 = obj_.results;
+    
+            obj2.sort((a, b) => {
+                return new Date(b.lab_order_date) - new Date(a.lab_order_date); // ascending
+            }); 
+            var sp_status=[];
+            
+
+            obj2.forEach(obj => {
+              Object.entries(obj).forEach(([key, value]) => {
+             //Loop through the result set from mLab
+                  if(key=='result_content')
+                  {
+                    // console.log(`${value}`);
+                  var value_=value;
+                    if(value_=='')
+                    {
+                    // sp_status='';
+                    }else
+                    {
+                  
+                  if (value_.includes('LDL')) {            
+                      sp_status.push('VS')
+                      //console.log(sp_status);
+                  } else {
+                    if(value_<1000)
+                    {
+                      sp_status.push('VS')
+                    }else
+                    {
+                      sp_status.push('UVS')
+
+                    }
+                   
+                  }
+                }
+                  }
+              });
+            
+
+          });
+         
+          if(sp_status[0]=='VS')
+          {
+            var viral_load__='Viral Suppressed';
+          }else
+          {
+            var viral_load__='Viral UnSuppressed';
+
+          }
+
+          var l = {
+            viral_load:viral_load__
+        }
+     }
+  
         return res
       .status(200)
       .json({
-          success: false,
-          msg: body,
+          success: true,
+          msg: l,
+          //msg2: body,
       });
 
       });
       
+
+    
+    }else
+    {
+      return res
+      .status(500)
+      .json({
+          success: false,
+          msg: 'No VL Records Found',
+      });
+
+    }
+
+  }else{
+
+    return res
+      .status(500)
+      .json({
+          success: false,
+          msg: 'No VL Records Found',
+      });
+      } 
+ 
+});
+
+
+router.get('/vl_results', async(req, res) =>  {
+  const userid = req.query.user_id;
+  
+  let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
+  console.log(base64.decode(userid));
+  
+  //Check if we already have an existing reschedule request
+
+   //Search if Program Details Exist
+   let check_ccc_no= await NUserprograms.findOne({
+    where: {
+      [Op.and]: [
+        { user_id: base64.decode(userid) },
+        { program_type: '1'}, // Set 1 for HIV program
+        { is_active: '1'} // Set 1 for HIV program
+      ]
+    }
+  });
+ // console.log(check_ccc_no);
+  if(check_ccc_no)
+  {
+
+    //Get Client Details
+    let check_program_valid= await Client.findOne({
+      where: {
+        id: check_ccc_no.program_identifier
+     }
+    });
+
+  
+    if(check_program_valid)
+    {
+      //Call mLab Instance
+     client_payload='{"ccc_number": "'+check_program_valid.clinic_number+'"}';
+     //client_payload='{"ccc_number": "1409101178"}';
+      const url_details = {
+        url: process.env.MLAB_URL,
+        json: true,
+        body: JSON.parse(client_payload),
+        "rejectUnauthorized": false,
+
+       
+      }
+
+      request.post(url_details, (err, res_, body) => {
+        if (err) {
+          return console.log(err)
+        }
+      
+    
+     var obj_ = body;
+     var sp_status=[];
+
+     //obj.messege.sort
+     
+     // return console.log(obj_)
+     if (obj_.message === 'No results for the given CCC Number were found') 
+     {
+      sp_status.push('No VL Results Found')
+
+     }else
+     {
+      var obj2 = obj_.results;
+    
+            obj2.sort((a, b) => {
+                return new Date(b.lab_order_date) - new Date(a.lab_order_date); // ascending
+            }); 
+            
+
+            obj2.forEach(obj => {
+              
+               var lab_order_date_=obj.lab_order_date;
+               var result_type_=obj.units;
+ 
+              
+              Object.entries(obj).forEach(([key, value]) => {
+             //Loop through the result set from mLab
+             
+                  if(key=='result_content')
+                  {
+                    // console.log(`${value}`);
+                  var value_=value;
+                    if(value_=='')
+                    {
+                    // sp_status='';
+                    }else
+                    {
+                  
+                  if (value_.includes('LDL')) {            
+                      sp_status.push({result:'<LDL copies/ml', status: 'Viral Suppressed', date: lab_order_date_ })
+                      //console.log(sp_status);
+                  } else {
+                    if(value_<1000)
+                    {
+                      sp_status.push({result:value_+' '+result_type_, status: 'Viral Suppressed', date: lab_order_date_ })
+
+                     
+                    }else
+                    {
+                      sp_status.push({result:value_+' '+result_type_, status: 'Viral UnSuppressed', date: lab_order_date_ })
+
+                    }
+                   
+                  }
+                }
+                  }
+              });
+            
+          });
+         
+        
+     }
+  
+        return res
+      .status(200)
+      .json({
+          success: true,
+          msg: sp_status,
+          //msg2: body,
+      });
+
+      });
 
     
     }else
@@ -1012,11 +1229,7 @@ router.get('/artdirectory', async(req, res) =>  {
   
   console.log(param_search_num);
   console.log(param_search_string);
-  //param_search_num
-  //request.get(process.env.ART_URL+'directory/ /kenyatta', (err, res_, body) => {
-
-//var stringURL=process.env.ART_URL+'directory/'+param_search_num+'/'+param_search_string;
-//console.log(stringURL);
+  //Search ART directory from 
    request.get(process.env.ART_URL+'directory/'+param_search_num+'/'+param_search_string, (err, res_, body) => {
         if (err) {
           return console.log(err)
@@ -1034,5 +1247,53 @@ router.get('/artdirectory', async(req, res) =>  {
       });
       
 });
+
+
+//Fetch Dependants 
+
+router.get('/dependants',  async (req, res) => {
+  const userid = req.query.user_id;
+  //console.log(userid);
+  
+      try{
+
+          const conn = mysql.createPool({
+              connectionLimit: 10,
+              host: process.env.DB_SERVER,
+              port: process.env.DB_PORT,
+              user: process.env.DB_USER,
+              password: process.env.DB_PASSWORD,
+              database: process.env.DB_NAME,
+              debug: true,
+              multipleStatements: true,
+            });
+            
+           let  sql = `CALL sp_nishauri_dependants(?)`;
+           let todo = [base64.decode(userid)];
+            conn.query(sql,todo, (error, results, fields) => {
+              if (error) {
+                  return console.error(error.message);
+                  conn.end();
+                }
+               // console.log(results);
+                return res
+                 .status(200)
+                 .json({
+                   success: true,
+                    data: results[0]
+                });
+
+            conn.end();
+            });
+
+      }catch(err){
+  
+      }
+  
+});
+
+
+
+
 
 module.exports = router;
