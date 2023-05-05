@@ -1428,7 +1428,7 @@ router.post('/bmi_calculator',  async (req, res) => {
 
   //number to string format
 
-  bmi = weight/(heigh*heigh) 
+  bmi = weigh/(heigh*heigh) 
     if (heigh<=3){
       weigh=weigh
     } else if (heigh>3 && heigh<10){
@@ -1436,20 +1436,20 @@ router.post('/bmi_calculator',  async (req, res) => {
     } else{
       heigh=(heigh/100)
     }
-    bmi = weigh/(heigh*heigh);
-    bmi = BMI.toFixed(2)
-    bmi = bmi.toFixed();
+    bmi = weigh/((heigh*heigh) / 10);
+    bmi = bmi.toFixed(2)
+    //bmi = bmi.toFixed();
 
-  req_name = req.body.Name;
+  //req_name = req.body.Name;
 
   // CONDITION FOR BMI
-  if (bmi < 19) {
+  if (bmi < 18.5) {
       var l = {
         bmi:bmi,
         comment:'Underweight',
     }
      
-  } else if (19 <= bmi && bmi < 25) {
+  } else if (18.5 <= bmi && bmi < 25) {
     var l = {
       bmi:bmi,
       comment:'Normalweight',
