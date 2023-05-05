@@ -1424,10 +1424,21 @@ router.get('/dependants',  async (req, res) => {
 router.post('/bmi_calculator',  async (req, res) => {
   heigh = parseFloat(req.body.height);
   weigh = parseFloat(req.body.weight);
-  bmi = weigh / (heigh * heigh);
+  //bmi = weigh / (heigh * heigh);
 
   //number to string format
-  bmi = bmi.toFixed();
+
+  bmi = weight/(heigh*heigh) 
+    if (heigh<=3){
+      weigh=weigh
+    } else if (heigh>3 && heigh<10){
+        height=(heigh/3.281)
+    } else{
+      heigh=(heigh/100)
+    }
+    bmi = weight/(heigh*heigh);
+    bmi = BMI.toFixed(2)
+    bmi = bmi.toFixed();
 
   req_name = req.body.Name;
 
