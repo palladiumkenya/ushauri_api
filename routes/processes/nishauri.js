@@ -756,6 +756,48 @@ router.get('/appointment_missed',  async (req, res) => {
   
 });
 
+//previous appointment list
+router.get('/appointment_previous',  async (req, res) => {
+  const userid = req.query.user_id;
+  //console.log(userid);
+  
+      try{
+
+          const conn = mysql.createPool({
+              connectionLimit: 10,
+              host: process.env.DB_SERVER,
+              port: process.env.DB_PORT,
+              user: process.env.DB_USER,
+              password: process.env.DB_PASSWORD,
+              database: process.env.DB_NAME,
+              debug: true,
+              multipleStatements: true,
+            });
+            
+           let  sql = `CALL sp_nishauri_history_appt(?)`;
+           let todo = [base64.decode(userid)];
+            conn.query(sql,todo, (error, results, fields) => {
+              if (error) {
+                  return console.error(error.message);
+                  conn.end();
+                }
+               // console.log(results);
+                return res
+                 .status(200)
+                 .json({
+                   success: true,
+                    data: results[0]
+                });
+
+            conn.end();
+            });
+
+      }catch(err){
+  
+      }
+  
+});
+
 
 //Reschedule Appointment
 router.post('/reschedule', async(req, res) =>  {
