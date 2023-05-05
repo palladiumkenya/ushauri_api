@@ -1436,7 +1436,7 @@ router.post('/bmi_calculator',  async (req, res) => {
     } else{
       heigh=(heigh/100)
     }
-    bmi = weight/(heigh*heigh);
+    bmi = weigh/(heigh*heigh);
     bmi = BMI.toFixed(2)
     bmi = bmi.toFixed();
 
