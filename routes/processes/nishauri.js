@@ -1419,6 +1419,54 @@ router.get('/dependants',  async (req, res) => {
   
 });
 
+//Fetch Dependants 
+
+router.post('/bmi_calculator',  async (req, res) => {
+  heigh = parseFloat(req.body.height);
+  weigh = parseFloat(req.body.weight);
+  bmi = weigh / (heigh * heigh);
+
+  //number to string format
+  bmi = bmi.toFixed();
+
+  req_name = req.body.Name;
+
+  // CONDITION FOR BMI
+  if (bmi < 19) {
+      var l = {
+        bmi:bmi,
+        comment:'Underweight',
+    }
+     
+  } else if (19 <= bmi && bmi < 25) {
+    var l = {
+      bmi:bmi,
+      comment:'Normalweight',
+  }
+    
+  } else if (25 <= bmi && bmi < 30) {
+    var l = {
+      bmi:bmi,
+      comment:'Overweight',
+  }
+      
+  } else {
+    var l = {
+      bmi:bmi,
+      comment:'Obese',
+  }
+     
+  }
+
+  return res
+  .status(200)
+  .json({
+      success: true,
+      msg: l,
+  });
+});
+
+
 
 
 
