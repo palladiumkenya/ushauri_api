@@ -1479,8 +1479,8 @@ router.post('/bmi_calculator',  async (req, res) => {
 
 
 
-router.get('/chat', async(req, res) =>  {
-  const question_ = req.query.question;
+router.post('/chat', async(req, res) =>  {
+  const question_ = req.body.question;
 
   
   client_payload='{"question": "'+question_+'"}';
