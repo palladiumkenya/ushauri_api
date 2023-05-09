@@ -1170,13 +1170,13 @@ router.get('/vl_results', async(req, res) =>  {
       var obj2 = obj_.results;
     
             obj2.sort((a, b) => {
-                return new Date(b.lab_order_date) - new Date(a.lab_order_date); // ascending
+                return new Date(b.date_collected) - new Date(a.date_collected); // ascending
             }); 
             
 
             obj2.forEach(obj => {
               
-               var lab_order_date_=obj.lab_order_date;
+               var lab_order_date_=obj.date_collected;
                var result_type_=obj.units;
  
               
@@ -1199,12 +1199,12 @@ router.get('/vl_results', async(req, res) =>  {
                   } else {
                     if(value_<1000)
                     {
-                      sp_status.push({result:value_+' '+result_type_, status: 'Viral Suppressed', date: lab_order_date_ })
+                      sp_status.push({result:value_+' '+result_type_, status: 'Viral UnSuppressed', date: lab_order_date_ })
 
                      
                     }else
                     {
-                      sp_status.push({result:value_+' '+result_type_, status: 'Viral UnSuppressed', date: lab_order_date_ })
+                      sp_status.push({result:value_+' '+result_type_, status: 'Viral Suppressed', date: lab_order_date_ })
 
                     }
                    
