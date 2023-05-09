@@ -1344,12 +1344,12 @@ router.get('/artdirectory', async(req, res) =>  {
   if(!isNaN(art_search))
   {
     var param_search_num=art_search;
-    var param_search_string='';
+    var param_search_string=' ';
 
   }else
   {
     var param_search_string=art_search;
-    var param_search_num='';
+    var param_search_num=' ';
 
 
   }
@@ -1485,7 +1485,7 @@ router.post('/chat', async(req, res) =>  {
   
   client_payload='{"question": "'+question_+'"}';
   const url_details = {
-    url: process.env.CHAT_URL,
+    url: process.env.CHAT_URL+'chatbot',
     json: true,
     body: JSON.parse(client_payload),
     "rejectUnauthorized": false,
