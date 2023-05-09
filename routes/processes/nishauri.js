@@ -1060,7 +1060,7 @@ router.get('/vl_result', async(req, res) =>  {
             var viral_load__='Viral Suppressed';
           }else
           {
-            var viral_load__='Viral UnSuppressed';
+            var viral_load__='Viral Unsuppressed';
 
           }
 
@@ -1199,7 +1199,7 @@ router.get('/vl_results', async(req, res) =>  {
                   } else {
                     if(value_.replace(/[^0-9]/g, '')<1000)
                     {
-                      sp_status.push({result:value_.replace(/[^0-9]/g, '')+' copies/ml', status: 'Viral UnSuppressed', date: lab_order_date_ })
+                      sp_status.push({result:value_.replace(/[^0-9]/g, '')+' copies/ml', status: 'Viral Unsuppressed', date: lab_order_date_ })
 
                      
                     }else
@@ -1344,12 +1344,12 @@ router.get('/artdirectory', async(req, res) =>  {
   if(!isNaN(art_search))
   {
     var param_search_num=art_search;
-    var param_search_string=' ';
+    var param_search_string='xx';
 
   }else
   {
     var param_search_string=art_search;
-    var param_search_num=' ';
+    var param_search_num='99999999';
 
 
   }
@@ -1483,11 +1483,14 @@ router.post('/chat', async(req, res) =>  {
   const question_ = req.body.question;
 
   
-  client_payload='{"question": "'+question_+'"}';
+  //client_payload='{"question": "'+question_+'"}';
+  var l = {
+    question:question_
+}
   const url_details = {
     url: process.env.CHAT_URL+'chatbot',
     json: true,
-    body: JSON.parse(client_payload),
+    body:l,
     "rejectUnauthorized": false,
   }
   request.post(url_details, (err, res_, body) => {
