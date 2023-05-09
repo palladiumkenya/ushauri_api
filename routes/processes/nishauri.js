@@ -1344,12 +1344,12 @@ router.get('/artdirectory', async(req, res) =>  {
   if(!isNaN(art_search))
   {
     var param_search_num=art_search;
-    var param_search_string=' ';
+    var param_search_string='';
 
   }else
   {
     var param_search_string=art_search;
-    var param_search_num=' ';
+    var param_search_num='';
 
 
   }
@@ -1478,6 +1478,38 @@ router.post('/bmi_calculator',  async (req, res) => {
 });
 
 
+
+router.get('/chat', async(req, res) =>  {
+  const question_ = req.query.question;
+
+  
+  client_payload='{"question": "'+question_+'"}';
+  const url_details = {
+    url: process.env.MLAB_URL,
+    json: true,
+    body: JSON.parse(client_payload),
+    "rejectUnauthorized": false,
+  }
+  request.post(url_details, (err, res_, body) => {
+    if (err) {
+      return console.log(err)
+    }
+  
+
+ //var obj_ = body;
+ var obj = JSON.parse(body);
+ return res
+ .status(200)
+ .json({
+     success: true,
+     msg: obj.response,
+ });
+ //var sp_status=[];
+  });
+
+});
+
+  
 
 
 
