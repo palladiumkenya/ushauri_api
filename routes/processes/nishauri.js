@@ -1485,7 +1485,7 @@ router.get('/chat', async(req, res) =>  {
   
   client_payload='{"question": "'+question_+'"}';
   const url_details = {
-    url: process.env.MLAB_URL,
+    url: process.env.CHAT_URL,
     json: true,
     body: JSON.parse(client_payload),
     "rejectUnauthorized": false,
