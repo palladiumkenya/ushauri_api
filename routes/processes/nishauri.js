@@ -1505,6 +1505,7 @@ router.post('/chat', async(req, res) =>  {
  .json({
      success: true,
      msg: obj.response,
+     question: question
  });
  //var sp_status=[];
   });
