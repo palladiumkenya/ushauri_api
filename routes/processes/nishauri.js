@@ -1488,7 +1488,7 @@ router.post('/chat', async(req, res) =>  {
   const url_details = {
     url: process.env.CHAT_URL+'chatbot',
   //  json: true,
-    form: { question: "heydude" },
+    form: { question: question_ },
     "rejectUnauthorized": false,
   }
   request.post(url_details, (err, res_, body) => {
@@ -1505,7 +1505,7 @@ router.post('/chat', async(req, res) =>  {
  .json({
      success: true,
      msg: obj.response,
-     question: question
+     question:question_
  });
  //var sp_status=[];
   });
