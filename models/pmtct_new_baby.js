@@ -19,6 +19,7 @@ const pmtct_baby = sequelize.sequelize.define(
         date_birth : Sequelize.DATEONLY,
         created_by: Sequelize.INTEGER,
         updated_by: Sequelize.INTEGER,
+        baby_no: Sequelize.INTEGER,
     }, {
         timestamps: true,
         paranoid: true,

@@ -30,6 +30,11 @@ const {
   Napptreschedule
 } = require("../../models/n_appoint_reschedule");
 
+const {
+  NLogs
+} = require("../../models/n_logs");
+
+
 
 generateOtp = function (size) {
     const zeros = '0'.repeat(size - 1);
@@ -202,6 +207,9 @@ router.post('/signin', async(req, res) =>  {
               }
            }else if(check_username.is_active==='1')
            {
+
+            //Log Activity
+            var log_activity_=NLogs.create({ user_id:check_username.id, access:'LOGIN'});
 
             //Log Login Date
             var l = {
@@ -652,6 +660,8 @@ router.get('/current_appt',  async (req, res) => {
                   conn.end();
                 }
                // console.log(results);
+               //Log Activity
+               var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'APPOINTMENTS'});
                 return res
                  .status(200)
                  .json({
@@ -695,6 +705,8 @@ router.get('/appointment_trends',  async (req, res) => {
                   conn.end();
                 }
                // console.log(results);
+               var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'APPOINTMENTS_TRENDS'});
+
                 return res
                  .status(200)
                  .json({
@@ -841,47 +853,6 @@ router.get('/appointment_future',  async (req, res) => {
 });
 
 
-//previous appointment list
-router.get('/appointment_future',  async (req, res) => {
-  const userid = req.query.user_id;
-  //console.log(userid);
-  
-      try{
-
-          const conn = mysql.createPool({
-              connectionLimit: 10,
-              host: process.env.DB_SERVER,
-              port: process.env.DB_PORT,
-              user: process.env.DB_USER,
-              password: process.env.DB_PASSWORD,
-              database: process.env.DB_NAME,
-              debug: true,
-              multipleStatements: true,
-            });
-            
-           let  sql = `CALL sp_nishauri_future_appt(?)`;
-           let todo = [base64.decode(userid)];
-            conn.query(sql,todo, (error, results, fields) => {
-              if (error) {
-                  return console.error(error.message);
-                  conn.end();
-                }
-               // console.log(results);
-                return res
-                 .status(200)
-                 .json({
-                   success: true,
-                    data: results[0]
-                });
-
-            conn.end();
-            });
-
-      }catch(err){
-  
-      }
-  
-});
 
 
 //Reschedule Appointment
@@ -1068,6 +1039,8 @@ router.get('/vl_result', async(req, res) =>  {
             viral_load:viral_load__
         }
      }
+     var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'VL_RESULTS'});
+
   
         return res
       .status(200)
@@ -1217,6 +1190,8 @@ router.get('/vl_results', async(req, res) =>  {
          
         
      }
+     var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'VL_RESULTS'});
+
   
         return res
       .status(200)
@@ -1336,6 +1311,8 @@ router.get('/regimen', async(req, res) =>  {
 //Fetch Regimen
 router.get('/artdirectory', async(req, res) =>  {
   const art_search = req.query.search;
+  const userid = req.query.user_id;
+
   //console.log(art_search);
 
   
@@ -1363,6 +1340,8 @@ router.get('/artdirectory', async(req, res) =>  {
         }
        //res_.send(err);
        //return console.log(body)
+       var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'ARTDIRECTORY'});
+
        var obj = JSON.parse(body);
       return res
       .status(200)
@@ -1424,19 +1403,21 @@ router.get('/dependants',  async (req, res) => {
 router.post('/bmi_calculator',  async (req, res) => {
   heigh = parseFloat(req.body.height);
   weigh = parseFloat(req.body.weight);
+  const userid = req.body.user_id;
+
   //bmi = weigh / (heigh * heigh);
 
   //number to string format
 
-  bmi = weigh/(heigh*heigh) 
-    if (heigh<=3){
-      weigh=weigh
-    } else if (heigh>3 && heigh<10){
-        height=(heigh/3.281)
-    } else{
-      heigh=(heigh/100)
-    }
-    bmi = weigh/((heigh*heigh) / 10);
+ // bmi = weigh/(heigh*heigh) 
+    //if (heigh<=3){
+  //    weigh=weigh
+  //  } else if (heigh>3 && heigh<10){
+  //    heigh=(heigh/3.281)
+  //  } else{
+  //    heigh=(heigh/100)
+  //  }
+    bmi = weigh/((heigh*heigh) / 10000);
     bmi = bmi.toFixed(2)
     //bmi = bmi.toFixed();
 
@@ -1469,6 +1450,9 @@ router.post('/bmi_calculator',  async (req, res) => {
      
   }
 
+  var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'BMICALCULATOR'});
+
+
   return res
   .status(200)
   .json({
@@ -1481,6 +1465,7 @@ router.post('/bmi_calculator',  async (req, res) => {
 
 router.post('/chat', async(req, res) =>  {
   const question_ = req.body.question;
+  const userid = req.body.user_id;
 
   
   //client_payload='{"question": "hello"}';
@@ -1495,10 +1480,10 @@ router.post('/chat', async(req, res) =>  {
     if (err) {
       return console.log(err)
     }
-  
-
  //var obj_ = body;
  //console.log(body);
+ var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'CHAT'});
+
  var obj = JSON.parse(body);
  return res
  .status(200)
@@ -1511,10 +1496,4 @@ router.post('/chat', async(req, res) =>  {
   });
 
 });
-
-  
-
-
-
-
 module.exports = router;

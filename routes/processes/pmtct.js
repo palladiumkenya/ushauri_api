@@ -561,6 +561,7 @@ router.get('/search',  async (req, res) => {
 
                 pmtct_babies.push({ delivery_id: result_delivery.id,
                     baby_delivered:eval("baby_delivered_"+i),
+                    baby_no:i+1,
                     date_died:moment(eval("baby_death_date_"+i), "DD/MM/YYYY").format("YYYY-MM-DD"),
                     cause_of_death: eval("baby_cause_of_death_"+i),
                     baby_sex: eval("baby_sex_"+i),
@@ -916,9 +917,6 @@ router.get('/search',  async (req, res) => {
            infant_prophylaxis_azt:_infant_prophylaxis_azt,
             infant_prophylaxis_nvp:_infant_prophylaxis_nvp,
             infant_prophylaxis_ctx:_infant_prophylaxis_ctx,
-            
-
-
             created_by:check_user.id,
 
             created_at:today,
