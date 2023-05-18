@@ -455,6 +455,136 @@ router.post('/updatepassword', async(req, res) =>  {
 });
 
 
+//Set Programs 
+router.post('/validate_program', async(req, res) =>  {
+  let ccc_no = req.body.ccc_no;
+  let upi_no = req.body.upi_no;
+  let firstname = req.body.firstname;
+  let user_id = req.body.user_id;
+  let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
+  
+    //Check if CCC is 10 digits
+    if (ccc_no.length != 10 ) {
+
+      return res
+          .status(200)
+          .json({
+              success: false,
+              msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`,
+          });
+
+  }  
+  
+  //Check If User Exists
+    let check_username= await NUsers.findOne({
+      where: {
+        [Op.and]: [
+          { is_active: '0'},
+          { id: base64.decode(user_id) }
+        ]
+      }
+    });
+
+    
+
+  //User Is Not Active
+  //Validate Program In HIV
+ let check_program_valid= await Client.findOne({
+     where: {
+       [Op.and]: [
+         { f_name: firstname},
+         { clinic_number: ccc_no}
+       ]
+    }
+   });
+
+   if(!check_program_valid)
+   {
+    return res
+    .status(200)
+    .json({
+        success: false,
+        msg: `Invalid CCC Number/ First Name Match: ${ccc_no}, The CCC Number/First Name does not match in Nishauri`,
+    });
+
+   }
+
+  if(check_username) //User Account Not Active- Show Page to Enter Program Indentification Details
+  {
+      //Generate OTP
+       //Generate OTP and send to Users Via Email or Telephone Number
+       let vOTP=generateOtp(5);
+
+       //Send SMS       
+       const header_details= {
+          "rejectUnauthorized": false,
+           url: process.env.SMS_API_URL,
+           method: 'POST',
+           json: true,
+           headers: {
+             Accept: 'application/json',
+             'api-token': process.env.SMS_API_KEY
+           },
+         
+           body: {
+               'destination': check_username.msisdn,
+               'msg': 'Dear Nishauri User, Your OTP to complete profile is '+vOTP+'. Valid for the next 24 hours.',
+               'sender_id': check_program_valid.phone_no,
+               'gateway': process.env.SMS_SHORTCODE
+           }
+       }
+
+       request.post(header_details,  (err, res, body) => {
+       if(err)
+       {
+           console.log(err);
+            //Error Sending OTP
+           return res
+            .status(200)
+            .json({
+               success: false,
+              msg: 'Error Sending OTP',
+           });
+       }   
+       });
+
+        //Save OTP Details
+        const log_OTP = await NUsers.update(
+           { profile_otp_date: today, profile_otp_number: vOTP},
+           { where: { id:  base64.decode(user_id) } }
+         );
+
+         var l = {
+           user_id: base64.encode(check_username.id),
+           mohupi_:upi_no,
+           cccno:ccc_no,
+           firstname:firstname,
+           phoneno:check_program_valid.phone_no
+       }
+       
+
+      //Sent OTP Number
+      return res
+      .status(200)
+      .json({
+          success: true,
+          msg: 'User OTP sent out successfully',
+          data:l,
+      });
+  
+  }else{
+
+      //Show Error Message 
+      return res
+      .status(500)
+      .json({
+          success: false,
+          msg: 'Program registration record already exists',
+      });
+
+  }
+ 
+});
 
 
 //Set Programs 
@@ -463,6 +593,7 @@ router.post('/setprogram', async(req, res) =>  {
     let upi_no = req.body.upi_no;
     let firstname = req.body.firstname;
     let user_id = req.body.user_id;
+    let otp=req.body.user_id;
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
     
       //Check if CCC is 10 digits
@@ -510,6 +641,28 @@ router.post('/setprogram', async(req, res) =>  {
       });
 
      }
+
+
+     //Check if OTP is Valid
+     let otp_validate= await NUsers.findOne({
+      where: {
+        [Op.and]: [
+          { profile_otp_number: otp},
+          { id: base64.decode(user_id) }
+        ]
+      }
+    });
+
+
+    if(!otp_validate)
+    {
+      return res
+      .status(200)
+      .json({
+          success: false,
+          msg: 'Invalid or Expired OTP'
+      });
+    }
 
     if(check_username) //User Account Not Active- Show Page to Enter Program Indentification Details
     {
@@ -897,7 +1050,7 @@ router.post('/reschedule', async(req, res) =>  {
         });
     }else{
          return res
-        .status(500)
+        .status(200)
         .json({
             success: false,
             msg: 'An error occurred, could not create appointment reschedule request',
@@ -909,7 +1062,7 @@ router.post('/reschedule', async(req, res) =>  {
     //Return Appointment Reschedule Already exist
        //Show Error Message 
        return res
-       .status(500)
+       .status(200)
        .json({
            success: false,
            msg: 'Appointment Reschedule Request Record Already Exist',
@@ -1225,6 +1378,152 @@ router.get('/vl_results', async(req, res) =>  {
       });
       } 
  
+});
+
+
+//Function To Search EID Result
+
+
+var eid_results_out=function(hei_no) {
+  var return_variable=[];
+  client_payload='{"ccc_number": "1607320220018"}';
+
+  // client_payload='{"ccc_number": "'+hei_no+'"}';
+     
+     const url_details = {
+       url: process.env.MLAB_URL,
+       json: true,
+       body: JSON.parse(client_payload),
+       "rejectUnauthorized": false,      
+     }
+     var sp_status=[];
+
+   request.post(url_details, (err, res_, body) => {
+      if (err) {
+        return console.log(err)
+      }
+         // return 'adasdad';
+
+        //console.log(body.results);
+
+        var obj_ = body;
+        //console.log(obj_);
+
+       // var sp_status=[];
+      if (obj_.message === 'No results for the given CCC Number were found') 
+      {
+      // sp_status.push('No Results Found');
+       sp_status=[];
+ 
+      }else
+      {
+        //console.log(body.results);
+        var obj2 = obj_.results;
+
+        obj2.sort((a, b) => {
+            return new Date(b.date_collected) - new Date(a.date_collected); // ascending
+        }); 
+        //  console.log(obj2);
+
+        
+
+        obj2.forEach(obj => {
+
+        var lab_order_date_=obj.date_collected;
+        var result_type_=obj.result_type;
+        //Loop through Objects 
+
+      Object.entries(obj).forEach(([key, value]) => {
+
+        if(key=='result_content')
+        {
+          var value_=value;
+          if(value_=='')
+          {
+            sp_status=[];
+
+          }else
+          {
+            if(result_type_=='2'){ //Allow only for EID results
+            sp_status.push({result:value_, result_type:'PCR Result', date: lab_order_date_ });
+           
+            }
+          }
+        }
+
+      });
+          
+
+        });
+
+
+        console.log(sp_status);
+        return_variable=sp_status;
+        
+      }
+
+     
+
+
+      //
+      
+      //dependants_.push({dependant_name:dependants[i].dependant_name,d_age:dependants[i].dependant_age,d_results:sp_status});
+    });
+    return return_variable;
+  }
+  
+  router.get('/eid_results', async(req, res) =>  {
+  const userid = req.query.user_id;
+  try{
+    const conn = mysql.createPool({
+        connectionLimit: 10,
+        host: process.env.DB_SERVER,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        debug: true,
+        multipleStatements: true,
+      });
+      
+     let  sql = `CALL sp_nishauri_dependants(?)`;
+     let todo = [base64.decode(userid)];
+      conn.query(sql,todo, (error, results, fields) => {
+        if (error) {
+            return console.error(error.message);
+            conn.end();
+          }
+          //Console Log
+         //console.log(results[0]);
+         dependants=results[0];
+         //console.log(dependants);
+
+         var dependants_=[];
+       
+         for (var i in dependants) {
+          //console.log(dependants[i].hei_no);
+          //Loop Through EID Results
+          var eidresults_=[];
+          eidresults_= eid_results_out('jf');
+          console.log(eidresults_);
+     
+          dependants_.push({dependant_name:dependants[i].dependant_name,d_age:dependants[i].dependant_age,d_results:eidresults_});
+
+        }
+
+        return res
+        .status(200)
+        .json({
+          success: true,
+           data: dependants_
+       });
+
+      conn.end();
+      });
+
+}catch(err){
+
+} 
 });
 
 

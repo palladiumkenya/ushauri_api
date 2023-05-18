@@ -22,7 +22,10 @@ const NUsers = sequelize.sequelize.define(
         language_preference:Sequelize.STRING,
         otp_number:Sequelize.STRING,
         otp_gen_date:Sequelize.DATEONLY,
-        otp_gen_hour: Sequelize.TIME
+        otp_gen_hour: Sequelize.TIME,
+        profile_otp_number:Sequelize.STRING,
+        profile_otp_date:Sequelize.DATEONLY,
+        profile_status: Sequelize.STRING
         
     }, {
         timestamps: true,
