@@ -527,7 +527,7 @@ router.post('/validate_program', async(req, res) =>  {
            },
          
            body: {
-               'destination': check_username.msisdn,
+               'destination': check_program_valid.phone_no,
                'msg': 'Dear Nishauri User, Your OTP to complete profile is '+vOTP+'. Valid for the next 24 hours.',
                'sender_id': check_program_valid.phone_no,
                'gateway': process.env.SMS_SHORTCODE
