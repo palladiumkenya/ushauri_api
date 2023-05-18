@@ -593,7 +593,7 @@ router.post('/setprogram', async(req, res) =>  {
     let upi_no = req.body.upi_no;
     let firstname = req.body.firstname;
     let user_id = req.body.user_id;
-    let otp=req.body.user_id;
+    let otp=req.body.otp_number;
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
     
       //Check if CCC is 10 digits
