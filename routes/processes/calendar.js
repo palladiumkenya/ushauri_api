@@ -7,6 +7,7 @@ const base64 = require("base64util");
 require("dotenv").config();
 //var mysql = require("mysql");
 const mysql = require('mysql2');
+const { Op } = require("sequelize");
 
 const {
   Napptreschedule
