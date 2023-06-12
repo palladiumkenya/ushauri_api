@@ -7,7 +7,7 @@ const base64 = require("base64util");
 require("dotenv").config();
 //var mysql = require("mysql");
 const mysql = require('mysql2');
-// { Op } = require("sequelize");
+const { Op } = require("sequelize");
 
 const {
   Napptreschedule
@@ -172,9 +172,6 @@ router.get('/calender', (req, res) => {
     //let proposed_date_ = req.body.reschedule_date;
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
     
-    
-    //Check if we already have an existing reschedule request
-  
      //Search if Program Details Exist
      let check_reschedule_request_exists= await Napptreschedule.findOne({
       where: {
@@ -184,23 +181,20 @@ router.get('/calender', (req, res) => {
         ]
       }
     });
-    if(!check_reschedule_request_exists)
+    if(check_reschedule_request_exists)
     {
-
       Napptreschedule.update(
         {  status:approval_status, process_date:today, updated_at:today
       },
         { returning: true, where: { id: reschedule_id} }
-      )
-        .then(() => {
+      ).then(() => {
           return res
           .status(200)
           .json({
               success: true,
               msg: 'Reschedule request processed successfully. ',
           });
-        })
-        .catch(err => {
+        }).catch(err => {
           return res
           .status(200)
           .json({
@@ -208,12 +202,6 @@ router.get('/calender', (req, res) => {
               msg: 'Appointment Reschedule Request Record Already Exist',
           });
         });
-  
     }
-        
-      
-     
   });
-
-
   module.exports = router;
