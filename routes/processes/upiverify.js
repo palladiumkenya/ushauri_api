@@ -993,4 +993,37 @@ router.get('/search',  async (req, res) => {
 });
 
 
+//Search Record for the person
+router.get('/search_ccc',  async (req, res) => {
+    const ccc_no = req.query.client_id;
+    //Search Record
+   // let client_details = await Client.findOne(client_id);
+    let client_details = await Client.findOne({
+               where: {
+                clinic_number: ccc_no
+               }, 
+           //    attributes: ["id","clinic_number", "f_name","m_name", "l_name","upi_no"],
+           })
+    if(client_details)
+    {
+        res.send({
+            success: true,
+            message: client_details
+        });
+        
+
+    }else{
+
+        res.send({ 
+            success: false,
+            message: 'No Record Found'
+        });
+       
+
+    }
+  
+
+});
+
+
 module.exports = router;

@@ -170,6 +170,7 @@ router.get('/calender', (req, res) => {
     let reschedule_id = req.body.r_id;
     let approval_status = req.body.r_status;
     //let proposed_date_ = req.body.reschedule_date;
+    console.log(reschedule_id);
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
     
      //Search if Program Details Exist
@@ -183,25 +184,42 @@ router.get('/calender', (req, res) => {
     });
     if(check_reschedule_request_exists)
     {
-      Napptreschedule.update(
-        {  status:approval_status, process_date:today, updated_at:today
-      },
-        { returning: true, where: { id: reschedule_id} }
-      ).then(() => {
-          return res
-          .status(200)
-          .json({
-              success: true,
-              msg: 'Reschedule request processed successfully. ',
-          });
-        }).catch(err => {
-          return res
-          .status(200)
-          .json({
-              success: false,
-              msg: 'Appointment Reschedule Request Record Already Exist',
-          });
-        });
+      //Process Reschedule 
+      let reschedule_app = {
+        status: parseInt(approval_status),
+        updated_at:today,
+        process_date:today
     }
+
+    
+      await Napptreschedule.update( reschedule_app, {returning: true, where: {_id: parseInt(reschedule_id) }})
+      .then(function (model) {
+        return res
+        .status(200)
+        .json({
+            success: true,
+            msg: 'Reschedule request processed successfully. ',
+        });
+
+      })
+    .catch(function (err) {
+      return res
+      .status(400)
+      .json({
+          success: false,
+          msg: 'Error processing Reschedule Request',
+      });
+     
+    });
+  }else{
+
+    return res
+    .status(200)
+    .json({
+        success: true,
+        msg: 'Reschedule already proccessed',
+    });
+
+  }
   });
   module.exports = router;
