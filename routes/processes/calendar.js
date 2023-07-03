@@ -191,26 +191,44 @@ router.get('/calender', (req, res) => {
         process_date:today
     }
 
-    
-      await Napptreschedule.update( reschedule_app, {returning: true, where: {_id: parseInt(reschedule_id) }})
-      .then(function (model) {
+    console.log(reschedule_app);
+
+    Napptreschedule.findOne({
+      where: {
+        id: reschedule_id
+      }
+    }).then( j => {
+      return Napptreschedule.update({
+        status: parseInt(approval_status),
+        updated_at:today,
+        process_date:today
+      },{ where: {
+        id: reschedule_id
+      }}).then( r => {
         return res
         .status(200)
         .json({
             success: true,
             msg: 'Reschedule request processed successfully. ',
         });
-
+      }).catch(e => {
+        return res
+        .status(400)
+        .json({
+            success: false,
+            msg: 'Error processing Reschedule Request',
+        });
       })
-    .catch(function (err) {
+    }).catch( e => {
       return res
       .status(400)
       .json({
           success: false,
           msg: 'Error processing Reschedule Request',
       });
-     
     });
+
+   
   }else{
 
     return res
