@@ -1795,4 +1795,49 @@ router.post('/chat', async(req, res) =>  {
   });
 
 });
+
+
+//Fetch  Appointment From CCC Number
+router.get('/appointments',  async (req, res) => {
+  const ccc_no = req.query.ccc_no;
+  //console.log(userid);
+  
+      try{
+
+          const conn = mysql.createPool({
+              connectionLimit: 10,
+              host: process.env.DB_SERVER,
+              port: process.env.DB_PORT,
+              user: process.env.DB_USER,
+              password: process.env.DB_PASSWORD,
+              database: process.env.DB_NAME,
+              debug: true,
+              multipleStatements: true,
+            });
+            
+           let  sql = `CALL sp_dawa_drop_appt(?)`;
+           let todo = [ccc_no];
+            conn.query(sql,todo, (error, results, fields) => {
+              if (error) {
+                  return console.error(error.message);
+                  conn.end();
+                }
+               // console.log(results);
+               //Log Activity
+              // var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'APPOINTMENTS'});
+                return res
+                 .status(200)
+                 .json({
+                   success: true,
+                    data: results[0]
+                });
+
+            conn.end();
+            });
+
+      }catch(err){
+  
+      }
+  
+});
 module.exports = router;
