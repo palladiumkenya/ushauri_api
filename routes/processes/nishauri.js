@@ -1840,4 +1840,319 @@ router.get('/appointments',  async (req, res) => {
       }
   
 });
+
+
+
+
+///Client Survey
+//Manages Access to client Survey endpoints
+function getAccessToken(url, callback) {
+  var token='';
+  auth_payload='{"msisdn": "'+process.env.PSURVEY_USER+'", "password": "'+process.env.PSURVEY_PASSWORD+'"}';
+  const url_details = {
+    url: process.env.PSURVEY_URL+'auth/token/login',
+    json: true,
+    body: JSON.parse(auth_payload)
+  }
+  request.post(url_details, function (err, httpResponse, body) { 
+      //return token=httpResponse.body;
+
+     // console.log(httpResponse.body);
+      var statusCode = httpResponse.statusCode;
+      finalData = httpResponse.body;
+      
+      callback(finalData);
+      // we are done
+      return;
+  })
+
+}
+
+router.post("/getactive_q_list", async (req, res) => {
+
+  //Get Passed Values
+  const userid = req.body.user_id;
+
+  //Get Token
+  var token_generated_='';
+  var verified_data='';
+
+  getAccessToken('url_invalid',function(token_generated){
+      //Parse Token
+    // console.log(token_generated);
+     // parsedBody= JSON.parse(token_generated);
+      token_generated_=token_generated.auth_token;
+     // console.log(token_generated_); 
+    //Call Active Surveys Endpoints
+  request.get(process.env.PSURVEY_URL+'api/current/user',{ 'headers':{
+    'Authorization':'Token '+token_generated_
+  }} , function (err, respond) {
+      console.log(token_generated_); 
+
+      //console.log(respond); 
+      //console.log(verified_data); 
+      if(res.statusCode==400)
+      {
+       res.send(respond);
+      
+      }else if (res.statusCode==200)
+      {
+          verified_data=JSON.parse(respond.body);
+          res.send(verified_data);
+
+      }else if(res.statusCode==500)
+      {
+
+       res.send(respond);
+
+     }else if(res.statusCode==401)
+     {
+       res.send(respond);
+
+      }  
+     //res.send(respond);
+  });
+
+  });
+
+});
+
+
+router.post("/getactive_q", async (req, res) => {
+
+  //Get Passed Values
+  const userid = req.body.user_id;
+
+  //Get Token
+  var token_generated_='';
+  var verified_data='';
+
+  getAccessToken('url_invalid',function(token_generated){
+      //Parse Token
+     //console.log(token_generated);
+     // parsedBody= JSON.parse(token_generated);
+      token_generated_=token_generated.auth_token;
+     // console.log(token_generated_); 
+    //Call Active Questionnaire Endpoint
+  request.get(process.env.PSURVEY_URL+'api/questionnaire/active',{ 'headers':{
+    'Authorization':'Token '+token_generated_
+  }} , function (err, respond) {
+     // console.log(token_generated_); 
+
+      //console.log(respond); 
+      //console.log(verified_data); 
+      if(res.statusCode==400)
+      {
+       res.send(respond);
+      
+      }else if (res.statusCode==200)
+      {
+          verified_data=JSON.parse(respond.body);
+          res.send(verified_data);
+
+      }else if(res.statusCode==500)
+      {
+
+       res.send(respond);
+
+     }else if(res.statusCode==401)
+     {
+       res.send(respond);
+
+      }  
+     //res.send(respond);
+  });
+
+  });
+
+});
+
+
+router.post("/start_q", async (req, res_) => {
+
+  //Get Passed Values
+  const userid = req.body.user_id;
+  const questionnaire_id_ = req.body.questionnaire_id;
+  const ccc_number_ = req.body.ccc_number;
+  const first_name_ = req.body.first_name;
+  const questionnaire_participant_id_= req.body.questionnaire_participant_id;
+  const interviewer_statement_ = req.body.interviewer_statement;
+  const informed_consent_ = req.body.informed_consent;
+  const privacy_policy_ = req.body.privacy_policy;
+
+  post_payload='{"questionnaire_id": "'+questionnaire_id_+'", "ccc_number": "'+ccc_number_+'", "first_name": "'+first_name_+'", "questionnaire_participant_id": "'+questionnaire_participant_id_+'", "interviewer_statement": "'+interviewer_statement_+'",'
+  +'"informed_consent": "'+informed_consent_+'", "privacy_policy": "'+privacy_policy_+'"}';
+
+  //Get Token
+  var token_generated_='';
+  var verified_data='';
+
+  getAccessToken('url_invalid',function(token_generated){
+      //Parse Token
+     console.log(token_generated);
+     // parsedBody= JSON.parse(token_generated);
+      token_generated_=token_generated.auth_token;
+ 
+    const url_details = {
+      url: process.env.PSURVEY_URL+'api/questionnaire/start/',
+      json: true,
+      body: JSON.parse(post_payload),
+      headers:{
+        'Authorization':'Token '+token_generated_
+      }
+    }
+
+    request.post(url_details, (err, res, body) => {
+      if (err) {
+        return console.log(err)
+      }
+    // console.log(res.body)
+     if(res.statusCode==400)
+     {
+      res_.send(body);
+     
+     }else if (res.statusCode==200)
+     {
+     // var link=body[0]['link'];
+     // var session=body[0][''];
+      res_.send(body);
+
+     }else if(res.statusCode==500)
+     {
+
+      res_.send(body);
+    }else if(res.statusCode==401)
+    {
+      res_.send(body);
+
+     }
+    // res_.send(body);
+
+    })
+
+  });
+
+});
+
+
+router.post("/next_q", async (req, res) => {
+
+  //Get Passed Values
+  const userid = req.body.user_id;
+  const next_q_ = req.body.next_q;
+  const session_ = req.body.session;
+  const question_ = req.body.question;
+  const answer_ = req.body.answer;
+  const open_text_ = req.body.open_text;
+
+
+
+  //Get Token
+  var token_generated_='';
+  var verified_data='';
+
+  getAccessToken('url_invalid',function(token_generated){
+      //Parse Token
+     //console.log(token_generated);
+     // parsedBody= JSON.parse(token_generated);
+      token_generated_=token_generated.auth_token;
+     // console.log(token_generated_); 
+    //Call Session ID Endpoint
+  request.get(process.env.PSURVEY_URL+'api/questions/answer/'+next_q_+'/'+session_id,{ 'headers':{
+    'Authorization':'Token '+token_generated_
+  }} , function (err, respond) {
+     // console.log(token_generated_); 
+
+      //console.log(respond); 
+      //console.log(verified_data); 
+      if(res.statusCode==400)
+      {
+       res.send(respond);
+      
+      }else if (res.statusCode==200)
+      {
+          verified_data=JSON.parse(respond.body);
+          res.send(verified_data);
+
+      }else if(res.statusCode==500)
+      {
+
+       res.send(respond);
+
+     }else if(res.statusCode==401)
+     {
+       res.send(respond);
+
+      }  
+     //res.send(respond);
+  });
+
+  });
+
+});
+
+
+router.post("/q_answer", async (req, res) => {
+
+  //Get Passed Values
+  const userid = req.body.user_id;
+  const session_ = req.body.session;
+  const question_ = req.body.question;
+  const answer_ = req.body.answer;
+  const open_text_ = req.body.open_text;
+
+  post_payload='{"session": "'+session_+'", "question": "'+question_+'", "answer": "'+answer_+'", "open_text": "'+open_text_+'"}';
+
+  //Get Token
+  var token_generated_='';
+  var verified_data='';
+
+  getAccessToken('url_invalid',function(token_generated){
+      //Parse Token
+      console.log(token_generated);
+      // parsedBody= JSON.parse(token_generated);
+       token_generated_=token_generated.auth_token;
+  
+     const url_details = {
+       url: process.env.PSURVEY_URL+'api/questions/answer/',
+       json: true,
+       body: JSON.parse(post_payload),
+       headers:{
+         'Authorization':'Token '+token_generated_
+       }
+     }
+ 
+     request.post(url_details, (err, res, body) => {
+       if (err) {
+         return console.log(err)
+       }
+     // console.log(res.body)
+      if(res.statusCode==400)
+      {
+       res_.send(body);
+      
+      }else if (res.statusCode==200)
+      {
+      // var link=body[0]['link'];
+      // var session=body[0][''];
+       res_.send(body);
+ 
+      }else if(res.statusCode==500)
+      {
+ 
+       res_.send(body);
+     }else if(res.statusCode==401)
+     {
+       res_.send(body);
+ 
+      }
+     // res_.send(body);
+ 
+     })
+
+  });
+
+});
+
+
 module.exports = router;
