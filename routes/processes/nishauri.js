@@ -2041,9 +2041,9 @@ router.post("/next_q", async (req, res) => {
   const userid = req.body.user_id;
   const next_q_ = req.body.next_q;
   const session_ = req.body.session;
-  const question_ = req.body.question;
-  const answer_ = req.body.answer;
-  const open_text_ = req.body.open_text;
+  //const question_ = req.body.question;
+  //const answer_ = req.body.answer;
+  //const open_text_ = req.body.open_text;
 
 
 
