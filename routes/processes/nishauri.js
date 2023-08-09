@@ -33,6 +33,7 @@ const {
 const {
   NLogs
 } = require("../../models/n_logs");
+const { parse } = require("path");
 
 
 
@@ -1857,7 +1858,7 @@ function getAccessToken(url, callback) {
   request.post(url_details, function (err, httpResponse, body) { 
       //return token=httpResponse.body;
 
-     // console.log(httpResponse.body);
+     //console.log(httpResponse);
       var statusCode = httpResponse.statusCode;
       finalData = httpResponse.body;
       
@@ -1989,7 +1990,7 @@ router.post("/start_q", async (req, res_) => {
 
   getAccessToken('url_invalid',function(token_generated){
       //Parse Token
-     console.log(token_generated);
+     //console.log(token_generated);
      // parsedBody= JSON.parse(token_generated);
       token_generated_=token_generated.auth_token;
  
@@ -2013,13 +2014,26 @@ router.post("/start_q", async (req, res_) => {
      
      }else if (res.statusCode==200)
      {
-     // var link=body[0]['link'];
-     // var session=body[0][''];
-      res_.send(body);
+    
+     //const body_ = JSON.parse(body);
+
+     //var link=body_[0]['link'];
+     //var session=body_[0]['session'];
+     //let json = JSON.parse(body);
+
+     // console.log(body.link);
+      const urlParts =body.link.split('/');
+      const q_id=urlParts.at(-1);
+
+      let return_ = {
+        link: parseInt(q_id),
+        session: body.session
+        };
+   
+      res_.send(return_);
 
      }else if(res.statusCode==500)
      {
-
       res_.send(body);
     }else if(res.statusCode==401)
     {
@@ -2095,21 +2109,25 @@ router.post("/next_q", async (req, res) => {
 router.post("/q_answer", async (req, res) => {
 
   //Get Passed Values
+  console.log(req.body.session);
+
   const userid = req.body.user_id;
   const session_ = req.body.session;
   const question_ = req.body.question;
   const answer_ = req.body.answer;
   const open_text_ = req.body.open_text;
 
-  post_payload='{"session": "'+session_+'", "question": "'+question_+'", "answer": "'+answer_+'", "open_text": "'+open_text_+'"}';
+    post_payload='{"session": "'+session_+'", "question": "'+question_+'", "answer": "'+answer_+'", "open_text": "'+open_text_+'"}';
+    console.log(post_payload);
 
+ 
   //Get Token
   var token_generated_='';
   var verified_data='';
 
   getAccessToken('url_invalid',function(token_generated){
       //Parse Token
-      console.log(token_generated);
+      //console.log(token_generated);
       // parsedBody= JSON.parse(token_generated);
        token_generated_=token_generated.auth_token;
   
@@ -2122,32 +2140,46 @@ router.post("/q_answer", async (req, res) => {
        }
      }
  
-     request.post(url_details, (err, res, body) => {
+     request.post(url_details, (err, res_, body) => {
        if (err) {
          return console.log(err)
        }
      // console.log(res.body)
-      if(res.statusCode==400)
+      if(res_.statusCode==400)
       {
-       res_.send(body);
+        res.send(body);
       
-      }else if (res.statusCode==200)
+      }else if (res_.statusCode==200)
       {
       // var link=body[0]['link'];
       // var session=body[0][''];
-       res_.send(body);
+
+      const urlParts =body.link.split('/');
+      const q_id=urlParts.at(-1);
+      const urlParts_pr =body.prevlink.split('/');
+      const q_id_pr=urlParts_pr.at(-2);
+
+      let return_ = {
+        prevlink: parseInt(q_id_pr),
+        link: parseInt(q_id),
+        session: parseInt(session_),
+        };
+   
+        res.send(return_);
+       //res_.send(body);
  
-      }else if(res.statusCode==500)
+      }else if(res_.statusCode==500)
       {
- 
-       res_.send(body);
-     }else if(res.statusCode==401)
+
+        res.send(body);
+
+     }else if(res_.statusCode==401)
      {
-       res_.send(body);
+
+      res.send(body);
  
       }
      // res_.send(body);
- 
      })
 
   });
