@@ -2023,7 +2023,7 @@ router.post("/start_q", async (req, res_) => {
 
      // console.log(body.link);
       const urlParts =body.link.split('/');
-      const q_id=urlParts.at(-1);
+      const q_id=urlParts[urlParts.length-1];
 
       let return_ = {
         link: parseInt(q_id),
@@ -2155,9 +2155,10 @@ router.post("/q_answer", async (req, res) => {
       // var session=body[0][''];
 
       const urlParts =body.link.split('/');
-      const q_id=urlParts.at(-1);
+      console.log(urlParts);
+      const q_id=urlParts[urlParts.length-1];
       const urlParts_pr =body.prevlink.split('/');
-      const q_id_pr=urlParts_pr.at(-2);
+      const q_id_pr=urlParts_pr[urlParts_pr.length-2];
 
       let return_ = {
         prevlink: parseInt(q_id_pr),
