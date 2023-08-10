@@ -2072,7 +2072,7 @@ router.post("/next_q", async (req, res) => {
       token_generated_=token_generated.auth_token;
      // console.log(token_generated_); 
     //Call Session ID Endpoint
-  request.get(process.env.PSURVEY_URL+'api/questions/answer/'+next_q_+'/'+session_id,{ 'headers':{
+  request.get(process.env.PSURVEY_URL+'api/questions/answer/'+next_q_+'/'+session_,{ 'headers':{
     'Authorization':'Token '+token_generated_
   }} , function (err, respond) {
      // console.log(token_generated_); 
@@ -2085,6 +2085,7 @@ router.post("/next_q", async (req, res) => {
       
       }else if (res.statusCode==200)
       {
+        console.log(respond.body);
           verified_data=JSON.parse(respond.body);
           res.send(verified_data);
 
