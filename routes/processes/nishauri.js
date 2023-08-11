@@ -2154,9 +2154,17 @@ router.post("/q_answer", async (req, res) => {
       {
       // var link=body[0]['link'];
       // var session=body[0][''];
+     // console.log(body);
+
+      if(typeof body.link == "undefined"){
+        // Assign value to the property here
+        //Obj.property = someValue;
+        res.send(body);
+
+    }else{
 
       const urlParts =body.link.split('/');
-      console.log(urlParts);
+     // console.log(urlParts);
       const q_id=urlParts[urlParts.length-1];
       const urlParts_pr =body.prevlink.split('/');
       const q_id_pr=urlParts_pr[urlParts_pr.length-2];
@@ -2168,6 +2176,10 @@ router.post("/q_answer", async (req, res) => {
         };
    
         res.send(return_);
+
+    }
+
+     
        //res_.send(body);
  
       }else if(res_.statusCode==500)
