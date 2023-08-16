@@ -1324,7 +1324,7 @@ router.get('/vl_results', async(req, res) =>  {
                       sp_status.push({result:'<LDL copies/ml', status: 'Viral Suppressed', date: lab_order_date_ , plot: parseInt(49)})
                       //console.log(sp_status);
                   } else {
-                    if(value_.replace(/[^0-9]/g, '')<1000)
+                    if(value_.replace(/[^0-9]/g, '')<200)
                     {
                       sp_status.push({result:value_.replace(/[^0-9]/g, '')+' copies/ml', status: 'Viral Suppressed', date: lab_order_date_,  plot: parseInt(value_.replace(/[^0-9]/g, ''))})
 
