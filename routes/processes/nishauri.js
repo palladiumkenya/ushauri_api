@@ -1163,7 +1163,7 @@ router.get('/vl_result', async(req, res) =>  {
                       sp_status.push('VS')
                       //console.log(sp_status);
                   } else {
-                    if(value_<1000)
+                    if(value_<200)
                     {
                       sp_status.push('VS')
                     }else
