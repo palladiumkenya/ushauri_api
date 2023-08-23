@@ -1977,7 +1977,7 @@ router.post("/getactive_q", async (req, res) => {
       token_generated_=token_generated.auth_token;
      // console.log(token_generated_); 
     //Call Active Questionnaire Endpoint
-  request.get(process.env.PSURVEY_URL+'api/questionnaire/active'+check_program_valid.mfl_code+'/'+check_program_valid.clinic_number,{ 'headers':{
+  request.get(process.env.PSURVEY_URL+'api/questionnaire/active/'+check_program_valid.mfl_code+'/'+check_program_valid.clinic_number,{ 'headers':{
     'Authorization':'Token '+token_generated_
   }} , function (err, respond) {
      // console.log(token_generated_); 
