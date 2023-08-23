@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const request = require('request');
 const moment = require("moment");
+const { Op } = require("sequelize");
 
 
 
@@ -97,26 +98,20 @@ router.post("/", async (req, res) => {
 
 
 //Verify OTP Details
-router.post('/verifyotp', async(req, res) =>  {
+router.post('/verifyotp/', async(req, res) =>  {
   const phone = req.body.phone_no;
   const otp_ = req.body.otp;
   
   //Check If User Exists
-  let check_username= await User.findOne({
-      where: {
-        [Op.and]: [
-          { account_otp_number: otp_},
-          { phone_no: phone }
-        ]
-      }
-    });
+  let check_username = await User.findOne({ where: { phone_no: phone } });
 
-
-    if(check_username)
+//console.log(check_username);
+    if(check_username.account_otp_number==otp_)
     {
+      let user = await User.findOne({ where: { phone_no: phone } });
       let result = {};
 
-      result.result = [{ mfl_code: user.facility_id }, { otp: '' }];
+      result.result = [{ mfl_code: user.facility_id }];
       //Send out OTP to the facility number
       res.status(200).send(result);
       

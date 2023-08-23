@@ -24,6 +24,8 @@ const User = sequelize.sequelize.define(
       allowNull: false
     },
     partner_id: Sequelize.INTEGER,
+    account_otp_number:Sequelize.STRING,
+    account_otp_date:Sequelize.DATEONLY,
     facility_id: {
       type: Sequelize.INTEGER,
       len: 5
