@@ -1877,6 +1877,27 @@ router.post("/getactive_q_list", async (req, res) => {
   //Get Token
   var token_generated_='';
   var verified_data='';
+var check_program_valid='';
+  let check_ccc_no= await NUserprograms.findOne({
+    where: {
+      [Op.and]: [
+        { user_id: base64.decode(userid) },
+        { program_type: '1'}, // Set 1 for HIV program
+        { is_active: '1'} // Set 1 for HIV program
+      ]
+    }
+  });
+ // console.log(check_ccc_no);
+  if(check_ccc_no)
+  {
+
+    //Get Client Details
+     check_program_valid= await Client.findOne({
+      where: {
+        id: check_ccc_no.program_identifier
+     }
+    });
+  }
 
   getAccessToken('url_invalid',function(token_generated){
       //Parse Token
@@ -1885,7 +1906,7 @@ router.post("/getactive_q_list", async (req, res) => {
       token_generated_=token_generated.auth_token;
      // console.log(token_generated_); 
     //Call Active Surveys Endpoints
-  request.get(process.env.PSURVEY_URL+'api/current/user',{ 'headers':{
+  request.get(process.env.PSURVEY_URL+'api/current/user/'+check_program_valid.mfl_code+'/'+check_program_valid.clinic_number,{ 'headers':{
     'Authorization':'Token '+token_generated_
   }} , function (err, respond) {
       console.log(token_generated_); 
@@ -1927,6 +1948,27 @@ router.post("/getactive_q", async (req, res) => {
   //Get Token
   var token_generated_='';
   var verified_data='';
+  var check_program_valid='';
+  let check_ccc_no= await NUserprograms.findOne({
+    where: {
+      [Op.and]: [
+        { user_id: base64.decode(userid) },
+        { program_type: '1'}, // Set 1 for HIV program
+        { is_active: '1'} // Set 1 for HIV program
+      ]
+    }
+  });
+ // console.log(check_ccc_no);
+  if(check_ccc_no)
+  {
+
+    //Get Client Details
+     check_program_valid= await Client.findOne({
+      where: {
+        id: check_ccc_no.program_identifier
+     }
+    });
+  }
 
   getAccessToken('url_invalid',function(token_generated){
       //Parse Token
@@ -1935,7 +1977,7 @@ router.post("/getactive_q", async (req, res) => {
       token_generated_=token_generated.auth_token;
      // console.log(token_generated_); 
     //Call Active Questionnaire Endpoint
-  request.get(process.env.PSURVEY_URL+'api/questionnaire/active',{ 'headers':{
+  request.get(process.env.PSURVEY_URL+'api/questionnaire/active'+check_program_valid.mfl_code+'/'+check_program_valid.clinic_number,{ 'headers':{
     'Authorization':'Token '+token_generated_
   }} , function (err, respond) {
      // console.log(token_generated_); 
