@@ -86,20 +86,20 @@ router.post('/signup', async(req, res) =>  {
     }
 
     //Check if Email Exists
-    let check_user_email = await NUsers.findOne({
-        where: {
-            email:email_address
-        },
-        })
+   // let check_user_email = await NUsers.findOne({
+    //    where: {
+    //        email:email_address
+    //    },
+    //    })
 
-    if (check_user_email){
-        return res
-            .status(200)
-            .json({
-                success: false,
-                msg: 'User with similar email address already exists',
-            });
-        }
+   // if (check_user_email){
+    //    return res
+      //      .status(200)
+        //    .json({
+          //      success: false,
+            //    msg: 'User with similar email address already exists',
+           // });
+       // }
 
     //Check if Telephone Number Already Exists
     let check_user_phone = await NUsers.findOne({
