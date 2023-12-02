@@ -3,6 +3,8 @@ const app = express();
 const bodyParser = require("body-parser");
 require("express-async-errors");
 require("dotenv").config();
+const passport = require('passport');
+require('./passport-config')(passport);
 
 // const users = require("./routes/users");
 const clients = require("./routes/clients");
@@ -16,6 +18,7 @@ const verifyupi = require("./routes/processes/upiverify");
 const calendarupi = require("./routes/processes/calendar");
 const pmtct_new = require("./routes/processes/pmtct");
 const nishauri_new = require("./routes/processes/nishauri");
+const nishauri_new_v2 = require("./routes/processes/nishauri_new");
 const locator_info = require("./routes/processes/locator");
 const mlab = require("./routes/processes/mlab");
 const dfc = require("./routes/processes/process_dfc");
@@ -29,6 +32,7 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
+
 //verify upi 
 app.use('/mohupi',verifyupi);
 //verify upi 
@@ -38,6 +42,10 @@ app.use('/appnt',calendarupi);
 app.use('/pmtct',pmtct_new);
 //Nishauri Module
 app.use('/nishauri',nishauri_new);
+
+
+app.use('/nishauri_new',nishauri_new_v2);
+
 
 //locator information
 app.use('/locator',locator_info);
