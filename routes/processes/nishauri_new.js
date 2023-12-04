@@ -633,7 +633,7 @@ router.post('/validate_program', passport.authenticate('jwt', { session: false }
 
 
 //Set Programs 
-router.post('/setprogram', async(req, res) =>  {
+router.post('/setprogram', passport.authenticate('jwt', { session: false }), async(req, res) =>  {
     let ccc_no = req.body.ccc_no;
     let upi_no = req.body.upi_no;
     let firstname = req.body.firstname;
@@ -834,7 +834,7 @@ router.get('/profile',  async (req, res) => {
 
 
 //Fetch Home Upcoming Appointments
-router.get('/current_appt',  async (req, res) => {
+router.get('/current_appt',  passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const userid = req.query.user_id;
   //console.log(userid);
   
@@ -879,7 +879,7 @@ router.get('/current_appt',  async (req, res) => {
 
 
 //Fetch Appointment Trends
-router.get('/appointment_trends',  async (req, res) => {
+router.get('/appointment_trends',  passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const userid = req.query.user_id;
   //console.log(userid);
   
@@ -926,7 +926,7 @@ router.get('/appointment_trends',  async (req, res) => {
 
 //Missed Appointment by type
 
-router.get('/appointment_missed',  async (req, res) => {
+router.get('/appointment_missed',  passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const userid = req.query.user_id;
   //console.log(userid);
   
@@ -1055,7 +1055,7 @@ router.get('/appointment_future',  async (req, res) => {
 
 
 //Reschedule Appointment
-router.post('/reschedule', async(req, res) =>  {
+router.post('/reschedule', passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   let app_id = req.body.appt_id;
   let reason_ = req.body.reason;
   let proposed_date_ = req.body.reschedule_date;
@@ -1121,7 +1121,7 @@ router.post('/reschedule', async(req, res) =>  {
 
 //Fetch Regimen
 
-router.get('/vl_result', async(req, res) =>  {
+router.get('/vl_result', passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const userid = req.query.user_id;
   
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
@@ -1277,7 +1277,7 @@ router.get('/vl_result', async(req, res) =>  {
 });
 
 
-router.get('/vl_results', async(req, res) =>  {
+router.get('/vl_results', passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const userid = req.query.user_id;
   
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
@@ -1518,7 +1518,7 @@ var eid_results_out=function(hei_no) {
     return return_variable;
   }
   
-  router.get('/eid_results', async(req, res) =>  {
+  router.get('/eid_results', passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const userid = req.query.user_id;
   try{
     const conn = mysql.createPool({
@@ -1654,7 +1654,7 @@ router.get('/regimen', async(req, res) =>  {
 
 
 //Fetch Regimen
-router.get('/artdirectory', async(req, res) =>  {
+router.get('/artdirectory', passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const art_search = req.query.search;
   const userid = req.query.user_id;
 
@@ -1702,7 +1702,7 @@ router.get('/artdirectory', async(req, res) =>  {
 
 //Fetch Dependants 
 
-router.get('/dependants',  async (req, res) => {
+router.get('/dependants',  passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const userid = req.query.user_id;
   //console.log(userid);
   
@@ -1808,7 +1808,7 @@ router.post('/bmi_calculator',  async (req, res) => {
 
 
 
-router.post('/chat', async(req, res) =>  {
+router.post('/chat', passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const question_ = req.body.question;
   const userid = req.body.user_id;
 
@@ -1844,7 +1844,7 @@ router.post('/chat', async(req, res) =>  {
 
 
 //Fetch  Appointment From CCC Number
-router.get('/appointments',  async (req, res) => {
+router.get('/appointments',  passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   const ccc_no = req.query.ccc_no;
   //console.log(userid);
   
@@ -1914,7 +1914,7 @@ function getAccessToken(url, callback) {
 
 }
 
-router.post("/getactive_q_list", async (req, res) => {
+router.post("/getactive_q_list", passport.authenticate('jwt', { session: false }), async(req, res) =>  {
 
   //Get Passed Values
   const userid = req.body.user_id;
@@ -2056,8 +2056,7 @@ router.post("/getactive_q", async (req, res) => {
 });
 
 
-router.post("/start_q", async (req, res_) => {
-
+router.post("/start_q", passport.authenticate('jwt', { session: false }), async(req, res) =>  {
   //Get Passed Values
   const userid = req.body.user_id;
   const questionnaire_id_ = req.body.questionnaire_id;
@@ -2194,7 +2193,7 @@ router.post("/next_q", async (req, res) => {
 });
 
 
-router.post("/q_answer", async (req, res) => {
+router.post("/q_answer", passport.authenticate('jwt', { session: false }), async(req, res) =>  {
 
   //Get Passed Values
   console.log(req.body.session);
