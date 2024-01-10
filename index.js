@@ -26,6 +26,8 @@ const pmtct = require("./routes/processes/process_pmtct");
 const editApps = require("./routes/processes/edit_appointment");
 const terms = require("./routes/terms");
 const conf = require("./routes/configs");
+const provider = require("./routes/users");
+const cases = require("./routes/processes/case");
 // app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -33,9 +35,9 @@ app.use(bodyParser.urlencoded({
 }));
 
 
-//verify upi 
+//verify upi
 app.use('/mohupi',verifyupi);
-//verify upi 
+//verify upi
 app.use('/appnt',calendarupi);
 
 //PMTCT Module
@@ -74,6 +76,10 @@ app.use("/api/edit_appointment", editApps)
 app.use("/terms", terms)
 //configs
 app.use("/config", conf)
+//pull case managers
+app.use("/user", provider)
+// assign cases
+app.use("/case", cases)
 
 
 const PORT = process.env.PORT || 3000;
