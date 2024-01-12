@@ -19,7 +19,8 @@ const caseAssign = sequelize.sequelize.define(
 		relationship: Sequelize.TEXT,
 		start_date: Sequelize.DATEONLY,
 		end_date: Sequelize.DATEONLY,
-		created_by: Sequelize.INTEGER
+		created_by: Sequelize.INTEGER,
+		updated_by: Sequelize.INTEGER
 	},
 	{
 		timestamps: true,
