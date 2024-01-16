@@ -197,4 +197,59 @@ router.put("/assign/update/:clinicNumber", async (req, res) => {
 	}
 });
 
+router.get("/search", async (req, res) => {
+	try {
+		let clinicNumber = req.query.clinic_number;
+
+		let client = await Client.findOne({
+			where: {
+				clinic_number: clinicNumber
+			}
+		});
+
+		if (!client) {
+			return res.status(404).json({
+				success: false,
+				message: `Clinic number ${clinicNumber} does not exist in the system`
+			});
+		}
+
+		const cases = await caseAssign.findOne({
+			where: {
+				client_id: client.id
+			}
+		});
+
+		if (!cases || cases.length === 0) {
+			return res.status(400).json({
+				success: false,
+				message: `No case found for Client ${clinicNumber}`
+			});
+		} else {
+			const getCases = Array.isArray(cases)
+				? cases.map(
+						({
+							reason_assign,
+							other_reason,
+							relationship,
+							start_date,
+							end_date
+						}) => ({
+							reason_assign,
+							other_reason,
+							relationship,
+							start_date,
+							end_date
+						})
+				  )
+				: [cases];
+
+			res.send(getCases);
+		}
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Error while getting cases");
+	}
+});
+
 module.exports = router;
