@@ -48,8 +48,6 @@ router.post("/assign", async (req, res) => {
 			message: `Client ${clinic_number} does not belong to your facility, the client belongs to ${get_facility.name}`
 		});
 
-
-
 	if (!check_user)
 		return res.json({
 			success: false,
@@ -202,10 +200,23 @@ router.put("/assign/update/:clinicNumber", async (req, res) => {
 router.get("/search", async (req, res) => {
 	try {
 		let clinicNumber = req.query.clinic_number;
+		let phone_no = req.query.phone_no;
 
 		let client = await Client.findOne({
 			where: {
 				clinic_number: clinicNumber
+			}
+		});
+
+		let get_facility = await masterFacility.findOne({
+			where: {
+				code: client.mfl_code
+			},
+			attributes: ["code", "name"]
+		});
+		let check_user = await User.findOne({
+			where: {
+				phone_no
 			}
 		});
 
@@ -215,6 +226,11 @@ router.get("/search", async (req, res) => {
 				message: `Clinic number ${clinicNumber} does not exist in the system`
 			});
 		}
+		if (client.mfl_code != check_user.facility_id)
+			return res.json({
+				success: false,
+				message: `Client ${clinicNumber} does not belong to your facility, the client belongs to ${get_facility.name}`
+			});
 
 		const cases = await caseAssign.findOne({
 			where: {
