@@ -7,6 +7,7 @@ const { date } = require("joi");
 const { caseAssign } = require("../../models/case_assign");
 const { Client } = require("../../models/client");
 const { User } = require("../../models/user");
+const { masterFacility } = require("../../models/master_facility");
 
 router.post("/assign", async (req, res) => {
 	let phone_no = req.body.phone_no;
@@ -30,6 +31,11 @@ router.post("/assign", async (req, res) => {
 		},
 		attributes: ["code", "name"]
 	});
+	let check_user = await User.findOne({
+		where: {
+			phone_no
+		}
+	});
 
 	if (!check_client)
 		return res.json({
@@ -42,11 +48,7 @@ router.post("/assign", async (req, res) => {
 			message: `Client ${clinic_number} does not belong to your facility, the client belongs to ${get_facility.name}`
 		});
 
-	let check_user = await User.findOne({
-		where: {
-			phone_no
-		}
-	});
+
 
 	if (!check_user)
 		return res.json({
