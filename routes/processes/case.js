@@ -1,13 +1,14 @@
 const express = require("express");
 const moment = require("moment");
 const _ = require("lodash");
-const Op = require("sequelize").Op;
+const { Op, Sequelize } = require("sequelize");
 const router = express.Router();
 const { date } = require("joi");
 const { caseAssign } = require("../../models/case_assign");
 const { Client } = require("../../models/client");
 const { User } = require("../../models/user");
 const { masterFacility } = require("../../models/master_facility");
+const { caseHome } = require("../../models/case_home");
 
 router.post("/assign", async (req, res) => {
 	let phone_no = req.body.phone_no;
@@ -204,7 +205,7 @@ router.get("/search", async (req, res) => {
 
 		let client = await Client.findOne({
 			where: {
-				clinic_number: clinicNumber
+				clinicNumber
 			}
 		});
 
@@ -221,7 +222,7 @@ router.get("/search", async (req, res) => {
 		});
 
 		if (!client) {
-			return res.status(404).json({
+			return res.json({
 				success: false,
 				message: `Clinic number ${clinicNumber} does not exist in the system`
 			});
@@ -267,6 +268,98 @@ router.get("/search", async (req, res) => {
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Error while getting cases");
+	}
+});
+
+router.post("/home/visit", async (req, res) => {
+	let phone_no = req.body.phone_no;
+	let clinic_number = req.body.clinic_number;
+	let family_member_name = req.body.family_member_name;
+	let telephone_no = req.body.telephone_no;
+	let landmark = req.body.landmark;
+	let patient_independent = req.body.patient_independent;
+	let basic_need = req.body.basic_need;
+	let sexual_partner = req.body.sexual_partner;
+	let disclosed_hiv_status = req.body.disclosed_hiv_status;
+	let disclosed_person = req.body.disclosed_person;
+	let arv_stored = req.body.arv_stored;
+	let arv_taken = req.body.arv_taken;
+	let social_support_household = req.body.social_support_household;
+	let social_support_community = req.body.social_support_community;
+	let non_clinical_services = req.body.non_clinical_services;
+	let mental_health = req.body.mental_health;
+	let stress_situation = req.body.stress_situation;
+	let use_drug = req.body.use_drug;
+	let side_effect = req.body.side_effect;
+	let other_note = req.body.other_note;
+	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+
+	let check_client = await Client.findOne({
+		where: {
+			clinic_number
+		}
+	});
+	let get_facility = await masterFacility.findOne({
+		where: {
+			code: check_client.mfl_code
+		},
+		attributes: ["code", "name"]
+	});
+	let check_user = await User.findOne({
+		where: {
+			phone_no
+		}
+	});
+
+	let existingVisit = await caseHome.findOne({
+		where: {
+			client_id: check_client.id,
+			[Op.and]: [
+                Sequelize.literal(`DATE(created_at) = '${today}'`)
+            ]
+		}
+	});
+
+	if (existingVisit) {
+        return res.status(400).json({
+            success: false,
+            message: `Home Visit details for Client: ${clinic_number} have already been captured today`
+        });
+    }else {
+		try {
+			await caseHome.create({
+				client_id: check_client.id,
+				family_member_name: family_member_name,
+				telephone_no: telephone_no,
+				landmark: landmark,
+				patient_independent: patient_independent,
+				basic_need: basic_need,
+				sexual_partner: sexual_partner,
+				disclosed_hiv_status: disclosed_hiv_status,
+				disclosed_person: disclosed_person,
+				arv_stored: arv_stored,
+				arv_taken: arv_taken,
+				social_support_household: social_support_household,
+				social_support_community: social_support_community,
+				non_clinical_services: non_clinical_services,
+				mental_health: mental_health,
+				stress_situation: stress_situation,
+				use_drug: use_drug,
+				side_effect: side_effect,
+				other_note: other_note,
+				created_at: today,
+				created_by: check_user.id
+			});
+			return res.status(200).json({
+				success: true,
+				message: `Client ${clinic_number} details has been successfully captured`
+			});
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				message: `Error occurred while capturing details. Please try again.`
+			});
+		}
 	}
 });
 
