@@ -205,7 +205,7 @@ router.get("/search", async (req, res) => {
 
 		let client = await Client.findOne({
 			where: {
-				clinicNumber
+				clinic_number:clinicNumber
 			}
 		});
 
