@@ -23,18 +23,7 @@ router.post("/assign", async (req, res) => {
 
 	let check_client = await Client.findOne({
 		where: {
-			clinic_number
-		}
-	});
-	let get_facility = await masterFacility.findOne({
-		where: {
-			code: check_client.mfl_code
-		},
-		attributes: ["code", "name"]
-	});
-	let check_user = await User.findOne({
-		where: {
-			phone_no
+			clinic_number: clinic_number
 		}
 	});
 
@@ -43,6 +32,17 @@ router.post("/assign", async (req, res) => {
 			success: false,
 			message: `Clinic number ${clinic_number} does not exist in the system`
 		});
+	let check_user = await User.findOne({
+		where: {
+			phone_no
+		}
+	});
+	let get_facility = await masterFacility.findOne({
+		where: {
+			code: check_client.mfl_code
+		},
+		attributes: ["code", "name"]
+	});
 	if (check_client.mfl_code != check_user.facility_id)
 		return res.json({
 			success: false,
@@ -205,7 +205,7 @@ router.get("/search", async (req, res) => {
 
 		let client = await Client.findOne({
 			where: {
-				clinic_number:clinicNumber
+				clinic_number: clinicNumber
 			}
 		});
 
@@ -314,18 +314,16 @@ router.post("/home/visit", async (req, res) => {
 	let existingVisit = await caseHome.findOne({
 		where: {
 			client_id: check_client.id,
-			[Op.and]: [
-                Sequelize.literal(`DATE(created_at) = '${today}'`)
-            ]
+			[Op.and]: [Sequelize.literal(`DATE(created_at) = '${today}'`)]
 		}
 	});
 
 	if (existingVisit) {
-        return res.status(400).json({
-            success: false,
-            message: `Home Visit details for Client: ${clinic_number} have already been captured today`
-        });
-    }else {
+		return res.status(400).json({
+			success: false,
+			message: `Home Visit details for Client: ${clinic_number} have already been captured today`
+		});
+	} else {
 		try {
 			await caseHome.create({
 				client_id: check_client.id,
