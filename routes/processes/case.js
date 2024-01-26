@@ -65,13 +65,18 @@ router.post("/assign", async (req, res) => {
 			message: `Phone number: ${phone_no} is not active in the system.`
 		});
 
-	let existing_assigned = await caseAssign.count({
+	let existing_assigned = await caseAssign.findOne({
 		where: {
 			client_id: check_client.id
 		}
 	});
 
-	if (existing_assigned === 0) {
+	if (existing_assigned) {
+		return res.status(400).json({
+			success: false,
+			message: `Client ${clinic_number} is already assigned to a case manager`
+		});
+	} else {
 		try {
 			await caseAssign.create({
 				client_id: check_client.id,
@@ -94,11 +99,6 @@ router.post("/assign", async (req, res) => {
 				message: `Error occurred while assigning a case. Please try again.`
 			});
 		}
-	} else {
-		return res.status(400).json({
-			success: false,
-			message: `Client ${clinic_number} is already assigned to a case manager`
-		});
 	}
 });
 
