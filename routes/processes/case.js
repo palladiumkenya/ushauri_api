@@ -19,7 +19,7 @@ router.post("/assign", async (req, res) => {
 	let relationship = req.body.relationship;
 	let start_date = req.body.start_date;
 	let end_date = req.body.end_date;
-	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+	let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
 
 	let check_client = await Client.findOne({
 		where: {

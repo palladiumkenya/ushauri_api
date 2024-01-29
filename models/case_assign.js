@@ -10,11 +10,8 @@ const caseAssign = sequelize.sequelize.define(
 			autoIncrement: true
 		},
 		client_id: Sequelize.INTEGER,
+		reason_assign: Sequelize.TEXT,
 		other_reason: Sequelize.TEXT,
-		reason_assign: {
-			type: Sequelize.TEXT,
-			allowNull: true
-		},
 		provider_id: Sequelize.INTEGER,
 		relationship: Sequelize.TEXT,
 		start_date: Sequelize.DATEONLY,
