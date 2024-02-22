@@ -4,10 +4,23 @@ const request = require('request');
 const https = require('https');
 const moment = require("moment");
 const base64 = require("base64util");
+const {spawn} = require('child_process');
+
 require("dotenv").config();
+
+//import { client_chat } from "@gradio/client";
+//const client_chat = require('@gradio/client', { force: true });
+//const dynamic = new Function('modulePath', 'return import(modulePath)');
+
+
+//const { client_chat } = require("@gradio/client");
+
+
+
 //const Op = require("sequelize");
 const { Op } = require("sequelize");
 var bcrypt = require('bcrypt');
+
 //const Sequelize = require("sequelize");
 
 //const Sequelize = require('sequelize');
@@ -1766,35 +1779,29 @@ router.post('/bmi_calculator',  async (req, res) => {
 router.post('/chat', async(req, res) =>  {
   const question_ = req.body.question;
   const userid = req.body.user_id;
+  var dataToSend;
+  var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'CHAT'});
 
-  
-  //client_payload='{"question": "hello"}';
- 
-  const url_details = {
-    url: process.env.CHAT_URL+'chatbot',
-  //  json: true,
-    form: { question: question_ },
-    "rejectUnauthorized": false,
-  }
-  request.post(url_details, (err, res_, body) => {
-    if (err) {
-      return console.log(err)
-    }
- //var obj_ = body;
- //console.log(body);
- var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'CHAT'});
+  // spawn new child process to call the python script
+ const python = spawn('python3', ['./routes/processes/nishauri_chatbot.py',question_]);
 
- var obj = JSON.parse(body);
- return res
- .status(200)
- .json({
+ python.stdout.on('data', function (data) {
+  console.log('Pipe data from python script ...'.data);
+  dataToSend = data.toString();
+ });
+ // in close event we are sure that stream from child process is closed
+ python.on('close', (code) => {
+ console.log(`child process close all stdio with code ${code}`);
+ // send data to browser
+
+    res.status(200).json({
      success: true,
-     msg: obj.response,
+      msg: dataToSend,
      question:question_
  });
- //var sp_status=[];
-  });
 
+ });
+   
 });
 
 
