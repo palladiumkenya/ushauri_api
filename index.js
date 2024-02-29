@@ -82,7 +82,7 @@ app.use("/user", provider)
 app.use("/case", cases)
 
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
     console.log(`Ushauri Web App started. Listening on Port: ${PORT}`)
 );
