@@ -1776,31 +1776,56 @@ router.post('/bmi_calculator',  async (req, res) => {
 
 
 
-router.post('/chat', async(req, res) =>  {
-  const question_ = req.body.question;
-  const userid = req.body.user_id;
-  var dataToSend;
-  var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'CHAT'});
+router.post('/chat', async (req, res) => {
+    const question_ = req.body.question;
+    const userid = req.body.user_id;
+    var dataToSend;
+    var log_activity_ = NLogs.create({ user_id: base64.decode(userid), access: 'CHAT' });
+
+    let { PythonShell } = require('python-shell');
+    let options = {
+        mode: 'text',
+        pythonOptions: ['-u'], // get print results in real-time
+        args: [question_],
+       scriptPath: './routes/processes/'
+    };
+
+
+    //Upload file first
+
+    PythonShell.run('nishauri_chatbot.py', options).then(messages => {
+        // results is an array consisting of messages collected during execution
+        console.log('results: %j', messages);
+
+
+        res.status(200).json({
+            success: true,
+            msg: messages.toString(),
+            question:question_
+        });
+    });
+    
+//}));
 
   // spawn new child process to call the python script
- const python = spawn('python3', ['./routes/processes/nishauri_chatbot.py',question_]);
+// const python = spawn('python3', ['./routes/processes/nishauri_chatbot.py',question_]);
 
- python.stdout.on('data', function (data) {
-  console.log('Pipe data from python script ...'.data);
-  dataToSend = data.toString();
- });
+ //python.stdout.on('data', function (data) {
+  //console.log('Pipe data from python script ...'.data);
+  //dataToSend = data.toString();
+ //});
  // in close event we are sure that stream from child process is closed
- python.on('close', (code) => {
- console.log(`child process close all stdio with code ${code}`);
+ //python.on('close', (code) => {
+ //console.log(`child process close all stdio with code ${code}`);
  // send data to browser
 
-    res.status(200).json({
-     success: true,
-      msg: dataToSend,
-     question:question_
- });
+   // res.status(200).json({
+    // success: true,
+     // msg: dataToSend,
+    // question:question_
+ //});
 
- });
+ //});
    
 });
 

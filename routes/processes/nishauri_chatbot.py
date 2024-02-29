@@ -3,6 +3,7 @@ import sys
 
 # take passed variable values 
 question = sys.argv[1];
+#question = 'am good';
 #token = sys.argv[2];
 
 
