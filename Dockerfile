@@ -8,7 +8,7 @@ RUN npm install
 
 # Install Python and pip, install Python dependencies using pip, and clean up
 RUN apt-get update && apt-get install -y python3 python3-pip && \
-    pip3 install gradio_client && \
+    pip3 install gradio_client python-shell  && \
     apt-get clean
 
 # Copy your Node.js application code to the working directory
