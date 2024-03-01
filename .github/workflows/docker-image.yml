@@ -23,12 +23,14 @@ jobs:
     - name: Build the Docker image
       run: docker build -t ushauri_api:latest . 
   test:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Test the Docker image
         run:  docker run -p 7002:5000 --name ushauri_api -d --restart always ushauri_api:latest
   push_to_registry:
+    needs: build
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
