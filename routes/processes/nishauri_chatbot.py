@@ -2,15 +2,15 @@
 import sys
 
 # take passed variable values 
-question = sys.argv[1];
-#question = 'am good';
+# question = sys.argv[1];
+question = 'How do i reschedule appointment?';
 #token = sys.argv[2];
 
 
 # calcluate the total using variable values and print the output
 def chat_nishauri(question):
     from gradio_client import Client;
-    client = Client("Nishauri/ChatBot", verbose=False);
+    client = Client("http://192.168.1.44:7861", verbose=False);
     result = client.predict(
 		question,	# str  in 'question' Textbox component
 		api_name="/predict"
