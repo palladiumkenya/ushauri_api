@@ -49,7 +49,6 @@ router.post("/signup", async (req, res) => {
 	let username = req.body.username;
 	let email_address = req.body.email;
 	let password_1 = req.body.password;
-	let password_2 = req.body.re_password;
 	let terms = req.body.termsAccepted;
 	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
@@ -63,14 +62,6 @@ router.post("/signup", async (req, res) => {
 		return res.status(200).json({
 			success: false,
 			msg: "Signup terms have not been accepted"
-		});
-	}
-
-	//Check if Passwords Are Similar
-	if (password_1 !== password_2) {
-		return res.status(200).json({
-			success: false,
-			msg: "Password Mis-match"
 		});
 	}
 
@@ -148,10 +139,10 @@ router.post("/signin", async (req, res) => {
 	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
 	//Check If User Exists
-	//console.log(vusername);
 	let check_username = await NUsers.findOne({
 		where: {
-			[Op.or]: [{ msisdn: vusername }, { email: vusername }]
+			[Op.or]: [{ msisdn: vusername }, { email: vusername }],
+      is_active: 1
 		}
 	});
 
@@ -626,14 +617,12 @@ router.post("/validate_program", passport.authenticate("jwt", { session: false }
 );
 
 //Set Programs
-router.post(
-	"/setprogram",
-	passport.authenticate("jwt", { session: false }),
+router.post("/setprogram", passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		//common body requests for all programs
 		let program_id = req.body.program_id;
 		let user_id = req.body.user_id;
-		let otp = req.body.otp_number;
+	//	let otp = req.body.otp_number;
 		let today = moment(new Date().toDateString())
 			.tz("Africa/Nairobi")
 			.format("YYYY-MM-DD H:M:S");
@@ -655,25 +644,12 @@ router.post(
 		//Check If User Exists
 		let check_username = await NUsers.findOne({
 			where: {
-				[Op.and]: [{ is_active: "0" }, { id: base64.decode(user_id) }]
+				[Op.and]: [{ id: base64.decode(user_id) }]
 			}
 		});
 
-		//Check if OTP is Valid
-		let otp_validate = await NUsers.findOne({
-			where: {
-				[Op.and]: [{ profile_otp_number: otp }, { id: base64.decode(user_id) }]
-			}
-		});
-
-		if (!otp_validate) {
-			return res.status(200).json({
-				success: false,
-				msg: "Invalid or Expired OTP"
-			});
-		}
 		// Hiv program set up
-		if (programs.id === 1) {
+		if (program_id === 1) {
 			let ccc_no = req.body.ccc_no;
 			let upi_no = req.body.upi_no;
 			let firstname = req.body.firstname;
@@ -693,7 +669,7 @@ router.post(
 			});
 
 			if (check_program_valid) {
-				if (!(check_program_valid.f_name.uppercase = firstname.uppercase)) {
+				if (check_program_valid.f_name.toUpperCase() !== firstname.toUpperCase()) {
 					return res.status(200).json({
 						success: false,
 						msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
