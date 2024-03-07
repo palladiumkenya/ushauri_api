@@ -2,7 +2,7 @@
 import sys
 
 # take passed variable values 
- question = sys.argv[1];
+question = sys.argv[1];
 #question = 'How do i reschedule appointment?';
 #token = sys.argv[2];
 
