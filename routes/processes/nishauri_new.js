@@ -248,7 +248,8 @@ router.post('/signin', async(req, res) =>  {
               var l = {
                   user_id: base64.encode(check_username.id),
                   page_id: 1,
-                  token: token
+                  token: token,
+                  account_verified:check_username.is_active
               }
               return res
               .status(200)
