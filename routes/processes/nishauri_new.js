@@ -10,6 +10,7 @@ const ExtractJwt = require("passport-jwt").ExtractJwt;
 
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
+const { Buffer } = require('buffer');
 
 const users = [];
 
@@ -35,6 +36,8 @@ const { Napptreschedule } = require("../../models/n_appoint_reschedule");
 const { NLogs } = require("../../models/n_logs");
 const { parse } = require("path");
 const { NprogramTypes } = require("../../models/n_program_type");
+const { NUserProfile } = require("../../models/n_user_profile");
+const { decode } = require("punycode");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -50,13 +53,16 @@ router.post("/signup", async (req, res) => {
 	let email_address = req.body.email;
 	let password_1 = req.body.password;
 	let terms = req.body.termsAccepted;
+	let f_name = req.body.f_name;
+	let l_name = req.body.l_name;
+	let dob = req.body.dob;
+	let gender = req.body.gender;
 	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
-	//Check if Terms Are Accepted
-
+	// Check if Terms Are Accepted
 	let boolVal;
 
-	// using the JSON.parse() method
+	// Using the JSON.parse() method
 	boolVal = JSON.parse(terms);
 	if (boolVal !== true) {
 		return res.status(200).json({
@@ -65,23 +71,7 @@ router.post("/signup", async (req, res) => {
 		});
 	}
 
-	//Check if Email Exists
-	// let check_user_email = await NUsers.findOne({
-	//    where: {
-	//        email:email_address
-	//    },
-	//    })
-
-	// if (check_user_email){
-	//    return res
-	//      .status(200)
-	//    .json({
-	//      success: false,
-	//    msg: 'User with similar email address already exists',
-	// });
-	// }
-
-	//Check if Telephone Number Already Exists
+	// Check if Telephone Number Already Exists
 	let check_user_phone = await NUsers.findOne({
 		where: {
 			msisdn: phone
@@ -91,43 +81,78 @@ router.post("/signup", async (req, res) => {
 	if (check_user_phone) {
 		return res.status(200).json({
 			success: false,
-			msg: "User with similar phone number already exists"
+			msg: "User with a similar phone number already exists"
 		});
 	}
 
-	//Save Signup Details
+	// Save Signup Details
 	const password_hash = bcrypt.hashSync(password_1, 10);
 
-	//console.log(password_hash);
-	const new_user = await NUsers.create({
-		msisdn: phone,
-		username: username,
-		password: password_hash,
-		email: email_address,
-		terms_accepted: true,
-		is_active: 0,
-		created_at: today,
-		updated_at: today
-	});
-
-	if (new_user) {
-		const token = jwt.sign(
-			{ userId: new_user.id, username: new_user.username },
-			process.env.JWT_SECRET,
-			{ expiresIn: "1h" }
-		);
-
-		return res.status(200).json({
-			success: true,
-			msg: "Signup successfully",
-			data: {
-				token: token
-			}
+	try {
+		const new_user = await NUsers.create({
+			msisdn: phone,
+			username: username,
+			password: password_hash,
+			email: email_address,
+			terms_accepted: true,
+			is_active: 0,
+			created_at: today,
+			updated_at: today
 		});
-	} else {
+
+		// Log the new user details for debugging
+		console.log("New User:", new_user);
+
+		if (new_user) {
+
+			const new_profile = await NUserProfile.create({
+				f_name: f_name,
+				l_name: l_name,
+				user_id: new_user.id,
+				dob: dob,
+				gender: gender,
+				created_at: today,
+				updated_at: today
+			});
+
+			if (new_profile) {
+				const token = jwt.sign(
+					{ userId: new_user.id, username: new_user.username },
+					process.env.JWT_SECRET,
+					{ expiresIn: "3h" }
+				);
+
+				return res.status(200).json({
+					success: true,
+					msg: "Signup successfully",
+					data: {
+						token: token,
+						user_id: new_user.id, // Use the decoded user ID
+						account_verified: new_user.is_active
+					}
+				});
+			} else {
+				// Log the error for debugging
+				console.error("Error creating user profile");
+				return res.status(500).json({
+					success: false,
+					msg: "Error creating user profile"
+				});
+			}
+		} else {
+			// Log the error for debugging
+			console.error("Error creating user");
+			return res.status(500).json({
+				success: false,
+				msg: "Error creating user"
+			});
+		}
+	} catch (error) {
+		// Log any unexpected errors for debugging
+		console.error("Unexpected error:", error);
 		return res.status(500).json({
 			success: false,
-			msg: "An error occurred, could not create signup record"
+			msg: "An unexpected error occurred"
 		});
 	}
 });
@@ -142,7 +167,7 @@ router.post("/signin", async (req, res) => {
 	let check_username = await NUsers.findOne({
 		where: {
 			[Op.or]: [{ msisdn: vusername }, { email: vusername }],
-      is_active: 1
+			is_active: 1
 		}
 	});
 
@@ -245,7 +270,7 @@ router.post("/signin", async (req, res) => {
 	} else {
 		return res.status(200).json({
 			success: false,
-			msg: "Invalid Email/Telephone Number Provided"
+			msg: "You're to not verified kindly set your program to continue"
 		});
 	}
 });
@@ -341,7 +366,10 @@ router.post("/verifyotp", async (req, res) => {
 	//Check If User Exists
 	let check_username = await NUsers.findOne({
 		where: {
-			[Op.and]: [{ profile_otp_number: otp_verify }, { id: base64.decode(user_id) }]
+			[Op.and]: [
+				{ profile_otp_number: otp_verify },
+				{ id: base64.decode(user_id) }
+			]
 		}
 	});
 
@@ -429,10 +457,12 @@ router.get("/get_program", async (req, res) => {
 });
 
 // send otp to user
-router.post("/sendotp", passport.authenticate("jwt", { session: false }),
+router.post(
+	"/sendotp",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		let user_id = req.body.user_id;
-    let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+		let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
 		//Check If User Exists
 		let check_username = await NUsers.findOne({
@@ -507,7 +537,9 @@ router.post("/sendotp", passport.authenticate("jwt", { session: false }),
 	}
 );
 
-router.post("/validate_program", passport.authenticate("jwt", { session: false }),
+router.post(
+	"/validate_program",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		let ccc_no = req.body.ccc_no;
 		let upi_no = req.body.upi_no;
@@ -617,12 +649,14 @@ router.post("/validate_program", passport.authenticate("jwt", { session: false }
 );
 
 //Set Programs
-router.post("/setprogram", passport.authenticate("jwt", { session: false }),
+router.post(
+	"/setprogram",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		//common body requests for all programs
 		let program_id = req.body.program_id;
 		let user_id = req.body.user_id;
-	//	let otp = req.body.otp_number;
+		//	let otp = req.body.otp_number;
 		let today = moment(new Date().toDateString())
 			.tz("Africa/Nairobi")
 			.format("YYYY-MM-DD H:M:S");
@@ -669,7 +703,9 @@ router.post("/setprogram", passport.authenticate("jwt", { session: false }),
 			});
 
 			if (check_program_valid) {
-				if (check_program_valid.f_name.toUpperCase() !== firstname.toUpperCase()) {
+				if (
+					check_program_valid.f_name.toUpperCase() !== firstname.toUpperCase()
+				) {
 					return res.status(200).json({
 						success: false,
 						msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
@@ -800,6 +836,76 @@ router.post("/setprogram", passport.authenticate("jwt", { session: false }),
 					msg: "Program registration record already exists"
 				});
 			}
+		}
+	}
+);
+
+//update profile
+router.post(
+	"/setprofile",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.body.user_id;
+		let landmark = req.body.landmark;
+		let blood_group = req.body.blood_group;
+		let weight = req.body.weight;
+		let height = req.body.height;
+		let marital = req.body.marital;
+		let education = req.body.education;
+		let primary_language = req.body.primary_language;
+		let occupation = req.body.occupation;
+		let allergies = req.body.allergies;
+		let chronics = req.body.chronics;
+		let disabilities = req.body.disabilities;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
+
+		let profile = await NUserProfile.findOne({
+			where: {
+				user_id: base64.decode(user_id)
+			}
+		});
+
+		if (profile) {
+			const user_profile = await NUserProfile.update(
+				{
+          landmark: landmark,
+          blood_group: blood_group,
+          weight: weight,
+          height: height,
+          marital: marital,
+          education: education,
+          primary_language: primary_language,
+          occupation: occupation,
+          allergies: allergies,
+          chronics: chronics,
+          disabilities: disabilities,
+          updated_at: today
+      },
+      {
+          where: {
+              user_id: base64.decode(user_id)
+          }
+      }
+			);
+
+			if (user_profile) {
+				return res.status(200).json({
+					success: true,
+					msg: "Your Profile was updated successfully"
+				});
+			} else {
+				return res.status(500).json({
+					success: false,
+					msg: "An error occurred, could not update profile"
+				});
+			}
+		} else {
+			return res.status(200).json({
+				success: true,
+				msg: "User doesnt exist."
+			});
 		}
 	}
 );
