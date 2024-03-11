@@ -126,7 +126,7 @@ router.post("/signup", async (req, res) => {
 					msg: "Signup successfully",
 					data: {
 						token: token,
-						user_id: new_user.id, // Use the decoded user ID
+						user_id: base64.encode(new_user.id), // Use the decoded user ID
 						account_verified: new_user.is_active
 					}
 				});
@@ -157,138 +157,103 @@ router.post("/signup", async (req, res) => {
 });
 
 //Sign-In Users
-router.post('/signin', async(req, res) =>  {
-  let vusername = req.body.user_name;
-  let password_1 = req.body.password;
-  let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+router.post("/signin", async (req, res) => {
+	let vusername = req.body.user_name;
+	let password_1 = req.body.password;
+	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
-  //Check If User Exists
-  //console.log(vusername);
-  let check_username = await NUsers.findOne({
-    where: {
-      [Op.and]: [
-        {
-          [Op.or]: [
-            { msisdn: vusername },
-            { email: vusername }
-          ]
-        },
-        { is_active: 1 }
-      ]
-    }
-  });
+	//Check If User Exists
+	//console.log(vusername);
+	let check_username = await NUsers.findOne({
+		where: {
+			[Op.and]: [
+				{
+					[Op.or]: [{ msisdn: vusername }, { email: vusername }]
+				}
+			]
+		}
+	});
 
+	//console.log(check_username.password);
 
-    //console.log(check_username.password);
-
-    if(check_username)
+	if (check_username) {
+		var password_hash = check_username.password;
+		//console.log(password_hash);
+		const verified = bcrypt.compareSync(password_1, password_hash);
+		if (verified)
     {
-      var password_hash=check_username.password;
-      //console.log(password_hash);
-      const verified = bcrypt.compareSync(password_1, password_hash);
-      if(verified)
+			if (check_username.is_active === "0")
       {
+				//Log Login Date
+				var l = {
+					user_id: base64.encode(check_username.id),
+					page_id: 0
+				};
 
-         if(check_username.is_active==='0'){
-           //Log Login Date
-           var l = {
-              user_id: base64.encode(check_username.id),
-              page_id: 0,
-          }
+				return res.status(200).json({
+					success: false,
+					msg: "Failed to sign-in, Your account is not verified kindly complete the program set up",
+					data: l
+				});
+			} else if (check_username.is_active === "1") {
+				//Log Activity
+				var log_activity_ = NLogs.create({
+					user_id: check_username.id,
+					access: "LOGIN"
+				});
 
-           try {
-              const log_login = await NUsers.update(
-                { last_login: today },
-                { where: { id: check_username.id } }
-              )
-              //Show Page To Add CCC or Program Number
-              return res
-              .status(200)
-              .json({
-                  success: true,
-                  msg: 'Signin successfully',
-                  data:l
-              });
-            } catch (err) {
-              return res
-              .status(200)
-              .json({
-                  success: false,
-                  msg: 'Failed to sign-in successfully',
-                  data:l
-              });
-            }
-         }else if(check_username.is_active==='1')
-         {
+				//Log Login Date
+				var l = {
+					user_id: base64.encode(check_username.id),
+					page_id: 1
+				};
 
-          //Log Activity
-          var log_activity_=NLogs.create({ user_id:check_username.id, access:'LOGIN'});
-
-          //Log Login Date
-          var l = {
-              user_id: base64.encode(check_username.id),
-              page_id: 1,
-          }
-
-           try {
-              const log_login = await NUsers.update(
-                { last_login: today },
-                { where: { id: check_username.id } }
-              )
-              const token = jwt.sign(
-                { username: check_username.id },
-                process.env.JWT_SECRET,
-                {
-                  expiresIn: "1h"
-                }
-              );
-              // const refreshToken = crypto.randomBytes(64).toString("hex");
-              // user.refreshToken = refreshToken;
-              //Go to home page
-              var l = {
-                  user_id: base64.encode(check_username.id),
-                  page_id: 1,
-                  token: token,
-                  account_verified:check_username.is_active
-              }
-              return res
-              .status(200)
-              .json({
-                  success: true,
-                  msg: 'Signin successfully',
-                  data:l
-              });
-            } catch (err) {
-              return res
-              .status(200)
-              .json({
-                  success: false,
-                  msg: 'Failed to sign-in successfully',
-                  data:l
-              });
-            }
-
-         }
-      }else{
-          return res
-          .status(200)
-          .json({
-              success: false,
-              msg: 'Wrong Password Provided',
-          });
-      }
-
-    }else{
-      return res
-      .status(200)
-      .json({
-          success: false,
-          msg: 'Your account is not verified kindly complete the program set',
-      });
-    }
-
-
-
+				try {
+					const log_login = await NUsers.update(
+						{ last_login: today },
+						{ where: { id: check_username.id } }
+					);
+					const token = jwt.sign(
+						{ username: check_username.id },
+						process.env.JWT_SECRET,
+						{
+							expiresIn: "1h"
+						}
+					);
+					// const refreshToken = crypto.randomBytes(64).toString("hex");
+					// user.refreshToken = refreshToken;
+					//Go to home page
+					var l = {
+						user_id: base64.encode(check_username.id),
+						page_id: 1,
+						token: token,
+						account_verified: check_username.is_active
+					};
+					return res.status(200).json({
+						success: true,
+						msg: "Signin successfully",
+						data: l
+					});
+				} catch (err) {
+					return res.status(200).json({
+						success: false,
+						msg: "Failed to sign-in successfully",
+						data: l
+					});
+				}
+			}
+		} else {
+			return res.status(200).json({
+				success: false,
+				msg: "Wrong Password Provided"
+			});
+		}
+	} else {
+		return res.status(200).json({
+			success: false,
+			msg: " Username or phone number provided does not exist."
+		});
+	}
 });
 
 //Password Reset Users
@@ -862,6 +827,10 @@ router.post(
 	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		let user_id = req.body.user_id;
+		let f_name = req.body.f_name;
+		let l_name = req.body.l_name;
+		let dob = req.body.dob;
+		let gender = req.body.gender;
 		let landmark = req.body.landmark;
 		let blood_group = req.body.blood_group;
 		let weight = req.body.weight;
@@ -886,6 +855,10 @@ router.post(
 		if (profile) {
 			const user_profile = await NUserProfile.update(
 				{
+					f_name: f_name,
+					l_name: l_name,
+					dob: dob,
+					gender: gender,
 					landmark: landmark,
 					blood_group: blood_group,
 					weight: weight,
@@ -909,7 +882,10 @@ router.post(
 			if (user_profile) {
 				return res.status(200).json({
 					success: true,
-					msg: "Your Profile was updated successfully"
+					msg: "Your Profile was updated successfully",
+          data: {
+						user_id: user_id
+					}
 				});
 			} else {
 				return res.status(500).json({
@@ -924,6 +900,43 @@ router.post(
 			});
 		}
 	}
+);
+
+// fetch profile
+router.get("/get_profile", passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      const user_id = req.query.user_id;
+
+      const profile = await NUserProfile.findOne({
+        where: {
+          user_id: base64.decode(user_id)
+        },
+      });
+
+      if (profile) {
+        return res.status(200).json({
+          success: true,
+          message: 'User profile retrieved successfully',
+          data: {
+            profile,
+						user_id: user_id
+					}
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'User profile not found',
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+      });
+    }
+  }
 );
 
 //Fetch Home Details
