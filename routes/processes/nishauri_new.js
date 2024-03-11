@@ -187,7 +187,8 @@ router.post("/signin", async (req, res) => {
 				//Log Login Date
 				var l = {
 					user_id: base64.encode(check_username.id),
-					page_id: 0
+					page_id: 0,
+          account_verified: check_username.is_active
 				};
 
 				return res.status(200).json({
