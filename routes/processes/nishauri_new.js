@@ -499,7 +499,8 @@ router.post(
 
 			var l = {
 				user_id: base64.encode(check_username.id),
-				phoneno: check_username.msisdn
+				phoneno: check_username.msisdn,
+        otp: check_username.profile_otp_number
 			};
 
 			//Sent OTP Number
