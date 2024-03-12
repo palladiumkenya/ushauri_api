@@ -107,6 +107,8 @@ router.post("/signup", async (req, res) => {
 			const new_profile = await NUserProfile.create({
 				f_name: f_name,
 				l_name: l_name,
+        email: email_address,
+        phone_no: phone,
 				user_id: new_user.id,
 				dob: dob,
 				gender: gender,
@@ -184,16 +186,24 @@ router.post("/signin", async (req, res) => {
     {
 			if (check_username.is_active === "0")
       {
+        const token = jwt.sign(
+          { username: check_username.id },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "3h"
+          }
+        );
 				//Log Login Date
 				var l = {
 					user_id: base64.encode(check_username.id),
 					page_id: 0,
+          token: token,
           account_verified: check_username.is_active
 				};
 
 				return res.status(200).json({
-					success: false,
-					msg: "Failed to sign-in, Your account is not verified kindly complete the program set up",
+					success: true,
+					msg: "Failed to sign-in, Your account is not verified kindly verify",
 					data: l
 				});
 			} else if (check_username.is_active === "1") {
@@ -218,7 +228,7 @@ router.post("/signin", async (req, res) => {
 						{ username: check_username.id },
 						process.env.JWT_SECRET,
 						{
-							expiresIn: "1h"
+							expiresIn: "3h"
 						}
 					);
 					// const refreshToken = crypto.randomBytes(64).toString("hex");
