@@ -840,6 +840,8 @@ router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 			let user_id = req.body.user_id;
 			let f_name = req.body.f_name;
 			let l_name = req.body.l_name;
+      let phone_no = req.body.phone_no;
+	    let email = req.body.email;
 			let dob = req.body.dob;
 			let gender = req.body.gender;
 			let landmark = req.body.landmark;
@@ -869,6 +871,8 @@ router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 						f_name: f_name,
 						l_name: l_name,
 						dob: dob,
+            phone_no:phone_no,
+            email:email,
 						gender: gender,
 						landmark: landmark,
 						blood_group: blood_group,
@@ -911,6 +915,8 @@ router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 					f_name: f_name,
 					l_name: l_name,
 					dob: dob,
+          phone_no:phone_no,
+          email:email,
 					gender: gender,
 					landmark: landmark,
 					blood_group: blood_group,
@@ -943,7 +949,7 @@ router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 				}
 			}
 		} catch (error) {
-			console.error(error);
+			// console.error(error);
 			return res.status(500).json({
 				success: false,
 				msg: "Internal Server Error"
