@@ -1745,57 +1745,70 @@ router.get("/regimen", async (req, res) => {
 	}
 });
 
-//Fetch Regimen
+//Fetch Facility directory
+
 router.get(
-	"/artdirectory",
-	passport.authenticate("jwt", { session: false }),
-	async (req, res) => {
-		const art_search = req.query.search;
-		const userid = req.query.user_id;
+  "/artdirectory",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    try {
+      const facility = req.query.name;
+      const isCode = /^\d{5}$/.test(facility);
+      const userid = req.query.user_id;
 
-		//console.log(art_search);
+      let today = moment(new Date().toDateString())
+        .tz("Africa/Nairobi")
+        .format("YYYY-MM-DD H:M:S");
 
-		let today = moment(new Date().toDateString())
-			.tz("Africa/Nairobi")
-			.format("YYYY-MM-DD H:M:S");
-		//console.log(base64.decode(userid));
-		if (!isNaN(art_search)) {
-			var param_search_num = art_search;
-			var param_search_string = "xx";
-		} else {
-			var param_search_string = art_search;
-			var param_search_num = "99999999";
-		}
+      // Log user activity
+      var log_activity_ = NLogs.create({
+        user_id: base64.decode(userid),
+        access: "ARTDIRECTORY"
+      });
 
-		console.log(param_search_num);
-		console.log(param_search_string);
-		//Search ART directory from
-		request.get(
-			process.env.ART_URL +
-				"directory/" +
-				param_search_num +
-				"/" +
-				param_search_string,
-			(err, res_, body) => {
-				if (err) {
-					return console.log(err);
-				}
-				//res_.send(err);
-				//return console.log(body)
-				var log_activity_ = NLogs.create({
-					user_id: base64.decode(userid),
-					access: "ARTDIRECTORY"
-				});
+      let apiUrl;
+      if (isCode) {
+        apiUrl = `${process.env.ART_URL}facility/directory?code=${facility}`;
+      } else {
+        apiUrl = `${process.env.ART_URL}facility/directory?name=${facility}`;
+      }
 
-				var obj = JSON.parse(body);
-				return res.status(200).json({
-					success: true,
-					msg: obj.message
-				});
-			}
-		);
-	}
+      request.get({
+        url: apiUrl,
+      }, (error, response, body) => {
+        if (error) {
+          console.error(error);
+          return res.status(500).json({
+            success: false,
+            message: "Error occurred while searching facility directory."
+          });
+        }
+
+        if (response.statusCode !== 200) {
+          return res.status(response.statusCode).json({
+            success: false,
+            message: "Error occurred while searching facility directory."
+          });
+        }
+
+        var obj = JSON.parse(body);
+        return res.status(200).json({
+          success: true,
+          message: obj.message,
+          data: obj.data
+        });
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error"
+      });
+    }
+  }
 );
+
+
+
 
 //Fetch Dependants
 
