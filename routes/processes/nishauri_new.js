@@ -834,39 +834,80 @@ router.post(
 );
 
 //update profile
-router.post(
-	"/setprofile",
-	passport.authenticate("jwt", { session: false }),
+router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
-		let user_id = req.body.user_id;
-		let f_name = req.body.f_name;
-		let l_name = req.body.l_name;
-		let dob = req.body.dob;
-		let gender = req.body.gender;
-		let landmark = req.body.landmark;
-		let blood_group = req.body.blood_group;
-		let weight = req.body.weight;
-		let height = req.body.height;
-		let marital = req.body.marital;
-		let education = req.body.education;
-		let primary_language = req.body.primary_language;
-		let occupation = req.body.occupation;
-		let allergies = req.body.allergies;
-		let chronics = req.body.chronics;
-		let disabilities = req.body.disabilities;
-		let today = moment(new Date().toDateString())
-			.tz("Africa/Nairobi")
-			.format("YYYY-MM-DD H:M:S");
+		try {
+			let user_id = req.body.user_id;
+			let f_name = req.body.f_name;
+			let l_name = req.body.l_name;
+			let dob = req.body.dob;
+			let gender = req.body.gender;
+			let landmark = req.body.landmark;
+			let blood_group = req.body.blood_group;
+			let weight = req.body.weight;
+			let height = req.body.height;
+			let marital = req.body.marital;
+			let education = req.body.education;
+			let primary_language = req.body.primary_language;
+			let occupation = req.body.occupation;
+			let allergies = req.body.allergies;
+			let chronics = req.body.chronics;
+			let disabilities = req.body.disabilities;
+			let today = moment(new Date().toDateString())
+				.tz("Africa/Nairobi")
+				.format("YYYY-MM-DD H:M:S");
 
-		let profile = await NUserProfile.findOne({
-			where: {
-				user_id: base64.decode(user_id)
-			}
-		});
+			let profile = await NUserProfile.findOne({
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
 
-		if (profile) {
-			const user_profile = await NUserProfile.update(
-				{
+			if (profile) {
+				const user_profile = await NUserProfile.update(
+					{
+						f_name: f_name,
+						l_name: l_name,
+						dob: dob,
+						gender: gender,
+						landmark: landmark,
+						blood_group: blood_group,
+						weight: weight,
+						height: height,
+						marital: marital,
+						education: education,
+						primary_language: primary_language,
+						occupation: occupation,
+						allergies: allergies,
+						chronics: chronics,
+						disabilities: disabilities,
+						updated_at: today
+					},
+					{
+						where: {
+							user_id: base64.decode(user_id)
+						}
+					}
+				);
+
+				if (user_profile) {
+					return res.status(200).json({
+						success: true,
+						msg: "Your Profile was updated successfully",
+						data: {
+							user_id: user_id
+						}
+					});
+				} else {
+					return res.status(500).json({
+						success: false,
+						msg: "An error occurred, could not update profile"
+					});
+				}
+			} else {
+				// User doesn't exist, create a new profile
+				const newProfile = await NUserProfile.create({
+					user_id: base64.decode(user_id),
 					f_name: f_name,
 					l_name: l_name,
 					dob: dob,
@@ -882,37 +923,35 @@ router.post(
 					allergies: allergies,
 					chronics: chronics,
 					disabilities: disabilities,
+					created_at: today,
 					updated_at: today
-				},
-				{
-					where: {
-						user_id: base64.decode(user_id)
-					}
-				}
-			);
+				});
 
-			if (user_profile) {
-				return res.status(200).json({
-					success: true,
-					msg: "Your Profile was updated successfully",
-          data: {
-						user_id: user_id
-					}
-				});
-			} else {
-				return res.status(500).json({
-					success: false,
-					msg: "An error occurred, could not update profile"
-				});
+				if (newProfile) {
+					return res.status(200).json({
+						success: true,
+						msg: "Profile created successfully",
+						data: {
+							user_id: user_id
+						}
+					});
+				} else {
+					return res.status(500).json({
+						success: false,
+						msg: "An error occurred, could not create profile"
+					});
+				}
 			}
-		} else {
-			return res.status(200).json({
-				success: true,
-				msg: "User doesnt exist."
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({
+				success: false,
+				msg: "Internal Server Error"
 			});
 		}
 	}
 );
+
 
 // fetch profile
 router.get("/get_profile", passport.authenticate('jwt', { session: false }),
