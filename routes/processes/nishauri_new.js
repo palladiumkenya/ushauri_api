@@ -38,6 +38,7 @@ const { parse } = require("path");
 const { NprogramTypes } = require("../../models/n_program_type");
 const { NUserProfile } = require("../../models/n_user_profile");
 const { decode } = require("punycode");
+const { Appointment } = require("../../models/appointment");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -1290,9 +1291,7 @@ router.post(
 
 //Fetch Regimen
 
-router.get(
-	"/vl_result",
-	passport.authenticate("jwt", { session: false }),
+router.get("/vl_result", passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		const userid = req.query.user_id;
 
@@ -1753,10 +1752,7 @@ router.get("/regimen", async (req, res) => {
 
 //Fetch Facility directory
 
-router.get(
-  "/artdirectory",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
+router.get("/artdirectory", passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
       const facility = req.query.name;
       const isCode = /^\d{5}$/.test(facility);
@@ -1915,9 +1911,7 @@ router.post("/bmi_calculator", async (req, res) => {
 	});
 });
 
-router.post(
-	"/chat",
-	passport.authenticate("jwt", { session: false }),
+router.post("/chat", passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		const question_ = req.body.question;
 		const userid = req.body.user_id;
@@ -1953,9 +1947,7 @@ router.post(
 );
 
 //Fetch  Appointment From CCC Number
-router.get(
-	"/appointments",
-	passport.authenticate("jwt", { session: false }),
+router.get("/appointments", passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		const ccc_no = req.query.ccc_no;
 		//console.log(userid);
@@ -2021,9 +2013,7 @@ function getAccessToken(url, callback) {
 	});
 }
 
-router.post(
-	"/getactive_q_list",
-	passport.authenticate("jwt", { session: false }),
+router.post("/getactive_q_list", passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		//Get Passed Values
 		const userid = req.body.user_id;
@@ -2157,9 +2147,7 @@ router.post("/getactive_q", async (req, res) => {
 	});
 });
 
-router.post(
-	"/start_q",
-	passport.authenticate("jwt", { session: false }),
+router.post("/start_q", passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		//Get Passed Values
 		const userid = req.body.user_id;
@@ -2296,9 +2284,7 @@ router.post("/next_q", async (req, res) => {
 	});
 });
 
-router.post(
-	"/q_answer",
-	passport.authenticate("jwt", { session: false }),
+router.post("/q_answer", passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		//Get Passed Values
 		console.log(req.body.session);
@@ -2383,6 +2369,100 @@ router.post(
 		});
 	}
 );
+
+// create order
+// router.post("/create_order", passport.authenticate("jwt", { session: false }),
+// async (req, res) => {
+
+// let user_id = req.body.userId;
+// let program_identifier = req.body.program_identifier;
+// let appointment_id = req.body.appointment_id;
+// let event_id = req.body.event_id;
+// let delivery_address = req.body.delivery_address;
+// let delivery_lat = req.body.delivery_lat;
+// let delivery_long = req.body.delivery_long;
+// let delivery_method = req.body.delivery_method;
+// let courier_service = req.body.courier_service;
+// let delivery_person = req.body.delivery_person;
+// let delivery_person_id = req.body.delivery_person_id;
+// let delivery_person_contact = req.body.delivery_person_contact;
+// let order_by = req.body.order_by;
+// let deliveries = req.body.deliveries;
+// let mode = req.body.mode;
+// let delivery_pickup_time = req.body.delivery_pickup_time;
+// let client_phone_no = req.body.client_phone_no;
+
+// });
+
+// get client details for order
+router.get("/patient_details", passport.authenticate("jwt", { session: false }),
+ async (req, res) => {
+let user_id = req.query.user_id;
+
+let check_patient_program = await NUserprograms.findOne({
+  where: {
+    user_id: base64.decode(user_id),
+    program_type: 1
+  }
+});
+if (!check_patient_program) {
+  return res.status(200).json({
+    success: false,
+    msg: "You are not registered in this program"
+  });
+}
+
+let check_patient = await Client.findOne({
+  where: {
+    id: check_patient_program.program_identifier
+  }
+});
+
+try {
+  const conn = mysql.createPool({
+    connectionLimit: 10,
+    host: process.env.DB_SERVER,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    debug: true,
+    multipleStatements: true
+  });
+
+  let sql = `CALL sp_dawa_drop_appt(?)`;
+  let todo = [check_patient.clinic_number];
+  conn.query(sql, todo, (error, results, fields) => {
+    if (error) {
+      return console.error(error.message);
+    }
+    if (results[0].length === 0) {
+      return res.status(200).json({
+          success: false,
+          msg: "You do not have upcoming appointment"
+      });
+  } else {
+      // Log Activity
+      // var log_activity_ = NLogs.create({ user_id: base64.decode(userid), access: 'APPOINTMENTS'});
+      return res.status(200).json({
+          success: true,
+          msg: "You have upcoming appointments",
+          data: results[0]
+      });
+  }
+
+    conn.end();
+  });
+} catch (err) {
+  return res.status(500).json({
+    success: false,
+    msg: "Internal Server Error"
+});
+}
+
+
+
+});
 
 module.exports = router;
 //module.exports = { router, users };
