@@ -39,6 +39,9 @@ const { NprogramTypes } = require("../../models/n_program_type");
 const { NUserProfile } = require("../../models/n_user_profile");
 const { decode } = require("punycode");
 const { Appointment } = require("../../models/appointment");
+const { NDrugOrder } = require("../../models/n_drug_order");
+const { NDrugDelivery } = require("../../models/n_drug_delivery");
+const { NCourier } = require("../../models/n_courier");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -904,7 +907,7 @@ router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 						}
 					});
 				} else {
-					return res.status(500).json({
+					return res.status(200).json({
 						success: false,
 						msg: "An error occurred, could not update profile"
 					});
@@ -2370,32 +2373,89 @@ router.post("/q_answer", passport.authenticate("jwt", { session: false }),
 	}
 );
 
-// create order
-// router.post("/create_order", passport.authenticate("jwt", { session: false }),
-// async (req, res) => {
+// create order request
+router.post("/create_order", passport.authenticate("jwt", { session: false }),
+ async (req, res) => {
 
-// let user_id = req.body.userId;
-// let program_identifier = req.body.program_identifier;
-// let appointment_id = req.body.appointment_id;
-// let event_id = req.body.event_id;
-// let delivery_address = req.body.delivery_address;
-// let delivery_lat = req.body.delivery_lat;
-// let delivery_long = req.body.delivery_long;
-// let delivery_method = req.body.delivery_method;
-// let courier_service = req.body.courier_service;
-// let delivery_person = req.body.delivery_person;
-// let delivery_person_id = req.body.delivery_person_id;
-// let delivery_person_contact = req.body.delivery_person_contact;
-// let order_by = req.body.order_by;
-// let deliveries = req.body.deliveries;
-// let mode = req.body.mode;
-// let delivery_pickup_time = req.body.delivery_pickup_time;
-// let client_phone_no = req.body.client_phone_no;
+let user_id = req.body.user_id;
+let ccc_no = req.body.ccc_no;
+let appointment_id = req.body.appointment_id;
+let event_id = req.body.event_id;
+let delivery_address = req.body.delivery_address;
+let delivery_lat = req.body.delivery_lat;
+let delivery_long = req.body.delivery_long;
+let delivery_method = req.body.delivery_method;
+let courier_service = req.body.courier_service;
+let delivery_person = req.body.delivery_person;
+let delivery_person_id = req.body.delivery_person_id;
+let delivery_person_contact = req.body.delivery_person_contact;
+let mode = req.body.mode;
+let delivery_pickup_time = req.body.delivery_pickup_time;
+let client_phone_no = req.body.client_phone_no;
+let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
-// });
+let check_order_request = await NDrugOrder.findOne({
+  where: {
+    appointment_id: appointment_id
+  }
+});
+
+console.log(check_order_request);
+
+if (check_order_request) {
+  return res.status(200).json({
+    success: false,
+    msg: "You already have an active drug delivery request for this appointment"
+  });
+}
+
+let check_patient = await Client.findOne({
+  where: {
+    clinic_number: ccc_no
+  }
+});
+
+try {
+const new_order = await NDrugOrder.create({
+  program_identifier: check_patient.id,
+  appointment_id: appointment_id,
+  delivery_address: delivery_address,
+  delivery_method: delivery_method,
+  courier_service: courier_service,
+  delivery_person: delivery_person,
+  delivery_person_id: delivery_person_id,
+  delivery_person_contact: delivery_person_contact,
+  delivery_lat: delivery_lat,
+  delivery_long: delivery_long,
+  mode: mode,
+  order_by:base64.decode(user_id),
+  client_phone_no: client_phone_no,
+  delivery_pickup_time: delivery_pickup_time,
+  created_at: today,
+	updated_at: today
+});
+if (new_order)
+{
+  return res.status(200).json({
+    success: true,
+    msg: "Order request made succesfully"
+  });
+} else {
+  return res.status(200).json({
+    success: false,
+    msg: "An error occurred, could not create order"
+  });
+}
+} catch (error) {
+  return res.status(500).json({
+    success: false,
+    msg: "Internal Server Error"
+  });
+}
+});
 
 // get client details for order
-router.get("/patient_details", passport.authenticate("jwt", { session: false }),
+router.get("/upcoming_appointment", passport.authenticate("jwt", { session: false }),
  async (req, res) => {
 let user_id = req.query.user_id;
 
@@ -2463,6 +2523,87 @@ try {
 
 
 });
+
+// get courier services
+router.get("/courier_services", passport.authenticate("jwt", { session: false }),
+async (req, res) => {
+  try {
+		let courier = await NCourier.findAll({
+			where: {
+				is_active: 1
+			}
+		});
+		return res.status(200).json({
+			success: true,
+			message: "Couriers Found",
+			data: courier
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to retrieve courier",
+			error: error.message
+		});
+	}
+})
+
+// get user programs
+router.get("/user_programs", passport.authenticate("jwt", { session: false }),
+async (req, res) => {
+  let user_id = req.query.user_id;
+
+  let check_patient_program = await NUserprograms.findOne({
+    where: {
+      user_id: base64.decode(user_id)
+    }
+  });
+  if (!check_patient_program) {
+    return res.status(200).json({
+      success: false,
+      msg: "User not found"
+    });
+  } else {
+
+  try {
+    const conn = mysql.createPool({
+      connectionLimit: 10,
+      host: process.env.DB_SERVER,
+      port: process.env.DB_PORT,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      debug: true,
+      multipleStatements: true
+    });
+
+    let sql = `CALL sp_nishauri_user_programs(?)`;
+    let todo = [base64.decode(user_id)];
+    conn.query(sql, todo, (error, results, fields) => {
+
+      if (results[0].length === 0) {
+        return res.status(200).json({
+            success: false,
+            msg: "No programs found"
+        });
+    } else {
+        return res.status(200).json({
+            success: true,
+            msg: "User programs successfully found",
+            user_id: user_id,
+            programs: results[0]
+        });
+    }
+
+      conn.end();
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      msg: "Internal Server Error"
+  });
+  }
+}
+})
 
 module.exports = router;
 //module.exports = { router, users };

@@ -17,12 +17,11 @@ const NDrugOrder = sequelize.sequelize.define(
         delivery_lat:Sequelize.STRING,
         delivery_long:Sequelize.STRING,
         delivery_method:Sequelize.STRING,
-        courier_service:Sequelize.STRING,
+        courier_service:Sequelize.INTEGER,
         delivery_person:Sequelize.STRING,
         delivery_person_id:Sequelize.STRING,
         delivery_person_contact:Sequelize.STRING,
         order_by:Sequelize.INTEGER,
-        deliveries:Sequelize.STRING,
         mode:Sequelize.STRING,
         delivery_pickup_time:Sequelize.DATE,
         client_phone_no:Sequelize.STRING
