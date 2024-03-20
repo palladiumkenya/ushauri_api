@@ -18,7 +18,7 @@ require("dotenv").config();
 
 
 //const Op = require("sequelize");
-const { Op } = require("sequelize");
+var { Op, Sequelize } = require("sequelize");
 var bcrypt = require('bcrypt');
 
 //const Sequelize = require("sequelize");
@@ -303,6 +303,7 @@ router.post('/resetpassword', async(req, res) =>  {
         }
       });
 
+
       if(check_username)
       {
         //Generate OTP and send to Users Via Email or Telephone Number
@@ -473,7 +474,7 @@ router.post('/updatepassword', async(req, res) =>  {
 router.post('/validate_program', async(req, res) =>  {
   let ccc_no = req.body.ccc_no;
   let upi_no = req.body.upi_no;
-  let firstname = req.body.firstname;
+  let firstname = req.body.firstname.toUpperCase().trim(); //Trim & Capitalize FirstName
   let user_id = req.body.user_id;
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
   
@@ -490,7 +491,7 @@ router.post('/validate_program', async(req, res) =>  {
   }  
   
   //Check If User Exists
-    let check_username= await NUsers.findOne({
+  var check_username= await NUsers.findOne({
       where: {
         [Op.and]: [
           { is_active: '0'},
@@ -498,19 +499,25 @@ router.post('/validate_program', async(req, res) =>  {
         ]
       }
     });
-
     
+
 
   //User Is Not Active
   //Validate Program In HIV
- let check_program_valid= await Client.findOne({
-     where: {
-       [Op.and]: [
-         { f_name: firstname},
-         { clinic_number: ccc_no}
-       ]
-    }
-   });
+
+  const check_program_valid= await Client.findOne({
+      where:{
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn('UPPER', Sequelize.col('f_name')),
+            Sequelize.fn('UPPER', firstname)
+        ),
+          { clinic_number: ccc_no }
+        ]
+      } 
+      });
+      
+    //console.log(check_program_valid);
 
    if(!check_program_valid)
    {
@@ -520,15 +527,50 @@ router.post('/validate_program', async(req, res) =>  {
         success: false,
         msg: `Invalid CCC Number/ First Name Match: ${ccc_no}, The CCC Number/First Name does not match in Nishauri`,
     });
-
    }
 
   if(check_username) //User Account Not Active- Show Page to Enter Program Indentification Details
   {
+    let vOTP='';
       //Generate OTP
        //Generate OTP and send to Users Via Email or Telephone Number
-       let vOTP=generateOtp(5);
+       //Check if OTP was generated and has not expired
+       if((check_username.profile_otp_number!=null) || (check_username.profile_otp_date!=null))
+       {
 
+        let date_diff = moment(today).diff(
+          moment(check_username.profile_otp_date).format("YYYY-MM-DD HH:MM:SS"),
+          "seconds"
+        );
+        console.log(date_diff);
+        if(date_diff<=3600) //60 Seconds
+        {
+          vOTP=check_username.profile_otp_number //Use OTP
+
+        }else
+        {
+          vOTP=generateOtp(5); //OTP expired or Not sent yet.. Generate a New OTP
+            //Update New OTP
+        const log_OTP = await NUsers.update(
+          { profile_otp_date: today, profile_otp_number: vOTP},
+          { where: { id:  base64.decode(user_id) } }
+        );
+    
+        }     
+
+       }else
+       {
+          vOTP=generateOtp(5); //OTP expired or Not sent yet.. Generate a New OTP 
+            //Update New OTP
+            const log_OTP = await NUsers.update(
+            { profile_otp_date: today, profile_otp_number: vOTP},
+            { where: { id:  base64.decode(user_id) } }
+          );
+       }
+
+      
+
+       
        //Send SMS       
        const header_details= {
           "rejectUnauthorized": false,
@@ -548,10 +590,11 @@ router.post('/validate_program', async(req, res) =>  {
            }
        }
 
+       //console.log(header_details);
        request.post(header_details,  (err, res, body) => {
        if(err)
        {
-           console.log(err);
+           //console.log(err);
             //Error Sending OTP
            return res
             .status(200)
@@ -559,14 +602,15 @@ router.post('/validate_program', async(req, res) =>  {
                success: false,
               msg: 'Error Sending OTP',
            });
-       }   
+       }else if (res.statusCode !== 200) {
+        console.error('Request failed with status code:', res.statusCode);
+        } else {
+          // Success! Do something with the response body
+          console.log('Success:', body.status);
+        }   
        });
 
-        //Save OTP Details
-        const log_OTP = await NUsers.update(
-           { profile_otp_date: today, profile_otp_number: vOTP},
-           { where: { id:  base64.decode(user_id) } }
-         );
+      
 
          var l = {
            user_id: base64.encode(check_username.id),
@@ -605,7 +649,7 @@ router.post('/validate_program', async(req, res) =>  {
 router.post('/setprogram', async(req, res) =>  {
     let ccc_no = req.body.ccc_no;
     let upi_no = req.body.upi_no;
-    let firstname = req.body.firstname;
+    let firstname = req.body.firstname.toUpperCase().trim(); //Trim & Capitalize FirstName
     let user_id = req.body.user_id;
     let otp=req.body.otp_number;
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
@@ -635,15 +679,19 @@ router.post('/setprogram', async(req, res) =>  {
       
 
     //User Is Not Active
-    //Validate Program In HIV
-   let check_program_valid= await Client.findOne({
-       where: {
-         [Op.and]: [
-           { f_name: firstname},
-           { clinic_number: ccc_no}
-         ]
-      }
-     });
+    //Validate Program In HI
+
+  const check_program_valid= await Client.findOne({
+      where:{
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn('UPPER', Sequelize.col('f_name')),
+            Sequelize.fn('UPPER', firstname.toUpperCase())
+        ),
+          { clinic_number: ccc_no }
+        ]
+      } 
+      });
 
      if(!check_program_valid)
      {
