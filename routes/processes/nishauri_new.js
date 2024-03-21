@@ -111,8 +111,8 @@ router.post("/signup", async (req, res) => {
 			const new_profile = await NUserProfile.create({
 				f_name: f_name,
 				l_name: l_name,
-        email: email_address,
-        phone_no: phone,
+				email: email_address,
+				phone_no: phone,
 				user_id: new_user.id,
 				dob: dob,
 				gender: gender,
@@ -186,23 +186,21 @@ router.post("/signin", async (req, res) => {
 		var password_hash = check_username.password;
 		//console.log(password_hash);
 		const verified = bcrypt.compareSync(password_1, password_hash);
-		if (verified)
-    {
-			if (check_username.is_active === "0")
-      {
-        const token = jwt.sign(
-          { username: check_username.id },
-          process.env.JWT_SECRET,
-          {
-            expiresIn: "3h"
-          }
-        );
+		if (verified) {
+			if (check_username.is_active === "0") {
+				const token = jwt.sign(
+					{ username: check_username.id },
+					process.env.JWT_SECRET,
+					{
+						expiresIn: "3h"
+					}
+				);
 				//Log Login Date
 				var l = {
 					user_id: base64.encode(check_username.id),
 					page_id: 0,
-          token: token,
-          account_verified: check_username.is_active
+					token: token,
+					account_verified: check_username.is_active
 				};
 
 				return res.status(200).json({
@@ -515,7 +513,7 @@ router.post(
 			var l = {
 				user_id: base64.encode(check_username.id),
 				phoneno: check_username.msisdn,
-        otp: check_username.profile_otp_number
+				otp: check_username.profile_otp_number
 			};
 
 			//Sent OTP Number
@@ -838,14 +836,16 @@ router.post(
 );
 
 //update profile
-router.post("/setprofile", passport.authenticate("jwt", { session: false }),
+router.post(
+	"/setprofile",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		try {
 			let user_id = req.body.user_id;
 			let f_name = req.body.f_name;
 			let l_name = req.body.l_name;
-      let phone_no = req.body.phone_no;
-	    let email = req.body.email;
+			let phone_no = req.body.phone_no;
+			let email = req.body.email;
 			let dob = req.body.dob;
 			let gender = req.body.gender;
 			let landmark = req.body.landmark;
@@ -875,8 +875,8 @@ router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 						f_name: f_name,
 						l_name: l_name,
 						dob: dob,
-            phone_no:phone_no,
-            email:email,
+						phone_no: phone_no,
+						email: email,
 						gender: gender,
 						landmark: landmark,
 						blood_group: blood_group,
@@ -919,8 +919,8 @@ router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 					f_name: f_name,
 					l_name: l_name,
 					dob: dob,
-          phone_no:phone_no,
-          email:email,
+					phone_no: phone_no,
+					email: email,
 					gender: gender,
 					landmark: landmark,
 					blood_group: blood_group,
@@ -962,42 +962,43 @@ router.post("/setprofile", passport.authenticate("jwt", { session: false }),
 	}
 );
 
-
 // fetch profile
-router.get("/get_profile", passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    try {
-      const user_id = req.query.user_id;
+router.get(
+	"/get_profile",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			const user_id = req.query.user_id;
 
-      const profile = await NUserProfile.findOne({
-        where: {
-          user_id: base64.decode(user_id)
-        },
-      });
+			const profile = await NUserProfile.findOne({
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
 
-      if (profile) {
-        return res.status(200).json({
-          success: true,
-          message: 'User profile retrieved successfully',
-          data: {
-            profile,
+			if (profile) {
+				return res.status(200).json({
+					success: true,
+					message: "User profile retrieved successfully",
+					data: {
+						profile,
 						user_id: user_id
 					}
-        });
-      } else {
-        return res.status(404).json({
-          success: false,
-          message: 'User profile not found',
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Internal Server Error',
-      });
-    }
-  }
+				});
+			} else {
+				return res.status(404).json({
+					success: false,
+					message: "User profile not found"
+				});
+			}
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({
+				success: false,
+				message: "Internal Server Error"
+			});
+		}
+	}
 );
 
 //Fetch Home Details
@@ -1294,7 +1295,9 @@ router.post(
 
 //Fetch Regimen
 
-router.get("/vl_result", passport.authenticate("jwt", { session: false }),
+router.get(
+	"/vl_result",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		const userid = req.query.user_id;
 
@@ -1755,65 +1758,68 @@ router.get("/regimen", async (req, res) => {
 
 //Fetch Facility directory
 
-router.get("/artdirectory", passport.authenticate("jwt", { session: false }), async (req, res) => {
-    try {
-      const facility = req.query.name;
-      const isCode = /^\d{5}$/.test(facility);
-      const userid = req.query.user_id;
+router.get(
+	"/artdirectory",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			const facility = req.query.name;
+			const isCode = /^\d{5}$/.test(facility);
+			const userid = req.query.user_id;
 
-      let today = moment(new Date().toDateString())
-        .tz("Africa/Nairobi")
-        .format("YYYY-MM-DD H:M:S");
+			let today = moment(new Date().toDateString())
+				.tz("Africa/Nairobi")
+				.format("YYYY-MM-DD H:M:S");
 
-      // Log user activity
-      var log_activity_ = NLogs.create({
-        user_id: base64.decode(userid),
-        access: "ARTDIRECTORY"
-      });
+			// Log user activity
+			var log_activity_ = NLogs.create({
+				user_id: base64.decode(userid),
+				access: "ARTDIRECTORY"
+			});
 
-      let apiUrl;
-      if (isCode) {
-        apiUrl = `${process.env.ART_URL}facility/directory?code=${facility}`;
-      } else {
-        apiUrl = `${process.env.ART_URL}facility/directory?name=${facility}`;
-      }
+			let apiUrl;
+			if (isCode) {
+				apiUrl = `${process.env.ART_URL}facility/directory?code=${facility}`;
+			} else {
+				apiUrl = `${process.env.ART_URL}facility/directory?name=${facility}`;
+			}
 
-      request.get({
-        url: apiUrl,
-      }, (error, response, body) => {
-        if (error) {
-          console.error(error);
-          return res.status(500).json({
-            success: false,
-            message: "Error occurred while searching facility directory."
-          });
-        }
+			request.get(
+				{
+					url: apiUrl
+				},
+				(error, response, body) => {
+					if (error) {
+						console.error(error);
+						return res.status(500).json({
+							success: false,
+							message: "Error occurred while searching facility directory."
+						});
+					}
 
-        if (response.statusCode !== 200) {
-          return res.status(response.statusCode).json({
-            success: false,
-            message: "Error occurred while searching facility directory."
-          });
-        }
+					if (response.statusCode !== 200) {
+						return res.status(response.statusCode).json({
+							success: false,
+							message: "Error occurred while searching facility directory."
+						});
+					}
 
-        var obj = JSON.parse(body);
-        return res.status(200).json({
-          success: true,
-          message: obj.message,
-          data: obj.data
-        });
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Internal Server Error"
-      });
-    }
-  }
+					var obj = JSON.parse(body);
+					return res.status(200).json({
+						success: true,
+						message: obj.message,
+						data: obj.data
+					});
+				}
+			);
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				message: "Internal Server Error"
+			});
+		}
+	}
 );
-
-
-
 
 //Fetch Dependants
 
@@ -1914,7 +1920,9 @@ router.post("/bmi_calculator", async (req, res) => {
 	});
 });
 
-router.post("/chat", passport.authenticate("jwt", { session: false }),
+router.post(
+	"/chat",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		const question_ = req.body.question;
 		const userid = req.body.user_id;
@@ -1950,7 +1958,9 @@ router.post("/chat", passport.authenticate("jwt", { session: false }),
 );
 
 //Fetch  Appointment From CCC Number
-router.get("/appointments", passport.authenticate("jwt", { session: false }),
+router.get(
+	"/appointments",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		const ccc_no = req.query.ccc_no;
 		//console.log(userid);
@@ -2016,7 +2026,9 @@ function getAccessToken(url, callback) {
 	});
 }
 
-router.post("/getactive_q_list", passport.authenticate("jwt", { session: false }),
+router.post(
+	"/getactive_q_list",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		//Get Passed Values
 		const userid = req.body.user_id;
@@ -2150,7 +2162,9 @@ router.post("/getactive_q", async (req, res) => {
 	});
 });
 
-router.post("/start_q", passport.authenticate("jwt", { session: false }),
+router.post(
+	"/start_q",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		//Get Passed Values
 		const userid = req.body.user_id;
@@ -2287,7 +2301,9 @@ router.post("/next_q", async (req, res) => {
 	});
 });
 
-router.post("/q_answer", passport.authenticate("jwt", { session: false }),
+router.post(
+	"/q_answer",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		//Get Passed Values
 		console.log(req.body.session);
@@ -2374,236 +2390,243 @@ router.post("/q_answer", passport.authenticate("jwt", { session: false }),
 );
 
 // create order request
-router.post("/create_order", passport.authenticate("jwt", { session: false }),
- async (req, res) => {
+router.post(
+	"/create_order",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.body.user_id;
+			let ccc_no = req.body.ccc_no;
+			let appointment_id = req.body.appointment_id;
+			let event_id = req.body.event_id;
+			let order_type = req.body.order_type;
+			let delivery_address = req.body.delivery_address;
+			let delivery_lat = req.body.delivery_lat;
+			let delivery_long = req.body.delivery_long;
+			let delivery_method = req.body.delivery_method;
+			let courier_service = req.body.courier_service;
+			let delivery_person = req.body.delivery_person;
+			let delivery_person_id = req.body.delivery_person_id;
+			let delivery_person_contact = req.body.delivery_person_contact;
+			let mode = req.body.mode;
+			let delivery_pickup_time = req.body.delivery_pickup_time;
+			let client_phone_no = req.body.client_phone_no;
+			let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
-let user_id = req.body.user_id;
-let ccc_no = req.body.ccc_no;
-let appointment_id = req.body.appointment_id;
-let event_id = req.body.event_id;
-let delivery_address = req.body.delivery_address;
-let delivery_lat = req.body.delivery_lat;
-let delivery_long = req.body.delivery_long;
-let delivery_method = req.body.delivery_method;
-let courier_service = req.body.courier_service;
-let delivery_person = req.body.delivery_person;
-let delivery_person_id = req.body.delivery_person_id;
-let delivery_person_contact = req.body.delivery_person_contact;
-let mode = req.body.mode;
-let delivery_pickup_time = req.body.delivery_pickup_time;
-let client_phone_no = req.body.client_phone_no;
-let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+			let check_order_request = await NDrugOrder.findOne({
+				where: {
+					appointment_id: appointment_id
+				}
+			});
 
-let check_order_request = await NDrugOrder.findOne({
-  where: {
-    appointment_id: appointment_id
-  }
-});
+			// console.log(check_order_request);
 
-console.log(check_order_request);
+			if (check_order_request) {
+				return res.status(200).json({
+					success: false,
+					msg: "You already have an active drug delivery request for this appointment"
+				});
+			}
 
-if (check_order_request) {
-  return res.status(200).json({
-    success: false,
-    msg: "You already have an active drug delivery request for this appointment"
-  });
-}
+			let check_patient = await Client.findOne({
+				where: {
+					clinic_number: ccc_no
+				}
+			});
 
-let check_patient = await Client.findOne({
-  where: {
-    clinic_number: ccc_no
-  }
-});
-
-try {
-const new_order = await NDrugOrder.create({
-  program_identifier: check_patient.id,
-  appointment_id: appointment_id,
-  delivery_address: delivery_address,
-  delivery_method: delivery_method,
-  courier_service: courier_service,
-  delivery_person: delivery_person,
-  delivery_person_id: delivery_person_id,
-  delivery_person_contact: delivery_person_contact,
-  delivery_lat: delivery_lat,
-  delivery_long: delivery_long,
-  mode: mode,
-  order_by:base64.decode(user_id),
-  client_phone_no: client_phone_no,
-  delivery_pickup_time: delivery_pickup_time,
-  created_at: today,
-	updated_at: today
-});
-if (new_order)
-{
-  return res.status(200).json({
-    success: true,
-    msg: "Order request made succesfully"
-  });
-} else {
-  return res.status(200).json({
-    success: false,
-    msg: "An error occurred, could not create order"
-  });
-}
-} catch (error) {
-  return res.status(500).json({
-    success: false,
-    msg: "Internal Server Error"
-  });
-}
-});
+			const new_order = await NDrugOrder.create({
+				program_identifier: check_patient.id,
+				appointment_id: appointment_id,
+				order_type:order_type,
+				delivery_address: delivery_address,
+				delivery_method: delivery_method,
+				courier_service: courier_service,
+				delivery_person: delivery_person,
+				delivery_person_id: delivery_person_id,
+				delivery_person_contact: delivery_person_contact,
+				delivery_lat: delivery_lat,
+				delivery_long: delivery_long,
+				mode: mode,
+				order_by: base64.decode(user_id),
+				client_phone_no: client_phone_no,
+				delivery_pickup_time: delivery_pickup_time,
+				created_at: today,
+				updated_at: today
+			});
+			if (new_order) {
+				return res.status(200).json({
+					success: true,
+					msg: "Order request made succesfully"
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "An error occurred, could not create delivery request"
+				});
+			}
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				msg: "Internal Server Error"
+			});
+		}
+	}
+);
 
 // get client details for order
-router.get("/upcoming_appointment", passport.authenticate("jwt", { session: false }),
- async (req, res) => {
-let user_id = req.query.user_id;
+router.get(
+	"/upcoming_appointment",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.query.user_id;
 
-let check_patient_program = await NUserprograms.findOne({
-  where: {
-    user_id: base64.decode(user_id),
-    program_type: 1
-  }
-});
-if (!check_patient_program) {
-  return res.status(200).json({
-    success: false,
-    msg: "You are not registered in this program"
-  });
-}
-
-let check_patient = await Client.findOne({
-  where: {
-    id: check_patient_program.program_identifier
-  }
-});
-
-try {
-  const conn = mysql.createPool({
-    connectionLimit: 10,
-    host: process.env.DB_SERVER,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    debug: true,
-    multipleStatements: true
-  });
-
-  let sql = `CALL sp_dawa_drop_appt(?)`;
-  let todo = [check_patient.clinic_number];
-  conn.query(sql, todo, (error, results, fields) => {
-    if (error) {
-      return console.error(error.message);
-    }
-    if (results[0].length === 0) {
-      return res.status(200).json({
-          success: false,
-          msg: "You do not have upcoming appointment"
-      });
-  } else {
-      // Log Activity
-      // var log_activity_ = NLogs.create({ user_id: base64.decode(userid), access: 'APPOINTMENTS'});
-      return res.status(200).json({
-          success: true,
-          msg: "You have upcoming appointments",
-          data: results[0]
-      });
-  }
-
-    conn.end();
-  });
-} catch (err) {
-  return res.status(500).json({
-    success: false,
-    msg: "Internal Server Error"
-});
-}
-
-
-
-});
-
-// get courier services
-router.get("/courier_services", passport.authenticate("jwt", { session: false }),
-async (req, res) => {
-  try {
-		let courier = await NCourier.findAll({
+		let check_patient_program = await NUserprograms.findOne({
 			where: {
-				is_active: 1
+				user_id: base64.decode(user_id),
+				program_type: 1
 			}
 		});
-		return res.status(200).json({
-			success: true,
-			message: "Couriers Found",
-			data: courier
+		if (!check_patient_program) {
+			return res.status(200).json({
+				success: false,
+				msg: "You are not registered in this program"
+			});
+		}
+
+		let check_patient = await Client.findOne({
+			where: {
+				id: check_patient_program.program_identifier
+			}
 		});
-	} catch (error) {
-		return res.status(500).json({
-			success: false,
-			message: "Failed to retrieve courier",
-			error: error.message
-		});
+
+		try {
+			const conn = mysql.createPool({
+				connectionLimit: 10,
+				host: process.env.DB_SERVER,
+				port: process.env.DB_PORT,
+				user: process.env.DB_USER,
+				password: process.env.DB_PASSWORD,
+				database: process.env.DB_NAME,
+				debug: true,
+				multipleStatements: true
+			});
+
+			let sql = `CALL sp_dawa_drop_appt(?)`;
+			let todo = [check_patient.clinic_number];
+			conn.query(sql, todo, (error, results, fields) => {
+				if (error) {
+					return console.error(error.message);
+				}
+				if (results[0].length === 0) {
+					return res.status(200).json({
+						success: false,
+						msg: "You do not have upcoming appointment"
+					});
+				} else {
+					// Log Activity
+					// var log_activity_ = NLogs.create({ user_id: base64.decode(userid), access: 'APPOINTMENTS'});
+					return res.status(200).json({
+						success: true,
+						msg: "You have upcoming appointments",
+						data: results[0]
+					});
+				}
+
+				conn.end();
+			});
+		} catch (err) {
+			return res.status(500).json({
+				success: false,
+				msg: "Internal Server Error"
+			});
+		}
 	}
-})
+);
+
+// get courier services
+router.get(
+	"/courier_services",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let courier = await NCourier.findAll({
+				where: {
+					is_active: 1
+				}
+			});
+			return res.status(200).json({
+				success: true,
+				message: "Couriers Found",
+				data: courier
+			});
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				message: "Failed to retrieve courier",
+				error: error.message
+			});
+		}
+	}
+);
 
 // get user programs
-router.get("/user_programs", passport.authenticate("jwt", { session: false }),
-async (req, res) => {
-  let user_id = req.query.user_id;
+router.get(
+	"/user_programs",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.query.user_id;
 
-  let check_patient_program = await NUserprograms.findOne({
-    where: {
-      user_id: base64.decode(user_id)
-    }
-  });
-  if (!check_patient_program) {
-    return res.status(200).json({
-      success: false,
-      msg: "User not found"
-    });
-  } else {
+		let check_patient_program = await NUserprograms.findOne({
+			where: {
+				user_id: base64.decode(user_id)
+			}
+		});
+		if (!check_patient_program) {
+			return res.status(200).json({
+				success: false,
+				msg: "User not found"
+			});
+		} else {
+			try {
+				const conn = mysql.createPool({
+					connectionLimit: 10,
+					host: process.env.DB_SERVER,
+					port: process.env.DB_PORT,
+					user: process.env.DB_USER,
+					password: process.env.DB_PASSWORD,
+					database: process.env.DB_NAME,
+					debug: true,
+					multipleStatements: true
+				});
 
-  try {
-    const conn = mysql.createPool({
-      connectionLimit: 10,
-      host: process.env.DB_SERVER,
-      port: process.env.DB_PORT,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      debug: true,
-      multipleStatements: true
-    });
+				let sql = `CALL sp_nishauri_user_programs(?)`;
+				let todo = [base64.decode(user_id)];
+				conn.query(sql, todo, (error, results, fields) => {
+					if (results[0].length === 0) {
+						return res.status(200).json({
+							success: false,
+							msg: "No programs found"
+						});
+					} else {
+						return res.status(200).json({
+							success: true,
+							msg: "User programs successfully found",
+							user_id: user_id,
+							programs: results[0]
+						});
+					}
 
-    let sql = `CALL sp_nishauri_user_programs(?)`;
-    let todo = [base64.decode(user_id)];
-    conn.query(sql, todo, (error, results, fields) => {
-
-      if (results[0].length === 0) {
-        return res.status(200).json({
-            success: false,
-            msg: "No programs found"
-        });
-    } else {
-        return res.status(200).json({
-            success: true,
-            msg: "User programs successfully found",
-            user_id: user_id,
-            programs: results[0]
-        });
-    }
-
-      conn.end();
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      msg: "Internal Server Error"
-  });
-  }
-}
-})
+					conn.end();
+				});
+			} catch (err) {
+				return res.status(500).json({
+					success: false,
+					msg: "Internal Server Error"
+				});
+			}
+		}
+	}
+);
 
 module.exports = router;
 //module.exports = { router, users };

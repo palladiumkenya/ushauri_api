@@ -13,6 +13,7 @@ const NDrugOrder = sequelize.sequelize.define(
         program_identifier:Sequelize.INTEGER,
         appointment_id:Sequelize.INTEGER,
         event_id:Sequelize.INTEGER,
+        order_type:Sequelize.STRING,
         delivery_address:Sequelize.STRING,
         delivery_lat:Sequelize.STRING,
         delivery_long:Sequelize.STRING,
