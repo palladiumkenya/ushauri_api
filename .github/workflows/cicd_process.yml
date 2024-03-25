@@ -34,5 +34,5 @@ jobs:
           # Build and run Docker container
           docker stop ushauri_api || true
           docker rm ushauri_api || true
-          docker build  --no-cache -t ushauri_api:latest "$deploy_dir"
+          docker build -t ushauri_api:latest "$deploy_dir"
           docker run -p 7002:5000 --name ushauri_api -d --restart always ushauri_api:latest
