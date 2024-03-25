@@ -2450,6 +2450,7 @@ router.post(
 				order_by: base64.decode(user_id),
 				client_phone_no: client_phone_no,
 				delivery_pickup_time: delivery_pickup_time,
+				status: "Pending",
 				created_at: today,
 				updated_at: today
 			});
@@ -2627,6 +2628,63 @@ router.get(
 		}
 	}
 );
+
+// get drug delivery requests
+router.get("/drug_delivery_list", passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.query.user_id;
+
+		let check_patient = await NDrugOrder.findOne({
+			where: {
+				order_by: base64.decode(user_id)
+			}
+		});
+		if (!check_patient) {
+			return res.status(200).json({
+				success: false,
+				msg: "User not found"
+			});
+		} else {
+			try {
+				const conn = mysql.createPool({
+					connectionLimit: 10,
+					host: process.env.DB_SERVER,
+					port: process.env.DB_PORT,
+					user: process.env.DB_USER,
+					password: process.env.DB_PASSWORD,
+					database: process.env.DB_NAME,
+					debug: true,
+					multipleStatements: true
+				});
+
+				let sql = `CALL sp_nishauri_drug_delivery(?)`;
+				let todo = [base64.decode(user_id)];
+				conn.query(sql, todo, (error, results, fields) => {
+					if (results[0].length === 0) {
+						return res.status(200).json({
+							success: false,
+							msg: "No drug delivery request found"
+						});
+					} else {
+						return res.status(200).json({
+							success: true,
+							msg: "Drug delivery request successfully found",
+							user_id: user_id,
+							programs: results[0]
+						});
+					}
+
+					conn.end();
+				});
+			} catch (err) {
+				return res.status(500).json({
+					success: false,
+					msg: "Internal Server Error"
+				});
+			}
+		}
+	}
+	);
 
 module.exports = router;
 //module.exports = { router, users };
