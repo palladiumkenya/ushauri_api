@@ -28,6 +28,8 @@ const terms = require("./routes/terms");
 const conf = require("./routes/configs");
 const provider = require("./routes/users");
 const cases = require("./routes/processes/case");
+const visit = require("./routes/processes/visit");
+
 // app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -42,6 +44,8 @@ app.use('/appnt',calendarupi);
 
 //PMTCT Module
 app.use('/pmtct',pmtct_new);
+//Visit Encounter Module
+app.use('/visit',visit);
 //Nishauri Module
 app.use('/nishauri',nishauri_new);
 
