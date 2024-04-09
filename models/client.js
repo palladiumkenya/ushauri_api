@@ -81,8 +81,11 @@ const Client = sequelize.sequelize.define(
         updated_by: Sequelize.INTEGER,
         hei_no: Sequelize.STRING,
         citizenship: Sequelize.INTEGER,
-        county_birth: Sequelize.INTEGER
-        
+        county_birth: Sequelize.INTEGER,
+        hiv_positive_date:Sequelize.DATEONLY,
+        regimen:Sequelize.STRING,
+        who_stage:Sequelize.STRING
+         
     }, {
         timestamps: true,
         paranoid: true,

@@ -33,7 +33,7 @@ async function registerClient(message, user) {
 
     const variables = decoded_message.split("*");
     console.log(variables.length);
-    if ((variables.length != 32) && (variables.length != 28))
+    if ((variables.length != 32) && (variables.length != 28) && (variables.length != 35))
         return {
             code: 400,
             message: variables.length
@@ -71,6 +71,10 @@ async function registerClient(message, user) {
      let locator_village = '';
      let locator_ward = '';
      let locator_location = '';
+     let regimen = '';
+     let who_stage = '';
+     let hiv_positive_date = '';
+
 
     if(variables.length == 32)
     {
@@ -108,6 +112,46 @@ async function registerClient(message, user) {
     
         locator_ward = variables[30]; //LOCATOR WARD INFO
         locator_location = variables[31]; //LOCATOR LOCATION
+
+    }else if(variables.length == 35){
+        //Additional Programatic data
+         //UPI Ushauri Version
+         reg = variables[0]; //CODE = REG : REGISTRATION 1
+         upn = variables[1]; //UPN/CCC NO 2
+         serial_no = variables[2]; //SERIAL NO 3
+         f_name = variables[3]; //FIRST NAME 4
+         m_name = variables[4]; //MIDDLE NAME 5
+         l_name = variables[5]; //LAST NAME 6
+         dob = variables[6]; //DATE OF BIRTH 7
+         national_id = variables[7]; //NATIONAL ID OR PASSOPRT NO 8
+         upi_no = variables[8]; //MOH UPI NUMBER
+         birth_cert_no = variables[9]; //MOH UPI NUMBER
+         gender = variables[10]; //GENDER 9
+         marital = variables[11]; //MARITAL STATUS 10
+         condition = variables[12]; //CONDITION 11
+         enrollment_date = variables[13]; //ENROLLMENT DATE 12
+         art_start_date = variables[14]; //ART START DATE 13
+         primary_phone_no = variables[15]; //PHONE NUMBER 14
+         alt_phone_no = variables[16]; //PHONE NUMBER 14
+         trtmnt_buddy_phone_no = variables[17]; //PHONE NUMBER 14
+         language = variables[18]; //LANGUAGE 16
+         sms_enable = variables[19]; //SMS ENABLE 15
+         motivation_enable = variables[20]; //MOTIVATIONAL ALERTS ENABLE 18
+         messaging_time = variables[21]; //MESSAGING TIME 17
+         client_status = variables[22]; //CLIENT STATUS 19
+         transaction_type = variables[23]; //TRANSACTION TYPE 20
+         grouping = variables[24]; //GROUPING
+         citizenship = variables[25]; //LOCATOR COUNTY INFO
+         county_birth = variables[26]; //LOCATOR COUNTY INFO
+         locator_county = variables[27]; //LOCATOR COUNTY INFO
+         locator_sub_county = variables[28]; //LOCATOR SUB COUNTY INFO
+         locator_village = variables[29]; // LOCATOR VILLAGE INFO
+     
+         locator_ward = variables[30]; //LOCATOR WARD INFO
+         locator_location = variables[31]; //LOCATOR LOCATION
+         hiv_positive_date = variables[32];
+         regimen = variables[33];
+         who_stage = variables[34];
 
     }else
     {
@@ -147,6 +191,9 @@ async function registerClient(message, user) {
         birth_cert_no = '-1'; //MOH UPI NUMBER
         citizenship = '-1'; //LOCATOR COUNTY INFO
         county_birth = '-1'; //LOCATOR COUNTY INFO
+        hiv_positive_date ='-1';
+        regimen = '-1';
+        who_stage = '-1';
 
 
 
@@ -189,6 +236,10 @@ async function registerClient(message, user) {
         }
         if (dob != "-1") {
             dob = moment(dob, "DD/MM/YYYY").format("YYYY-MM-DD");
+        }
+
+        if (hiv_positive_date != "-1") {
+            hiv_positive_date = moment(hiv_positive_date, "DD/MM/YYYY").format("YYYY-MM-DD");
         }
 
         var b = moment(new Date());
@@ -239,12 +290,16 @@ async function registerClient(message, user) {
             client_type = "Transfer";
         } else if (transaction_type == 1) {
             client_type = "New";
+        }else if (transaction_type == 4) {
+            client_type = "Re-enrollment";
+        }else if (transaction_type == 5) {
+            client_type = "Transit";
         }
 
 
 
 
-    if (transaction_type == 1 || transaction_type == 3) {
+    if (transaction_type == 1 || transaction_type == 3 || transaction_type == 4 || transaction_type == 5) {
         //New Registration or Transfer IN for a client not existing in the system
 
         const client = await Client.findOne({
@@ -330,7 +385,15 @@ async function registerClient(message, user) {
                 locator_village: locator_village.toUpperCase(),
                 locator_location: locator_location.toUpperCase(),
                 citizenship: citizenship,
-                county_birth: county_birth
+                county_birth: county_birth,
+                hiv_positive_date:hiv_positive_date,
+                regimen:regimen,
+                who_stage:who_stage
+            
+
+                
+
+
 
             }
 
@@ -431,7 +494,10 @@ async function registerClient(message, user) {
             locator_village: locator_village.toUpperCase(),
             locator_location: locator_location.toUpperCase(),
             citizenship: citizenship,
-            county_birth: county_birth
+            county_birth: county_birth,
+            hiv_positive_date:hiv_positive_date,
+            regimen:regimen,
+            who_stage:who_stage
         };
 
         let clean_object = await cleanUpdateObject(update_array);
