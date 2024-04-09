@@ -25,7 +25,11 @@ const NDrugOrder = sequelize.sequelize.define(
         order_by:Sequelize.INTEGER,
         mode:Sequelize.STRING,
         delivery_pickup_time:Sequelize.DATE,
-        client_phone_no:Sequelize.STRING
+        client_phone_no:Sequelize.STRING,
+        status:Sequelize.ENUM('Pending','Approved','Fullfilled','Dispatched'),
+        is_received:Sequelize.INTEGER,
+        fullfilled_date:Sequelize.DATE,
+        comment:Sequelize.STRING
     }, {
         timestamps: true,
         paranoid: true,

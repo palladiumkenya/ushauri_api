@@ -2419,6 +2419,12 @@ router.post(
 				}
 			});
 
+			let check_patient = await Client.findOne({
+				where: {
+					clinic_number: ccc_no
+				}
+			});
+
 			// console.log(check_order_request);
 
 			if (check_order_request) {
@@ -2426,45 +2432,43 @@ router.post(
 					success: false,
 					msg: "You already have an active drug delivery request for this appointment"
 				});
-			}
-
-			let check_patient = await Client.findOne({
-				where: {
-					clinic_number: ccc_no
+			} else
+			{
+				const new_order = await NDrugOrder.create({
+					program_identifier: check_patient.id,
+					appointment_id: appointment_id,
+					order_type: order_type,
+					delivery_address: delivery_address,
+					delivery_method: delivery_method,
+					courier_service: courier_service,
+					delivery_person: delivery_person,
+					delivery_person_id: delivery_person_id,
+					delivery_person_contact: delivery_person_contact,
+					delivery_lat: delivery_lat,
+					delivery_long: delivery_long,
+					mode: mode,
+					order_by: base64.decode(user_id),
+					client_phone_no: client_phone_no,
+					delivery_pickup_time: delivery_pickup_time,
+					status: "Pending",
+					is_received: 0,
+					created_at: today,
+					updated_at: today
+				});
+				if (new_order) {
+					return res.status(200).json({
+						success: true,
+						msg: "Order request made succesfully"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "An error occurred, could not create delivery request"
+					});
 				}
-			});
-
-			const new_order = await NDrugOrder.create({
-				program_identifier: check_patient.id,
-				appointment_id: appointment_id,
-				order_type:order_type,
-				delivery_address: delivery_address,
-				delivery_method: delivery_method,
-				courier_service: courier_service,
-				delivery_person: delivery_person,
-				delivery_person_id: delivery_person_id,
-				delivery_person_contact: delivery_person_contact,
-				delivery_lat: delivery_lat,
-				delivery_long: delivery_long,
-				mode: mode,
-				order_by: base64.decode(user_id),
-				client_phone_no: client_phone_no,
-				delivery_pickup_time: delivery_pickup_time,
-				status: "Pending",
-				created_at: today,
-				updated_at: today
-			});
-			if (new_order) {
-				return res.status(200).json({
-					success: true,
-					msg: "Order request made succesfully"
-				});
-			} else {
-				return res.status(200).json({
-					success: false,
-					msg: "An error occurred, could not create delivery request"
-				});
 			}
+
+
 		} catch (error) {
 			return res.status(500).json({
 				success: false,
@@ -2630,7 +2634,9 @@ router.get(
 );
 
 // get drug delivery requests
-router.get("/drug_delivery_list", passport.authenticate("jwt", { session: false }),
+router.get(
+	"/drug_delivery_list",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		let user_id = req.query.user_id;
 
@@ -2684,7 +2690,68 @@ router.get("/drug_delivery_list", passport.authenticate("jwt", { session: false 
 			}
 		}
 	}
-	);
+);
+// confirmation receipt
+router.post(
+	"/delivery_confirmation",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.body.user_id;
+			let confirmation_code = req.body.confirmation_code;
+			let is_received = req.body.is_received;
+			let order_id = req.body.order_id;
+			let comment = req.body.comment;
+			let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
+
+			let check_order = await NDrugOrder.findOne({
+				where: {
+					id: order_id,
+					status: "Dispatched"
+				}
+
+			});
+
+			if (check_order) {
+				const confirm_receipt = await NDrugOrder.update(
+					{
+						is_received: is_received,
+						status: "Fullfilled",
+						comment: comment,
+						fullfilled_date: today,
+						updated_at: today
+					},
+					{
+						where: {
+							confirmation_code: confirmation_code
+						}
+					}
+				);
+				if (confirm_receipt) {
+					return res.status(200).json({
+						success: true,
+						msg: `Drug delivery request Order No: ${confirmation_code} confirmed succesfully`
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "An error occurred, could not confirmed"
+					});
+				}
+			} else {
+				return res.status(200).json({
+					success: true,
+					msg: "Invalid Confirmation code"
+				});
+			}
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				message: "Internal Server Error"
+			});
+		}
+	}
+);
 
 module.exports = router;
 //module.exports = { router, users };
