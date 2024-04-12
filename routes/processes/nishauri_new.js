@@ -388,6 +388,44 @@ router.post("/verifyotp", async (req, res) => {
 	}
 });
 
+//Verify reset password otp
+router.post("/verifyresetpassotp", async (req, res) => {
+	let otp_verify = req.body.otp;
+	let user_name = req.body.user_name;
+	let today = moment(new Date().toDateString())
+		.tz("Africa/Nairobi")
+		.format("YYYY-MM-DD H:M:S");
+	//Check If User Exists
+	let check_username = await NUsers.findOne({
+		where: {
+			[Op.and]: [
+				{ otp_number: otp_verify },
+				{ msisdn: user_name }
+			]
+		}
+	});
+
+	if (check_username) {
+		var l = {
+			user_id: base64.encode(check_username.id),
+			page_id: 0
+		};
+
+		//return success on OTP Verification
+		return res.status(200).json({
+			success: true,
+			msg: "OTP Verified Successfully",
+			data: l
+		});
+	} else {
+		//return success on OTP Verification
+		return res.status(200).json({
+			success: false,
+			msg: "Invalid or Expired OTP"
+		});
+	}
+});
+
 //update password
 router.post("/updatepassword", async (req, res) => {
 	let password_1 = req.body.password;
@@ -411,6 +449,35 @@ router.post("/updatepassword", async (req, res) => {
 		const log_login = await NUsers.update(
 			{ password: password_hash },
 			{ where: { id: base64.decode(user_id) } }
+		);
+
+		return res.status(200).json({
+			success: true,
+			msg: "Password reset successfully"
+		});
+	} catch (err) {
+		return res.status(200).json({
+			success: false,
+			msg: "Failed to update new password"
+		});
+	}
+});
+
+// change password after reset
+router.post("/changepassword", async (req, res) => {
+	let password_1 = req.body.new_password;
+	let username = req.body.username;
+	let today = moment(new Date().toDateString())
+		.tz("Africa/Nairobi")
+		.format("YYYY-MM-DD H:M:S");
+
+	const password_hash = bcrypt.hashSync(password_1, 10);
+
+	try {
+		const log_login = await NUsers.update(
+			{ password: password_hash },
+			{ updated_at: today },
+			{ where: { msisdn: username } }
 		);
 
 		return res.status(200).json({
@@ -2424,8 +2491,6 @@ router.post(
 					clinic_number: ccc_no
 				}
 			});
-
-			// console.log(check_order_request);
 
 			if (check_order_request) {
 				return res.status(200).json({
