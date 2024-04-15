@@ -165,7 +165,7 @@ router.get('/search',  async (req, res) => {
 
     let msg_type=variables[0]; //Message Type ANC
 
-    let client_id = variables[1];
+    let clinic_number = variables[1];
     let is_scheduled = variables[2];
     let visit_type = variables[3];
     let other_visit_type = variables[4];
@@ -247,7 +247,7 @@ router.get('/search',  async (req, res) => {
 
         //Save Visit Variables
        const new_visit = await Visits.create({
-        client_id: client_id,
+        client_id: client.id,
         is_scheduled: is_scheduled,
         visit_type: visit_type,
         other_visit_type: other_visit_type,
