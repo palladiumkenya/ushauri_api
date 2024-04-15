@@ -149,12 +149,6 @@ router.get('/search',  async (req, res) => {
     let phone_no = req.body.phone_no;
 
 
-    //Log Message Received
-    const new_anc_log = await pmtct_log.create({
-        log:message
-    });
-
-
     message = message.split("*");
    // message = message[1];
 
