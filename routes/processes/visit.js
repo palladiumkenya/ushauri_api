@@ -27,7 +27,7 @@ const {
 } = require("../../models/clinic");
 
 const {
-    visits
+    Visits
 } = require("../../models/visits");
 
 
@@ -144,15 +144,9 @@ router.get('/search',  async (req, res) => {
   });
 
 
-  router.post('/anc', async(req, res) =>  {
+  router.post('/enc', async(req, res) =>  {
     let message = req.body.msg;
     let phone_no = req.body.phone_no;
-
-
-    //Log Message Received
-    const new_anc_log = await pmtct_log.create({
-        log:message
-    });
 
 
     message = message.split("*");
@@ -164,51 +158,32 @@ router.get('/search',  async (req, res) => {
 
    
 
-    decoded_message = "anc*" + decoded_message;
+    decoded_message = "visit*" + decoded_message;
 
 
     let variables = decoded_message.split("*");
 
     let msg_type=variables[0]; //Message Type ANC
 
-    
-    let clinic_number=variables[1]; //CC No
-    //console.log(clinic_number);
-    let anc_visit_no=variables[2]; // ANC Visit No
-    let anc_clinic_no=variables[3]; //ANC Clinic No
-    let client_type=variables[4]; // Client Type
-    let weight_ =variables[5]; // Client Type
-    let muac_ =variables[6]; // Client Type
+    let clinic_number = variables[1];
+    let is_scheduled = variables[2];
+    let visit_type = variables[3];
+    let other_visit_type = variables[4];
+    let weight = variables[5];
+    let height = variables[6];
+    let bmi = variables[7];
+    let z_score = variables[8];
+    let muac = variables[9];
+    let blood_sugar = variables[10];
+    let systolic_pressure = variables[11];
+    let diastolic_pressure = variables[12];
+    let is_chronic_illness = variables[13];
+    let illness = variables[14];
+    let other_illness = variables[15];
+    let ncd_status = variables[16];
+    let current_regimen = variables[17];
+    let who_stage = variables[18];
 
-    let parity_1=variables[7]; //Parity 1
-    let parity_2=variables[8]; // Parity 2
-    let gravida=variables[9]; // Gravida
-    let lmp_date= variables[10]; // LMP Date
-    let edd_date=variables[11];  //EDD date
-    let gestation=variables[12];  //Gestation date
-    let c_hiv_status=variables[13]; //HIV Status
-    let c_hiv_tested=variables[14]; //HIV Tested
-    let c_hiv_result=variables[15]; //HIV Result
-    let c_date_tested=variables[16]; //Client HIV Date Tested
-    let c_ccc_no=variables[17]; // Client CCC Number
-    let c_enrolment_date=variables[18]; //Client Enrolment Date
-    let c_art_start=variables[19]; // Client ART Start Date
-    let p_hiv_result= variables[20]; // Partner Result Code
-    let p_date_tested_=variables[21]; //Partner Date Tested
-    let p_ccc_no=variables[22]; //Partner CCC Number
-    let p_enrolment_date_= variables[23]; //Partner Enrolment Date
-    let p_art_start=variables[24]; //Partner ART date
-    let syphilis_result=variables[25]; //Syphilis Result
-    let syphilis_treatment= variables[26]; // Syphilis Treatment
-    let hepatisis= variables[27]; //Hepatitis Result
-    let tb_outcome= variables[28]; //TB Outcome
-    let _infant_prophylaxis_azt= variables[29]; //Infant Prophylaxis AZT
-    let _infant_prophylaxis_nvp= variables[30]; //Infant Prophylaxis NVP
-    let _infant_prophylaxis_ctx= variables[31]; //Infant Prophylaxis CTX
-    let vl_date= variables[32]; //VL date
-    let vl_result_=variables[33]; // VL Result
-    let vl_result_type_=variables[34]; // VL ResultType
-    
     let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
 
@@ -270,58 +245,38 @@ router.get('/search',  async (req, res) => {
             message: `Client: ${clinic_number} is not active in the system.`
         })
 
-        //Save PMTCT Variables
-       const new_anc_visit = await pmtct_anc.create({
-            client_id:client.id,
-            visit_number:anc_visit_no,
-            clinic_number:anc_clinic_no,
-            client_type:client_type,
-            parity_one:parity_1,
-            parity_two:parity_2,
-            gravida:gravida,
-            lmp_date:moment(lmp_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            edd: moment(edd_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            created_by:check_user.id,
-            created_at:today,
-            updated_at:today,
-            updated_by:check_user.id,
-            is_syphyilis:syphilis_result,
-            syphilis_treatment:syphilis_treatment,
-            hepatitis_b:hepatisis,
-            gestation:gestation,
-            weight:weight_,
-            muac:muac_,
-            hiv_testing_before_anc:c_hiv_status,
-            is_hiv_tested:c_hiv_tested,
-            m_status:c_hiv_result,
-            m_date_tested:moment(c_date_tested, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            m_ccc_number:c_ccc_no,
-            m_enrolment_date:moment(c_enrolment_date, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            m_art_start_date:moment(c_art_start, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            p_status:p_hiv_result,
-            p_date_tested:moment(p_date_tested_, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            p_ccc_number:p_ccc_no,
-            p_enrolment_date:moment(p_enrolment_date_, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            p_art_start_date:moment(p_art_start, "DD/MM/YYYY").format("YYYY-MM-DD"),
-            tb_outcome:tb_outcome,
-            infant_prophylaxis_azt:_infant_prophylaxis_azt,
-            infant_prophylaxis_nvp:_infant_prophylaxis_nvp,
-            infant_prophylaxis_ctx:_infant_prophylaxis_ctx,
-            vl_result:vl_result_,
-            vl_result_type:vl_result_type_,
-            vl_test_date:moment(vl_date, "DD/MM/YYYY").format("YYYY-MM-DD")
+        //Save Visit Variables
+       const new_visit = await Visits.create({
+        client_id: client.id,
+        is_scheduled: is_scheduled,
+        visit_type: visit_type,
+        other_visit_type: other_visit_type,
+        weight:weight,
+        height:height,
+        bmi:bmi,
+        z_score:z_score,
+        muac:muac,
+        blood_sugar:blood_sugar,
+        systolic_pressure:systolic_pressure,
+        diastolic_pressure:diastolic_pressure,
+        is_chronic_illness:is_chronic_illness,
+        illness:illness,
+        other_illness:other_illness,
+        ncd_status:ncd_status,
+        current_regimen:current_regimen,
+        who_stage:who_stage,
         });
          
         //console.log(new_anc_visit);
-        if(new_anc_visit){
+        if(new_visit){
          return res.json({
                 code: 200,
-                message: `ANC Visit Record for ${clinic_number} was created successfully`
+                message: `Visit Encounter Record for ${clinic_number} was created successfully`
             });
         }else{
             return res.json({
                 code: 500,
-                message: "An error occurred, could not create ANC Record"
+                message: "An error occurred, could not create Visit Encounter Record"
             });
         }
 
