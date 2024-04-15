@@ -398,10 +398,7 @@ router.post("/verifyresetpassotp", async (req, res) => {
 	//Check If User Exists
 	let check_username = await NUsers.findOne({
 		where: {
-			[Op.and]: [
-				{ otp_number: otp_verify },
-				{ msisdn: user_name }
-			]
+			[Op.and]: [{ otp_number: otp_verify }, { msisdn: user_name }]
 		}
 	});
 
@@ -466,7 +463,7 @@ router.post("/updatepassword", async (req, res) => {
 // change password after reset
 router.post("/changepassword", async (req, res) => {
 	let password_1 = req.body.new_password;
-	let username = req.body.username;
+	let user_name = req.body.user_name;
 	let today = moment(new Date().toDateString())
 		.tz("Africa/Nairobi")
 		.format("YYYY-MM-DD H:M:S");
@@ -476,18 +473,24 @@ router.post("/changepassword", async (req, res) => {
 	try {
 		const log_login = await NUsers.update(
 			{ password: password_hash },
-			{ updated_at: today },
-			{ where: { msisdn: username } }
+			{ where: { msisdn: user_name } }
 		);
-
-		return res.status(200).json({
-			success: true,
-			msg: "Password reset successfully"
-		});
+		if (log_login) {
+			return res.status(200).json({
+				success: true,
+				msg: "Password reset successfully"
+			});
+		} else {
+			return res.status(200).json({
+				success: false,
+				msg: "Failed to update new password"
+			});
+		}
 	} catch (err) {
-		return res.status(200).json({
+		console.error(error);
+		return res.status(500).json({
 			success: false,
-			msg: "Failed to update new password"
+			msg: "Internal server error"
 		});
 	}
 });
@@ -2497,8 +2500,7 @@ router.post(
 					success: false,
 					msg: "You already have an active drug delivery request for this appointment"
 				});
-			} else
-			{
+			} else {
 				const new_order = await NDrugOrder.create({
 					program_identifier: check_patient.id,
 					appointment_id: appointment_id,
@@ -2532,8 +2534,6 @@ router.post(
 					});
 				}
 			}
-
-
 		} catch (error) {
 			return res.status(500).json({
 				success: false,
@@ -2767,14 +2767,15 @@ router.post(
 			let is_received = req.body.is_received;
 			let order_id = req.body.order_id;
 			let comment = req.body.comment;
-			let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
+			let today = moment(new Date().toDateString())
+				.tz("Africa/Nairobi")
+				.format("YYYY-MM-DD H:M:S");
 
 			let check_order = await NDrugOrder.findOne({
 				where: {
 					id: order_id,
 					status: "Dispatched"
 				}
-
 			});
 
 			if (check_order) {
