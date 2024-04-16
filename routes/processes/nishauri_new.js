@@ -424,41 +424,60 @@ router.post("/verifyresetpassotp", async (req, res) => {
 });
 
 //update password
-router.post("/updatepassword", async (req, res) => {
-	let password_1 = req.body.password;
-	let password_2 = req.body.re_password;
-	let user_id = req.body.user_id;
-	let today = moment(new Date().toDateString())
-		.tz("Africa/Nairobi")
-		.format("YYYY-MM-DD H:M:S");
+router.post(
+	"/updatepassword",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let current_password = req.body.current_password;
+		let new_password = req.body.new_password;
+		let user_id = req.body.user_id;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
 
-	//Check if Passwords Are Similar
-	if (password_1 !== password_2) {
-		return res.status(200).json({
-			success: false,
-			msg: "Password Mis-match"
-		});
+		//Check if Passwords the current password is correct
+		//const current_password_hash = bcrypt.hashSync(current_password, 10);
+		const new_password_hash = bcrypt.hashSync(new_password, 10);
+		try {
+			const check_user = await NUsers.findOne({
+				where: {
+					 id: base64.decode(user_id)
+				}
+			});
+			if (check_user) {
+
+				const check_password = await bcrypt.compare(current_password, check_user.password);
+				if (check_password) {
+					const log_login = await NUsers.update(
+						{ password: new_password_hash },
+						{ where: { id: base64.decode(user_id) } }
+					);
+
+					return res.status(200).json({
+						success: true,
+						msg: "Password reset successfully"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "Wrong current password provided"
+					});
+				}
+
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "Failed to update new password"
+				});
+			}
+		} catch (err) {
+			return res.status(500).json({
+				success: false,
+				msg: "Server error could not update"
+			});
+		}
 	}
-
-	const password_hash = bcrypt.hashSync(password_1, 10);
-
-	try {
-		const log_login = await NUsers.update(
-			{ password: password_hash },
-			{ where: { id: base64.decode(user_id) } }
-		);
-
-		return res.status(200).json({
-			success: true,
-			msg: "Password reset successfully"
-		});
-	} catch (err) {
-		return res.status(200).json({
-			success: false,
-			msg: "Failed to update new password"
-		});
-	}
-});
+);
 
 // change password after reset
 router.post("/changepassword", async (req, res) => {
