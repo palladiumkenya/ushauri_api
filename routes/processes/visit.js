@@ -27,7 +27,7 @@ const {
 } = require("../../models/clinic");
 
 const {
-    Visits
+    Visit
 } = require("../../models/visits");
 
 
@@ -246,7 +246,7 @@ router.get('/search',  async (req, res) => {
         })
 
         //Save Visit Variables
-       const new_visit = await Visits.create({
+       const new_visit = await Visit.create({
         client_id: client.id,
         is_scheduled: is_scheduled,
         visit_type: visit_type,
@@ -267,7 +267,7 @@ router.get('/search',  async (req, res) => {
         who_stage:who_stage,
         });
          
-        //console.log(new_anc_visit);
+      
         if(new_visit){
          return res.json({
                 code: 200,
