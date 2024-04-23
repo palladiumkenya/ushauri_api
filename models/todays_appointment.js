@@ -19,6 +19,7 @@ const TodayAppointments = sequelize.sequelize.define(
         buddy_phone_no: Sequelize.STRING,
         facility_id: Sequelize.INTEGER,
         user_phone_no: Sequelize.STRING,
+        client_id: Sequelize.INTEGER,
         created_at: Sequelize.STRING
 
     }, {
