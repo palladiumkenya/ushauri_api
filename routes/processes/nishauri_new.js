@@ -43,6 +43,7 @@ const { NDrugOrder } = require("../../models/n_drug_order");
 const { NDrugDelivery } = require("../../models/n_drug_delivery");
 const { NCourier } = require("../../models/n_courier");
 const { masterFacility } = require("../../models/master_facility");
+const { NBmi } = require("../../models/n_bmi");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -2938,55 +2939,61 @@ router.post(
 // 		}
 // 	}
 // );
-async function getVLResults(baseURL, clinicNumber) {
-    return new Promise((resolve, reject) => {
-        const url = `${baseURL}/vl_results?clinic_number=${clinicNumber}`;
+async function getVLResults(baseURL, userID, authToken) {
+	return new Promise((resolve, reject) => {
+		const url = `${baseURL}/nishauri_new/vl_results?user_id=${userID}`;
+		console.log(url);
+		const options = {
+			url,
+			headers: {
+				Authorization: `Bearer ${authToken}`
+			}
+		};
 
-        request.get(url, (err, res_, body) => {
-            if (err) {
-                console.error("Error making request:", err);
-                reject(err);
-                return;
-            }
+		request.get(options, (err, res_, body) => {
+			if (err) {
+				reject(err);
+				return;
+			}
+			// Try to parse the body as JSON
+			let vlResults;
+			try {
+				vlResults = JSON.parse(body);
+			} catch (parseError) {
+				reject(parseError);
+				return;
+			}
 
-            // Try to parse the body as JSON
-            let vlResults;
-            try {
-                vlResults = JSON.parse(body);
-            } catch (parseError) {
-                console.error("Error parsing JSON:", parseError);
-                reject(parseError);
-                return;
-            }
+			// Check if the payload contains the "msg" array
+			if (
+				!vlResults.msg ||
+				!Array.isArray(vlResults.msg) ||
+				vlResults.msg.length === 0
+			) {
+				reject("Invalid payload format");
+				return;
+			}
 
-            // Check if the payload contains the "msg" array
-            if (!vlResults.msg || !Array.isArray(vlResults.msg) || vlResults.msg.length === 0) {
-                console.error("Invalid payload format:", vlResults);
-                reject("Invalid payload format");
-                return;
-            }
+			// Sort results by date in descending order
+			vlResults.msg.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            // Sort results by date in descending order
-            vlResults.msg.sort((a, b) => new Date(b.date) - new Date(a.date));
+			// Take the result for the latest date
+			const latestResult = vlResults.msg[0];
 
-            // Take the result for the latest date
-            const latestResult = vlResults.msg[0];
-
-            resolve(latestResult);
-        });
-    });
+			resolve(latestResult);
+		});
+	});
 }
 
 router.get(
     "/patient_clinic",
     passport.authenticate("jwt", { session: false }),
     async (req, res) => {
-        const userid = req.query.user_id;
-
-        const decodedUserid = base64.decode(userid);
+        const user_id = req.query.user_id;
+        const decodedUserid = base64.decode(user_id);
+        const authToken = req.header("Authorization").replace("Bearer ", "");
 
         try {
-            // Fetch all active programs for the user
             const userPrograms = await NUserprograms.findAll({
                 where: {
                     user_id: decodedUserid,
@@ -2998,97 +3005,117 @@ router.get(
                 programs: []
             };
 
-            // Loop through each active program
-            for (const program of userPrograms) {
-                const { program_type } = program;
+            const promises = [];
 
-                // Get program details by program_type
+            for (const program of userPrograms) {
+                const { program_type, program_identifier } = program;
+
                 const programDetails = await NprogramTypes.findOne({
                     where: { id: program_type }
                 });
 
-                if (programDetails) {
-                    const { name } = programDetails;
-
-                    const clientDetails = await Client.findOne({
-                        where: { id: program.program_identifier }
-                    });
-                    let patientFacility = await masterFacility.findOne({
-                        where: {
-                            code: clientDetails.mfl_code
-                        },
-                        attributes: ["code", "name"]
-                    });
-
-                    if (clientDetails) {
-                        const regimenUrl = `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`;
-
-                        // Make request to fetch program-specific data (patient regimens)
-                        request.get(regimenUrl, (err, res_, body) => {
-                            let programData;
-							console.log("Response body:", body);
-                            try {
-                                programData = JSON.parse(body);
-                            } catch (parseError) {
-                                return;
-                            }
-                            // Assuming programData.message is an array
-                            if (
-                                programData.status === "success" &&
-                                Array.isArray(programData.message) &&
-                                programData.message.length > 0
-                            ) {
-                                // Extract the first element from programData.message
-                                const programItem = programData.message[0];
-
-                                // Add program data to final JSON response
-                                finalJson.programs.push({
-                                    name,
-                                    facility: patientFacility.name,
-                                    patient_observations: programItem
-                                });
-
-                                // If this is the last program, send the final JSON response
-                                if (finalJson.programs.length === userPrograms.length) {
-                                    return res.status(200).json(finalJson);
-                                }
-                            } else {
-                                console.error("Unexpected program data format:", programData);
-                            }
-                        });
-
-                        // localUrl for fetching VL results
-                        const localUrl = `${req.protocol}://${req.get("host")}`;
-                        const vlResults = await getVLResults(localUrl, clientDetails.clinic_number);
-
-                        // Add VL results to final JSON response
-                        finalJson.programs.push({
-                            name,
-                            facility: patientFacility.name,
-                            patient_observations: {
-                                viral_load: vlResults.result
-                            }
-                        });
-
-                        // If this is the last program, send the final JSON response
-                        if (finalJson.programs.length === userPrograms.length) {
-                            return res.status(200).json(finalJson);
-                        }
-                    } else {
-                        console.error("Client details not found for program:", program);
-                    }
-                } else {
+                if (!programDetails) {
                     console.error("Program details not found for program:", program);
+                    continue;
                 }
+
+                const { name } = programDetails;
+
+                const clientDetails = await Client.findOne({
+                    where: { id: program_identifier }
+                });
+
+                const { mfl_code, clinic_number } = clientDetails;
+
+                let patientFacility = await masterFacility.findOne({
+                    where: {
+                        code: mfl_code
+                    },
+                    attributes: ["code", "name"]
+                });
+
+                if (!patientFacility) {
+                    console.error("Facility details not found for program:", program);
+                    continue;
+                }
+
+                const regimenUrl = `${process.env.ART_URL}patient/${clinic_number}/regimen`;
+
+                promises.push(new Promise((resolve, reject) => {
+                    request.get(regimenUrl, (err, res_, body) => {
+
+                        let programData;
+
+                        try {
+                            programData = JSON.parse(body);
+                            const programItem = programData.message[0] || {};
+                            finalJson.programs.push({
+                                name,
+                                facility: patientFacility.name,
+                                patient_observations: programItem
+                            });
+                        } catch (parseError) {
+                            reject(parseError);
+                        }
+
+                        resolve();
+                    });
+                }));
+
+                promises.push(getVLResults(
+                    `${req.protocol}://${req.get("host")}`,
+                    user_id,
+                    authToken
+                ).then(vlResults => {
+                    const existingProgramIndex = finalJson.programs.findIndex(
+                        p => p.name === name && p.facility === patientFacility.name
+                    );
+
+                    if (existingProgramIndex !== -1) {
+                        if (!finalJson.programs[existingProgramIndex].patient_observations.viral_load) {
+                            finalJson.programs[existingProgramIndex].patient_observations.viral_load = vlResults.result !== undefined
+                                ? vlResults.result.viral_load
+                                : "No VL results available for this patient.";
+                        }
+                    }
+                }).catch(error => {
+                    console.error("Error fetching VL results:", error);
+                }));
             }
+
+            await Promise.all(promises);
+
+            return res.status(200).json(finalJson);
         } catch (error) {
             return res.status(500).json({
                 success: false,
-                msg: "Error occurred while patient data"
+                msg: "Error occurred while fetching patient data"
             });
         }
     }
 );
+
+router.get("/bmi_details", async (req, res) => {
+	try {
+		let bmi_details = await NBmi.findAll({
+			where: {
+				is_active: 1
+			}
+		});
+		return res.status(200).json({
+			success: true,
+			message: "BMI details successfully found",
+			data: bmi_details
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to retrieve BMI details",
+			error: error.message
+		});
+	}
+});
+
 
 
 module.exports = router;
