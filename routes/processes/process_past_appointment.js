@@ -116,6 +116,7 @@ router.post("/", async (req, res) => {
                     let file_no = appointments[i].file_no;
                     let buddy_phone_no = appointments[i].buddy_phone_no;
                     let other_appointment_type = appointments[i].other_appointment_type;
+                    let client_id=appointments[i].client_id;
                     //let hei_number = appointments[i].hei_number;
                     appointments[i].trmnt_buddy_phone_no = '';
                     if (isEmpty(buddy_phone_no)) {
@@ -156,7 +157,8 @@ router.post("/", async (req, res) => {
                         "*" + appointment_id +
                         "*" + file_no +
                         "*" + appointments[i].trmnt_buddy_phone_no +
-                        "*" + appointment_date;
+                        "*" + appointment_date +
+                        "*" + client_id;
                     let encrypted_msg = "TOAPP*" + await base64.encode(outgoing_msg);
                     let innerMessage = {};
                     innerMessage.message = encrypted_msg;
@@ -189,6 +191,8 @@ router.post("/", async (req, res) => {
                     let file_no = appointments[i].file_no;
                     let buddy_phone_no = appointments[i].buddy_phone_no;
                     let other_appointment_type = appointments[i].other_appointment_type;
+                    let client_id=appointments[i].client_id;
+
                     //let hei_number = appointments[i].hei_number;
                     appointments[i].trmnt_buddy_phone_no = '';
                     if (isEmpty(buddy_phone_no)) {
@@ -229,7 +233,8 @@ router.post("/", async (req, res) => {
                         "*" + appointment_id +
                         "*" + file_no +
                         "*" + appointments[i].trmnt_buddy_phone_no +
-                        "*" + appointment_date;
+                        "*" + appointment_date +
+                        "*" + client_id;;
                     let encrypted_msg = "TOAPP*" + await base64.encode(outgoing_msg);
                     let innerMessage = {};
                     innerMessage.message = encrypted_msg;
@@ -312,6 +317,8 @@ router.post("/new", async (req, res) => {
         let file_no = appointments[i].file_no;
         let buddy_phone_no = appointments[i].buddy_phone_no;
         let other_appointment_type = appointments[i].other_appointment_type;
+        let client_id=appointments[i].client_id;
+        
         //let hei_number = appointments[i].hei_number;
         appointments[i].trmnt_buddy_phone_no = '';
         if (isEmpty(buddy_phone_no)) {
@@ -352,7 +359,8 @@ router.post("/new", async (req, res) => {
             "*" + appointment_id +
             "*" + file_no +
             "*" + appointments[i].trmnt_buddy_phone_no +
-            "*" + appointment_date;
+            "*" + appointment_date +
+            "*" + client_id;
         let encrypted_msg = "TOAPP*" + await base64.encode(outgoing_msg);
         let innerMessage = {};
         innerMessage.message = encrypted_msg;
