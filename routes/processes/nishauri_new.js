@@ -42,6 +42,7 @@ const { Appointment } = require("../../models/appointment");
 const { NDrugOrder } = require("../../models/n_drug_order");
 const { NDrugDelivery } = require("../../models/n_drug_delivery");
 const { NCourier } = require("../../models/n_courier");
+const { masterFacility } = require("../../models/master_facility");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -441,12 +442,14 @@ router.post(
 		try {
 			const check_user = await NUsers.findOne({
 				where: {
-					 id: base64.decode(user_id)
+					id: base64.decode(user_id)
 				}
 			});
 			if (check_user) {
-
-				const check_password = await bcrypt.compare(current_password, check_user.password);
+				const check_password = await bcrypt.compare(
+					current_password,
+					check_user.password
+				);
 				if (check_password) {
 					const log_login = await NUsers.update(
 						{ password: new_password_hash },
@@ -463,7 +466,6 @@ router.post(
 						msg: "Wrong current password provided"
 					});
 				}
-
 			} else {
 				return res.status(200).json({
 					success: false,
@@ -2837,6 +2839,257 @@ router.post(
 		}
 	}
 );
+
+// router.get(
+// 	"/patient_clinic",
+// 	passport.authenticate("jwt", { session: false }),
+// 	async (req, res) => {
+// 		const userid = req.query.user_id;
+
+// 		const decodedUserid = base64.decode(userid);
+
+// 		try {
+// 			// Fetch all active programs for the user
+// 			const userPrograms = await NUserprograms.findAll({
+// 				where: {
+// 					user_id: decodedUserid,
+// 					is_active: 1
+// 				}
+// 			});
+
+// 			const finalJson = {
+// 				programs: []
+// 			};
+
+// 			// Loop through each active program
+// 			for (const program of userPrograms) {
+// 				const { program_type } = program;
+
+// 				// Get program details by program_type
+// 				const programDetails = await NprogramTypes.findOne({
+// 					where: { id: program_type }
+// 				});
+
+// 				if (programDetails) {
+// 					const { name } = programDetails;
+
+// 					const clientDetails = await Client.findOne({
+// 						where: { id: program.program_identifier }
+// 					});
+// 					let patientFacility = await masterFacility.findOne({
+// 						where: {
+// 							code: clientDetails.mfl_code
+// 						},
+// 						attributes: ["code", "name"]
+// 					});
+
+// 					if (clientDetails) {
+// 						const url = `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`;
+
+// 						// Make request to fetch program-specific data
+// 						request.get(url, (err, res_, body) => {
+
+// 							let programData;
+// 							if (err) {
+// 								console.error("Error making request:", err);
+// 								return;
+// 							}
+// 							try {
+// 								programData = JSON.parse(body);
+// 							} catch (parseError) {
+// 								return;
+// 							}
+// 							// Assuming programData.message is an array
+// 							if (
+// 								programData.status === "success" &&
+// 								Array.isArray(programData.message) &&
+// 								programData.message.length > 0
+// 							) {
+// 								// Extract the first element from programData.message
+// 								const programItem = programData.message[0];
+
+// 								// Add program data to final JSON response
+// 								finalJson.programs.push({
+// 									name,
+// 									facility: patientFacility.name,
+// 									patient_observations: programItem
+// 								});
+
+// 								// If this is the last program, send the final JSON response
+// 								if (finalJson.programs.length === userPrograms.length) {
+// 									return res.status(200).json(finalJson);
+// 								}
+// 							} else {
+// 								console.error("Unexpected program data format:", programData);
+// 							}
+// 						});
+// 					} else {
+// 						console.error("Client details not found for program:", program);
+// 					}
+// 				} else {
+// 					console.error("Program details not found for program:", program);
+// 				}
+// 			}
+// 		} catch (error) {
+// 			return res.status(500).json({
+// 				success: false,
+// 				msg: "Error occurred while fetching data"
+// 			});
+// 		}
+// 	}
+// );
+async function getVLResults(baseURL, clinicNumber) {
+    return new Promise((resolve, reject) => {
+        const url = `${baseURL}/vl_results?clinic_number=${clinicNumber}`;
+
+        request.get(url, (err, res_, body) => {
+            if (err) {
+                console.error("Error making request:", err);
+                reject(err);
+                return;
+            }
+
+            // Try to parse the body as JSON
+            let vlResults;
+            try {
+                vlResults = JSON.parse(body);
+            } catch (parseError) {
+                console.error("Error parsing JSON:", parseError);
+                reject(parseError);
+                return;
+            }
+
+            // Check if the payload contains the "msg" array
+            if (!vlResults.msg || !Array.isArray(vlResults.msg) || vlResults.msg.length === 0) {
+                console.error("Invalid payload format:", vlResults);
+                reject("Invalid payload format");
+                return;
+            }
+
+            // Sort results by date in descending order
+            vlResults.msg.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Take the result for the latest date
+            const latestResult = vlResults.msg[0];
+
+            resolve(latestResult);
+        });
+    });
+}
+
+router.get(
+    "/patient_clinic",
+    passport.authenticate("jwt", { session: false }),
+    async (req, res) => {
+        const userid = req.query.user_id;
+
+        const decodedUserid = base64.decode(userid);
+
+        try {
+            // Fetch all active programs for the user
+            const userPrograms = await NUserprograms.findAll({
+                where: {
+                    user_id: decodedUserid,
+                    is_active: 1
+                }
+            });
+
+            const finalJson = {
+                programs: []
+            };
+
+            // Loop through each active program
+            for (const program of userPrograms) {
+                const { program_type } = program;
+
+                // Get program details by program_type
+                const programDetails = await NprogramTypes.findOne({
+                    where: { id: program_type }
+                });
+
+                if (programDetails) {
+                    const { name } = programDetails;
+
+                    const clientDetails = await Client.findOne({
+                        where: { id: program.program_identifier }
+                    });
+                    let patientFacility = await masterFacility.findOne({
+                        where: {
+                            code: clientDetails.mfl_code
+                        },
+                        attributes: ["code", "name"]
+                    });
+
+                    if (clientDetails) {
+                        const regimenUrl = `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`;
+
+                        // Make request to fetch program-specific data (patient regimens)
+                        request.get(regimenUrl, (err, res_, body) => {
+                            let programData;
+							console.log("Response body:", body);
+                            try {
+                                programData = JSON.parse(body);
+                            } catch (parseError) {
+                                return;
+                            }
+                            // Assuming programData.message is an array
+                            if (
+                                programData.status === "success" &&
+                                Array.isArray(programData.message) &&
+                                programData.message.length > 0
+                            ) {
+                                // Extract the first element from programData.message
+                                const programItem = programData.message[0];
+
+                                // Add program data to final JSON response
+                                finalJson.programs.push({
+                                    name,
+                                    facility: patientFacility.name,
+                                    patient_observations: programItem
+                                });
+
+                                // If this is the last program, send the final JSON response
+                                if (finalJson.programs.length === userPrograms.length) {
+                                    return res.status(200).json(finalJson);
+                                }
+                            } else {
+                                console.error("Unexpected program data format:", programData);
+                            }
+                        });
+
+                        // localUrl for fetching VL results
+                        const localUrl = `${req.protocol}://${req.get("host")}`;
+                        const vlResults = await getVLResults(localUrl, clientDetails.clinic_number);
+
+                        // Add VL results to final JSON response
+                        finalJson.programs.push({
+                            name,
+                            facility: patientFacility.name,
+                            patient_observations: {
+                                viral_load: vlResults.result
+                            }
+                        });
+
+                        // If this is the last program, send the final JSON response
+                        if (finalJson.programs.length === userPrograms.length) {
+                            return res.status(200).json(finalJson);
+                        }
+                    } else {
+                        console.error("Client details not found for program:", program);
+                    }
+                } else {
+                    console.error("Program details not found for program:", program);
+                }
+            }
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                msg: "Error occurred while patient data"
+            });
+        }
+    }
+);
+
 
 module.exports = router;
 //module.exports = { router, users };
