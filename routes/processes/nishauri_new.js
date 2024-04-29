@@ -3087,6 +3087,7 @@ router.get(
 
             return res.status(200).json(finalJson);
         } catch (error) {
+			console.error("I want to catch this error!!:", error);
             return res.status(500).json({
                 success: false,
                 msg: "Error occurred while fetching patient data"
