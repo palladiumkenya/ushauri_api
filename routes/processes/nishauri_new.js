@@ -3006,7 +3006,7 @@ router.get(
 
 		const promises = [];
 
-		try {
+		// try {
 			for (const program of userPrograms) {
 				const { program_type, program_identifier } = program;
 
@@ -3097,12 +3097,12 @@ router.get(
 			await Promise.all(promises);
 
 			return res.status(200).json(finalJson);
-		} catch (error) {
-			return res.status(500).json({
-				success: false,
-				msg: "Error occurred while fetching patient data"
-			});
-		}
+		// } catch (error) {
+		// 	return res.status(500).json({
+		// 		success: false,
+		// 		msg: "Error occurred while fetching patient data"
+		// 	});
+		// }
 	}
 );
 
