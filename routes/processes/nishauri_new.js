@@ -2989,24 +2989,24 @@ router.get(
 	"/patient_clinic",
 	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
-		const user_id = req.query.user_id;
-		const decodedUserid = base64.decode(user_id);
-		const authToken = req.header("Authorization").replace("Bearer ", "");
+		try {
+			const user_id = req.query.user_id;
+			const decodedUserid = base64.decode(user_id);
+			const authToken = req.header("Authorization").replace("Bearer ", "");
 
-		const userPrograms = await NUserprograms.findAll({
-			where: {
-				user_id: decodedUserid,
-				is_active: 1
-			}
-		});
+			const userPrograms = await NUserprograms.findAll({
+				where: {
+					user_id: decodedUserid,
+					is_active: 1
+				}
+			});
 
-		const finalJson = {
-			programs: []
-		};
+			const finalJson = {
+				programs: []
+			};
 
-		const promises = [];
+			const promises = [];
 
-		// try {
 			for (const program of userPrograms) {
 				const { program_type, program_identifier } = program;
 
@@ -3025,41 +3025,59 @@ router.get(
 					where: { id: program_identifier }
 				});
 
-				const { mfl_code, clinic_number } = clientDetails;
+				let patientFacility = null;
+				if (clientDetails) {
+					const { mfl_code } = clientDetails;
 
-				let patientFacility = await masterFacility.findOne({
-					where: {
-						code: mfl_code
-					},
-					attributes: ["code", "name"]
-				});
-
-				if (!patientFacility) {
-					console.error("Facility details not found for program:", program);
-					continue;
+					patientFacility = await masterFacility.findOne({
+						where: {
+							code: mfl_code
+						},
+						attributes: ["code", "name"]
+					});
 				}
 
-				const regimenUrl = `${process.env.ART_URL}patient/${clinic_number}/regimen`;
+				const facilityName = patientFacility ? patientFacility.name : null;
+
+				const regimenUrl = clientDetails
+					? `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`
+					: null;
 
 				promises.push(
 					new Promise((resolve, reject) => {
-						request.get(regimenUrl, (err, res_, body) => {
-							let programData;
+						if (regimenUrl) {
+							request.get(regimenUrl, (err, res_, body) => {
+								if (err) {
+									console.error("Error fetching regimen data:", err);
+									reject(err);
+									return;
+								}
 
-							try {
-								programData = JSON.parse(body);
-								const programItem = programData.message[0] || {};
-								finalJson.programs.push({
-									name,
-									facility: patientFacility.name,
-									patient_observations: programItem
-								});
-							} catch (parseError) {
-								reject(parseError);
-							}
+								let programData;
 
+								try {
+									programData = JSON.parse(body);
+									const programItem = programData.message[0] || {};
+									finalJson.programs.push({
+										name,
+										facility: facilityName,
+										patient_observations: programItem
+									});
+								} catch (parseError) {
+									console.error("Error parsing JSON (Regimen):", parseError);
+									reject(parseError);
+								}
+
+								resolve();
+							});
+						} else {
+							finalJson.programs.push({
+								name,
+								facility: facilityName,
+								patient_observations: {}
+							});
 							resolve();
-						});
+						}
 					})
 				);
 
@@ -3071,7 +3089,7 @@ router.get(
 					)
 						.then((vlResults) => {
 							const existingProgramIndex = finalJson.programs.findIndex(
-								(p) => p.name === name && p.facility === patientFacility.name
+								(p) => p.name === name && p.facility === facilityName
 							);
 
 							if (existingProgramIndex !== -1) {
@@ -3097,14 +3115,15 @@ router.get(
 			await Promise.all(promises);
 
 			return res.status(200).json(finalJson);
-		// } catch (error) {
-		// 	return res.status(500).json({
-		// 		success: false,
-		// 		msg: "Error occurred while fetching patient data"
-		// 	});
-		// }
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				msg: "Error occurred while fetching patient data"
+			});
+		}
 	}
 );
+
 
 router.get("/bmi_details", async (req, res) => {
 	try {
