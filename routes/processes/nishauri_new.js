@@ -2984,145 +2984,142 @@ async function getVLResults(baseURL, userID, authToken) {
 }
 
 router.get(
-	"/patient_clinic",
-	passport.authenticate("jwt", { session: false }),
-	async (req, res) => {
-		try {
-			const user_id = req.query.user_id;
-			const decodedUserid = base64.decode(user_id);
-			const authToken = req.header("Authorization").replace("Bearer ", "");
+    "/patient_clinic",
+    passport.authenticate("jwt", { session: false }),
+    async (req, res) => {
+        try {
+            const user_id = req.query.user_id;
+            const decodedUserid = base64.decode(user_id);
+            const authToken = req.header("Authorization").replace("Bearer ", "");
 
-			const userPrograms = await NUserprograms.findAll({
-				where: {
-					user_id: decodedUserid,
-					is_active: 1
-				}
-			});
+            const userPrograms = await NUserprograms.findAll({
+                where: {
+                    user_id: decodedUserid,
+                    is_active: 1
+                }
+            });
 
-			const finalJson = {
-				programs: []
-			};
+            const finalJson = {
+                programs: []
+            };
 
-			const promises = [];
+            const promises = [];
 
-			for (const program of userPrograms) {
-				const { program_type, program_identifier } = program;
+            for (const program of userPrograms) {
+                const { program_type, program_identifier } = program;
 
-				const programDetails = await NprogramTypes.findOne({
-					where: { id: program_type }
-				});
+                const programDetails = await NprogramTypes.findOne({
+                    where: { id: program_type }
+                });
 
-				if (!programDetails) {
-					continue;
-				}
+                if (!programDetails) {
+                    continue;
+                }
 
-				const { name } = programDetails;
+                const { name } = programDetails;
 
-				const clientDetails = await Client.findOne({
-					where: { id: program_identifier }
-				});
+                const clientDetails = await Client.findOne({
+                    where: { id: program_identifier }
+                });
 
-				let patientFacility = null;
-				if (clientDetails) {
-					const { mfl_code } = clientDetails;
+                let patientFacility = null;
+                if (clientDetails) {
+                    const { mfl_code } = clientDetails;
 
-					patientFacility = await masterFacility.findOne({
-						where: {
-							code: mfl_code
-						},
-						attributes: ["code", "name"]
-					});
-				}
+                    patientFacility = await masterFacility.findOne({
+                        where: {
+                            code: mfl_code
+                        },
+                        attributes: ["code", "name"]
+                    });
+                }
 
-				const facilityName = patientFacility ? patientFacility.name : null;
+                const facilityName = patientFacility ? patientFacility.name : null;
 
-				const regimenUrl = clientDetails
-					? `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`
-					: null;
+                const regimenUrl = clientDetails
+                    ? `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`
+                    : null;
 
-				promises.push(
-					new Promise((resolve, reject) => {
-						if (regimenUrl) {
-							request.get(regimenUrl, (err, res_, body) => {
-								if (err) {
-									return;
-								}
+                promises.push(
+                    new Promise((resolve, reject) => {
+                        if (regimenUrl) {
+                            request.get(regimenUrl, (err, res_, body) => {
+                                if (err) {
+                                    return;
+                                }
 
-								let programData;
+                                let programData;
 
-								try {
-									programData = JSON.parse(body);
-									const programItem = programData.message[0] || {};
-									finalJson.programs.push({
-										name,
-										facility: facilityName,
-										patient_observations: programItem
-									});
-								} catch (parseError) {
-									reject(parseError);
-								}
+                                try {
+                                    programData = JSON.parse(body);
+                                    const programItem = programData.message[0] || {};
+                                    finalJson.programs.push({
+                                        name,
+                                        facility: facilityName,
+                                        patient_observations: []
+                                    });
+                                    const patientObservations = finalJson.programs[finalJson.programs.length - 1].patient_observations;
+                                    for (const [key, value] of Object.entries(programItem)) {
+                                        // Convert key to human-readable format
+                                        const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                                        // Add label and value to patient observations
+                                        patientObservations.push({ label, value });
+                                    }
+                                } catch (parseError) {
+                                    reject(parseError);
+                                }
 
-								resolve();
-							});
-						} else {
-							finalJson.programs.push({
-								name,
-								facility: facilityName,
-								patient_observations: {}
-							});
-							resolve();
-						}
-					})
-				);
+                                resolve();
+                            });
+                        } else {
+                            finalJson.programs.push({
+                                name,
+                                facility: facilityName,
+                                patient_observations: []
+                            });
+                            resolve();
+                        }
+                    })
+                );
 
-				promises.push(
-					getVLResults(
-						`${req.protocol}://${req.get("host")}`,
-						user_id,
-						authToken
-					)
-					.then((vlResults) => {
-						const existingProgramIndex = finalJson.programs.findIndex(
-							(p) => p.name === name && p.facility === facilityName
-						);
+                if (program_identifier !== null) {
+                    promises.push(
+                        getVLResults(
+                            `${req.protocol}://${req.get("host")}`,
+                            user_id,
+                            authToken
+                        ).then((vlResults) => {
+                            const existingProgramIndex = finalJson.programs.findIndex(
+                                (p) => p.name === name && p.facility === facilityName
+                            );
 
-						if (existingProgramIndex !== -1) {
-							const patientObservations = finalJson.programs[existingProgramIndex].patient_observations;
+                            if (existingProgramIndex !== -1) {
+                                const patientObservations = finalJson.programs[existingProgramIndex].patient_observations;
 
-							// Check if patient_observations object exists
-							if (!patientObservations) {
-								finalJson.programs[existingProgramIndex].patient_observations = {};
-							}
+                                // Extract viral_load from vlResults.result
+                                const viralLoadValue = vlResults.result;
 
-							// Extract viral_load from vlResults.result
-							const viralLoadValue = vlResults.result;
-							// Update viral_load if it's not already defined
-							if (typeof patientObservations.viral_load === 'undefined') {
-								finalJson.programs[existingProgramIndex].patient_observations.viral_load =
-									viralLoadValue !== undefined
-										? viralLoadValue
-										: "No VL results available for this patient.";
+                                // Add viral_load to patient observations
+                                patientObservations.push({ label: "Viral Load", value: viralLoadValue });
+                            }
+                        })
+                    );
+                }
+            }
 
-							} else {
-								console.log("viral_load property already exists or is undefined");
-							}
-						}
-					})
+            await Promise.all(promises);
 
-				);
-			}
-
-			await Promise.all(promises);
-
-			return res.status(200).json(finalJson);
-		} catch (error) {
-			return res.status(500).json({
-				success: false,
-				msg: "Error occurred while fetching patient data"
-			});
-		}
-	}
+            return res.status(200).json(finalJson);
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                msg: "Error occurred while fetching patient data"
+            });
+        }
+    }
 );
+
+
 
 router.get("/bmi_details", async (req, res) => {
 	try {
@@ -3144,6 +3141,59 @@ router.get("/bmi_details", async (req, res) => {
 		});
 	}
 });
+
+// update patient program
+router.post(
+	"/updateprogram",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let program_id = req.body.program_id;
+		let user_id = req.body.user_id;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
+		try {
+			const check_user = await NUsers.findOne({
+				where: {
+					id: base64.decode(user_id)
+				}
+			});
+			if (check_user) {
+				const check_user_program = await NUserprograms.findOne({
+					where: {
+						[Op.and]: [{ is_active: "1" }, { program_type: program_id }]
+					}
+				});
+				if (check_user_program) {
+					const update_program = await NUserprograms.update(
+						{ is_active: "0" },
+						{ where: { program_type: program_id } }
+					);
+
+					return res.status(200).json({
+						success: true,
+						msg: "Program was successfully removed"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "Program is already inActive"
+					});
+				}
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "User not found"
+				});
+			}
+		} catch (err) {
+			return res.status(500).json({
+				success: false,
+				msg: "Server error could not remove program"
+			});
+		}
+	}
+);
 
 module.exports = router;
 //module.exports = { router, users };
