@@ -2942,7 +2942,6 @@ router.post(
 async function getVLResults(baseURL, userID, authToken) {
 	return new Promise((resolve, reject) => {
 		const url = `${baseURL}/nishauri_new/vl_results?user_id=${userID}`;
-		console.log(url);
 		const options = {
 			url,
 			headers: {
@@ -2979,7 +2978,6 @@ async function getVLResults(baseURL, userID, authToken) {
 
 			// Take the result for the latest date
 			const latestResult = vlResults.msg[0];
-
 			resolve(latestResult);
 		});
 	});
@@ -3015,7 +3013,6 @@ router.get(
 				});
 
 				if (!programDetails) {
-					console.error("Program details not found for program:", program);
 					continue;
 				}
 
@@ -3048,8 +3045,6 @@ router.get(
 						if (regimenUrl) {
 							request.get(regimenUrl, (err, res_, body) => {
 								if (err) {
-									console.error("Error fetching regimen data:", err);
-									reject(err);
 									return;
 								}
 
@@ -3064,7 +3059,6 @@ router.get(
 										patient_observations: programItem
 									});
 								} catch (parseError) {
-									console.error("Error parsing JSON (Regimen):", parseError);
 									reject(parseError);
 								}
 
@@ -3087,28 +3081,34 @@ router.get(
 						user_id,
 						authToken
 					)
-						.then((vlResults) => {
-							const existingProgramIndex = finalJson.programs.findIndex(
-								(p) => p.name === name && p.facility === facilityName
-							);
+					.then((vlResults) => {
+						const existingProgramIndex = finalJson.programs.findIndex(
+							(p) => p.name === name && p.facility === facilityName
+						);
 
-							if (existingProgramIndex !== -1) {
-								if (
-									!finalJson.programs[existingProgramIndex].patient_observations
-										.viral_load
-								) {
-									finalJson.programs[
-										existingProgramIndex
-									].patient_observations.viral_load =
-										vlResults.result !== undefined
-											? vlResults.result.viral_load
-											: "No VL results available for this patient.";
-								}
+						if (existingProgramIndex !== -1) {
+							const patientObservations = finalJson.programs[existingProgramIndex].patient_observations;
+
+							// Check if patient_observations object exists
+							if (!patientObservations) {
+								finalJson.programs[existingProgramIndex].patient_observations = {};
 							}
-						})
-						.catch((error) => {
-							console.error("Error fetching VL results:", error);
-						})
+
+							// Extract viral_load from vlResults.result
+							const viralLoadValue = vlResults.result;
+							// Update viral_load if it's not already defined
+							if (typeof patientObservations.viral_load === 'undefined') {
+								finalJson.programs[existingProgramIndex].patient_observations.viral_load =
+									viralLoadValue !== undefined
+										? viralLoadValue
+										: "No VL results available for this patient.";
+
+							} else {
+								console.log("viral_load property already exists or is undefined");
+							}
+						}
+					})
+
 				);
 			}
 
@@ -3123,7 +3123,6 @@ router.get(
 		}
 	}
 );
-
 
 router.get("/bmi_details", async (req, res) => {
 	try {
