@@ -768,6 +768,16 @@ router.post(
 				[Op.and]: [{ id: base64.decode(user_id) }]
 			}
 		});
+		// existing program
+		let existing_other_program = await NUserprograms.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: base64.decode(user_id) },
+					{ is_active: 0 },
+					{ program_type: program_id }
+				]
+			}
+		});
 
 		// Hiv program set up
 		if (program_id === 1) {
@@ -848,23 +858,41 @@ router.post(
 					if (new_user_program) {
 						return res.status(200).json({
 							success: true,
-							msg: "Program Registration Succesfully. Please Login to access personalized data"
+							msg: "Program Registration Succesfully."
 						});
 					} else {
-						return res.status(500).json({
+						return res.status(200).json({
 							success: false,
 							msg: "An error occurred, could not create program record"
 						});
 					}
-				} else {
-					return res.status(200).json({
-						success: true,
-						msg: "Program Already Exist Succesfully. Please Login to access personalized data"
-					});
+				} else if (existing_other_program) {
+
+					const update_program = await NUserprograms.update(
+						{ is_active: "1" },
+						{ where: {
+							[Op.and]: [
+								{ user_id: base64.decode(user_id) },
+								{ program_type: program_id }
+							]
+						} }
+					);
+
+					if (update_program) {
+						return res.status(200).json({
+							success: true,
+							msg: "Program activation was Succesfully"
+						});
+					} else {
+						return res.status(200).json({
+							success: false,
+							msg: "An error occurred, could not activate program record"
+						});
+					}
 				}
 			} else {
 				//Show Error Message
-				return res.status(500).json({
+				return res.status(200).json({
 					success: false,
 					msg: "Program registration record already exists"
 				});
@@ -902,23 +930,46 @@ router.post(
 					if (new_user_program) {
 						return res.status(200).json({
 							success: true,
-							msg: "Program Registration Succesfully. Please Login to access personalized data"
+							msg: "Program Registration Succesfully"
 						});
 					} else {
-						return res.status(500).json({
+						return res.status(200).json({
 							success: false,
 							msg: "An error occurred, could not create program record"
+						});
+					}
+				} else if (existing_other_program) {
+
+					const update_program = await NUserprograms.update(
+						{ is_active: "1" },
+						{ where: {
+							[Op.and]: [
+								{ user_id: base64.decode(user_id) },
+								{ program_type: program_id } // for other programs
+							]
+						} }
+					);
+
+					if (update_program) {
+						return res.status(200).json({
+							success: true,
+							msg: "Program activation was Succesfully"
+						});
+					} else {
+						return res.status(200).json({
+							success: false,
+							msg: "An error occurred, could not activate program record"
 						});
 					}
 				} else {
 					return res.status(200).json({
 						success: true,
-						msg: "Program Already Exist Succesfully. Please Login to access personalized data"
+						msg: "Program Already Exist Succesfully."
 					});
 				}
 			} else {
 				//Show Error Message
-				return res.status(500).json({
+				return res.status(200).json({
 					success: false,
 					msg: "Program registration record already exists"
 				});
@@ -2988,11 +3039,11 @@ router.get(
     passport.authenticate("jwt", { session: false }),
     async (req, res) => {
         try {
-            const user_id = req.query.user_id;
-            const decodedUserid = base64.decode(user_id);
-            const authToken = req.header("Authorization").replace("Bearer ", "");
+            let user_id = req.query.user_id;
+            let decodedUserid = base64.decode(user_id);
+            let authToken = req.header("Authorization").replace("Bearer ", "");
 
-            const userPrograms = await NUserprograms.findAll({
+            let userPrograms = await NUserprograms.findAll({
                 where: {
                     user_id: decodedUserid,
                     is_active: 1
