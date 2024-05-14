@@ -1342,7 +1342,13 @@ router.get("/appointment_previous", async (req, res) => {
 
 			conn.end();
 		});
-	} catch (err) {}
+	} catch (err) {
+		return res.status(500).json({
+            success: false,
+            message: "An error occurred while processing the request."
+        });
+
+	}
 });
 
 //previous appointment list
@@ -1888,15 +1894,15 @@ router.get("/regimen", async (req, res) => {
 				}
 			);
 		} else {
-			return res.status(500).json({
+			return res.status(200).json({
 				success: false,
-				msg: "Regimen Records Found"
+				msg: "No Regimen records found, you are not registered to this program"
 			});
 		}
 	} else {
-		return res.status(500).json({
+		return res.status(200).json({
 			success: false,
-			msg: "Regimen Records Found"
+			msg: "No Regimen records found, you are not registered to this programr"
 		});
 	}
 });
@@ -2683,7 +2689,7 @@ router.get(
 			});
 
 			let sql = `CALL sp_dawa_drop_appt(?)`;
-			let todo = [check_patient.clinic_number];
+			let todo = base64.decode(user_id);
 			conn.query(sql, todo, (error, results, fields) => {
 				if (error) {
 					return console.error(error.message);
