@@ -819,7 +819,7 @@ router.post(
 			if (!check_valid_user) {
 				return res.status(200).json({
 					success: false,
-					msg: `Invalid CCC Number/ First Name Match: ${ccc_no}, The CCC Number/First Name does not match in Nishauri`
+					msg: `The First Name does not match with CCC Number: ${ccc_no} in Nishauri`
 				});
 			}
 
@@ -879,10 +879,10 @@ router.post(
 					if (!check_valid_user) {
 						return res.status(200).json({
 							success: false,
-							msg: `Invalid CCC Number/ First Name Match: ${ccc_no}, The CCC Number/First Name does not match in Nishauri`
+							msg: `The First Name does not match with CCC Number: ${ccc_no} in Nishauri `
 						});
 					}
-					
+
 					const update_program = await NUserprograms.update(
 						{ is_active: "1" },
 						{
