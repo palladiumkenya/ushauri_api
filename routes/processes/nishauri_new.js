@@ -3302,5 +3302,123 @@ router.post(
 	}
 );
 
+// new patient details
+router.get(
+    "/patient_clinic_new",
+    passport.authenticate("jwt", { session: false }),
+    async (req, res) => {
+        try {
+            let user_id = req.query.user_id;
+            let decodedUserid = base64.decode(user_id);
+            let authToken = req.header("Authorization").replace("Bearer ", "");
+
+            let userPrograms = await NUserprograms.findAll({
+                where: {
+                    user_id: decodedUserid,
+                    is_active: 1
+                }
+            });
+
+            const finalJson = {
+                programs: []
+            };
+
+            const promises = [];
+
+            for (const program of userPrograms) {
+                const { program_type, program_identifier } = program;
+
+                const programDetails = await NprogramTypes.findOne({
+                    where: { id: program_type }
+                });
+
+                if (!programDetails) {
+                    continue;
+                }
+
+                const { name } = programDetails;
+
+                const clientDetails = await Client.findOne({
+                    where: { id: program_identifier }
+                });
+
+                let patientFacility = null;
+                if (clientDetails) {
+                    const { mfl_code } = clientDetails;
+
+                    patientFacility = await masterFacility.findOne({
+                        where: {
+                            code: mfl_code
+                        },
+                        attributes: ["code", "name"]
+                    });
+                }
+
+                const facilityName = patientFacility ? patientFacility.name : null;
+
+                const regimenUrl = clientDetails
+                    ? `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`
+                    : null;
+
+                promises.push(
+                    new Promise((resolve, reject) => {
+                        if (regimenUrl) {
+                            request.get(regimenUrl, (err, res_, body) => {
+                                if (err) {
+                                    return;
+                                }
+
+                                let programData;
+
+                                try {
+                                    programData = JSON.parse(body);
+                                    const programItem = programData.message[0] || {};
+                                    finalJson.programs.push({
+                                        name,
+                                        facility: facilityName,
+                                        patient_observations: []
+                                    });
+                                    const patientObservations =
+                                        finalJson.programs[finalJson.programs.length - 1]
+                                            .patient_observations;
+                                    for (const [key, value] of Object.entries(programItem)) {
+                                        // Convert key to human-readable format
+                                        const label = key
+                                            .replace(/_/g, " ")
+                                            .replace(/\b\w/g, (c) => c.toUpperCase());
+                                        // Add label and value to patient observations
+                                        patientObservations.push({ label, value });
+                                    }
+                                } catch (parseError) {
+                                    reject(parseError);
+                                }
+
+                                resolve();
+                            });
+                        } else {
+                            finalJson.programs.push({
+                                name,
+                                facility: facilityName,
+                                patient_observations: []
+                            });
+                            resolve();
+                        }
+                    })
+                );
+            }
+
+            await Promise.all(promises);
+
+            return res.status(200).json(finalJson);
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                msg: "Error occurred while fetching patient data"
+            });
+        }
+    }
+);
+
+
 module.exports = router;
 //module.exports = { router, users };
