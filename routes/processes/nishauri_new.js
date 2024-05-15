@@ -799,15 +799,15 @@ router.post(
 				where: { clinic_number: ccc_no }
 			});
 
-			if (check_program_valid) {
-				if (
-					check_program_valid.f_name.toUpperCase() !== firstname.toUpperCase()
-				) {
+			if (!check_program_valid) {
+				// if (
+				// 	check_program_valid.f_name.toUpperCase() !== firstname.toUpperCase()
+				// ) {
 					return res.status(200).json({
 						success: false,
 						msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
 					});
-				}
+				// }
 			}
 
 			let check_valid_user = await Client.findOne({
@@ -866,7 +866,23 @@ router.post(
 							msg: "An error occurred, could not create program record"
 						});
 					}
+
+
 				} else if (existing_other_program) {
+					if (!check_program_valid) {
+
+							return res.status(200).json({
+								success: false,
+								msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
+							});
+					}
+					if (!check_valid_user) {
+						return res.status(200).json({
+							success: false,
+							msg: `Invalid CCC Number/ First Name Match: ${ccc_no}, The CCC Number/First Name does not match in Nishauri`
+						});
+					}
+					
 					const update_program = await NUserprograms.update(
 						{ is_active: "1" },
 						{
