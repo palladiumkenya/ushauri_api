@@ -1146,7 +1146,7 @@ router.get('/vl_result', async(req, res) =>  {
   //Check if we already have an existing reschedule request
 
    //Search if Program Details Exist
-   let check_ccc_no= await NUserprograms.findOne({
+   let check_ccc_no = await NUserprograms.findOne({
     where: {
       [Op.and]: [
         { user_id: base64.decode(userid) },
@@ -1155,7 +1155,7 @@ router.get('/vl_result', async(req, res) =>  {
       ]
     }
   });
- // console.log(check_ccc_no);
+// console.log(check_ccc_no);
   if(check_ccc_no)
   {
 
@@ -1171,7 +1171,7 @@ router.get('/vl_result', async(req, res) =>  {
     {
       //Call mLab Instance
      client_payload='{"ccc_number": "'+check_program_valid.clinic_number+'"}';
-     // client_payload='{"ccc_number": "1409101178"}';
+     // client_payload='{"ccc_number": "1073900337"}';
       const url_details = {
         url: process.env.MLAB_URL,
         json: true,
@@ -1326,6 +1326,7 @@ router.get('/vl_results', async(req, res) =>  {
     if(check_program_valid)
     {
       //Call mLab Instance
+      console.log(check_program_valid.clinic_number);
      client_payload='{"ccc_number": "'+check_program_valid.clinic_number+'"}';
      //client_payload='{"ccc_number": "1409101178"}';
       const url_details = {
@@ -2082,6 +2083,9 @@ router.post("/getactive_q", async (req, res) => {
      {
        res.send(respond);
 
+      }else
+      {
+        res.send(respond);
       }  
      //res.send(respond);
   });
