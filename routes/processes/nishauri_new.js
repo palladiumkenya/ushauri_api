@@ -11,6 +11,7 @@ const ExtractJwt = require("passport-jwt").ExtractJwt;
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const { Buffer } = require("buffer");
+const axios = require("axios");
 
 const users = [];
 
@@ -44,6 +45,7 @@ const { NDrugDelivery } = require("../../models/n_drug_delivery");
 const { NCourier } = require("../../models/n_courier");
 const { masterFacility } = require("../../models/master_facility");
 const { NBmi } = require("../../models/n_bmi");
+const { NpatientObs } = require("../../models/n_patient_obs");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -244,12 +246,64 @@ router.post("/signin", async (req, res) => {
 						token: token,
 						account_verified: check_username.is_active
 					};
+
+					// Trigger data retrieval from getVLResults function
+					// const hostURL = `${req.protocol}://${req.get("host")}`;
+
+					// // Call VL Results Endpoint
+					// const vlResultResponse = await axios.get(
+					// 	`${hostURL}/nishauri_new/vl_results?user_id=${base64.encode(
+					// 		check_username.id
+					// 	)}`,
+					// 	{
+					// 		headers: {
+					// 			Authorization: `Bearer ${token}`
+					// 		}
+					// 	}
+					// );
+					// const patientObservationsResponse = await axios.get(
+					// 	`${hostURL}/nishauri_new/patient_clinic_new?user_id=${base64.encode(
+					// 		check_username.id
+					// 	)}`,
+					// 	{
+					// 		headers: {
+					// 			Authorization: `Bearer ${token}`
+					// 		}
+					// 	}
+					// );
+
+					// // Convert the flattened programs array to JSON format
+					// const patientObJSON = JSON.stringify(
+					// 	patientObservationsResponse.data
+					// );
+
+					// console.log(patientObservationsResponse.data);
+
+					// // Try to find the record
+					// const [patientObsRecord, created] = await NpatientObs.findOrCreate({
+					// 	where: { user_id: check_username.id },
+					// 	defaults: {
+					// 		user_id: check_username.id,
+					// 		lab_data: vlResultResponse.data.msg,
+					// 		patient_ob: patientObJSON
+					// 	}
+					// });
+
+					// // If the record was found and not just created, update it
+					// if (!created) {
+					// 	await patientObsRecord.update({
+					// 		lab_data: vlResultResponse.data.msg,
+					// 		patient_ob: patientObJSON
+					// 	});
+					// }
+
 					return res.status(200).json({
 						success: true,
 						msg: "Signin successfully",
 						data: l
 					});
 				} catch (err) {
+					console.log(err);
 					return res.status(200).json({
 						success: false,
 						msg: "Failed to sign-in successfully",
@@ -803,10 +857,10 @@ router.post(
 				// if (
 				// 	check_program_valid.f_name.toUpperCase() !== firstname.toUpperCase()
 				// ) {
-					return res.status(200).json({
-						success: false,
-						msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
-					});
+				return res.status(200).json({
+					success: false,
+					msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
+				});
 				// }
 			}
 
@@ -835,46 +889,30 @@ router.post(
 						]
 					}
 				});
-
-				if (!check_program) {
-					//Update Login & Active Login
-
-					const log_active_login = await NUsers.update(
-						{ is_active: "1" },
-						{ where: { id: base64.decode(user_id) } }
-					);
-					//Save Program Details If Exist
-					const new_user_program = await NUserprograms.create({
-						user_id: base64.decode(user_id),
-						program_type: "1",
-						program_identifier: check_program_valid.id,
-						moh_upi_no: upi_no,
-						is_active: "1",
-						activation_date: today,
-						created_at: today,
-						updated_at: today
-					});
-
-					if (new_user_program) {
-						return res.status(200).json({
-							success: true,
-							msg: "Program Registration Succesfully."
-						});
-					} else {
-						return res.status(200).json({
-							success: false,
-							msg: "An error occurred, could not create program record"
-						});
+				let existing_other_program = await NUserprograms.findOne({
+					where: {
+						[Op.and]: [
+							{ user_id: base64.decode(user_id) },
+							{ is_active: 0 },
+							{ program_type: program_id }
+						]
 					}
+				});
 
+
+				if (check_program) {
+					return res.status(200).json({
+						success: false,
+						msg: "Program registration record already exists"
+					});
+					//Update Login & Active Login
 
 				} else if (existing_other_program) {
 					if (!check_program_valid) {
-
-							return res.status(200).json({
-								success: false,
-								msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
-							});
+						return res.status(200).json({
+							success: false,
+							msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
+						});
 					}
 					if (!check_valid_user) {
 						return res.status(200).json({
@@ -884,7 +922,7 @@ router.post(
 					}
 
 					const update_program = await NUserprograms.update(
-						{ is_active: "1" },
+						{ is_active: "1", program_identifier: check_program_valid.id },
 						{
 							where: {
 								[Op.and]: [
@@ -909,10 +947,33 @@ router.post(
 				}
 			} else {
 				//Show Error Message
-				return res.status(200).json({
-					success: false,
-					msg: "Program registration record already exists"
+				const log_active_login = await NUsers.update(
+					{ is_active: "1" },
+					{ where: { id: base64.decode(user_id) } }
+				);
+				//Save Program Details If Exist
+				const new_user_program = await NUserprograms.create({
+					user_id: base64.decode(user_id),
+					program_type: "1",
+					program_identifier: check_program_valid.id,
+					moh_upi_no: upi_no,
+					is_active: "1",
+					activation_date: today,
+					created_at: today,
+					updated_at: today
 				});
+
+				if (new_user_program) {
+					return res.status(200).json({
+						success: true,
+						msg: "Program Registration Succesfully."
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "An error occurred, could not create program record"
+					});
+				}
 			}
 		} else {
 			// other programs set up
@@ -1360,10 +1421,9 @@ router.get("/appointment_previous", async (req, res) => {
 		});
 	} catch (err) {
 		return res.status(500).json({
-            success: false,
-            message: "An error occurred while processing the request."
-        });
-
+			success: false,
+			message: "An error occurred while processing the request."
+		});
 	}
 });
 
@@ -2592,7 +2652,6 @@ router.post(
 				});
 			} else {
 				if (delivery_method === "In Person") {
-
 					let delivery_person = req.body.delivery_person;
 					let delivery_person_id = req.body.delivery_person_id;
 					let delivery_person_contact = req.body.delivery_person_contact;
@@ -3304,121 +3363,120 @@ router.post(
 
 // new patient details
 router.get(
-    "/patient_clinic_new",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        try {
-            let user_id = req.query.user_id;
-            let decodedUserid = base64.decode(user_id);
-            let authToken = req.header("Authorization").replace("Bearer ", "");
+	"/patient_clinic_new",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.query.user_id;
+			let decodedUserid = base64.decode(user_id);
+			let authToken = req.header("Authorization").replace("Bearer ", "");
 
-            let userPrograms = await NUserprograms.findAll({
-                where: {
-                    user_id: decodedUserid,
-                    is_active: 1
-                }
-            });
+			let userPrograms = await NUserprograms.findAll({
+				where: {
+					user_id: decodedUserid,
+					is_active: 1
+				}
+			});
 
-            const finalJson = {
-                programs: []
-            };
+			const finalJson = {
+				programs: []
+			};
 
-            const promises = [];
+			const promises = [];
 
-            for (const program of userPrograms) {
-                const { program_type, program_identifier } = program;
+			for (const program of userPrograms) {
+				const { program_type, program_identifier } = program;
 
-                const programDetails = await NprogramTypes.findOne({
-                    where: { id: program_type }
-                });
+				const programDetails = await NprogramTypes.findOne({
+					where: { id: program_type }
+				});
 
-                if (!programDetails) {
-                    continue;
-                }
+				if (!programDetails) {
+					continue;
+				}
 
-                const { name } = programDetails;
+				const { name } = programDetails;
 
-                const clientDetails = await Client.findOne({
-                    where: { id: program_identifier }
-                });
+				const clientDetails = await Client.findOne({
+					where: { id: program_identifier }
+				});
 
-                let patientFacility = null;
-                if (clientDetails) {
-                    const { mfl_code } = clientDetails;
+				let patientFacility = null;
+				if (clientDetails) {
+					const { mfl_code } = clientDetails;
 
-                    patientFacility = await masterFacility.findOne({
-                        where: {
-                            code: mfl_code
-                        },
-                        attributes: ["code", "name"]
-                    });
-                }
+					patientFacility = await masterFacility.findOne({
+						where: {
+							code: mfl_code
+						},
+						attributes: ["code", "name"]
+					});
+				}
 
-                const facilityName = patientFacility ? patientFacility.name : null;
+				const facilityName = patientFacility ? patientFacility.name : null;
 
-                const regimenUrl = clientDetails
-                    ? `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`
-                    : null;
+				const regimenUrl = clientDetails
+					? `${process.env.ART_URL}patient/${clientDetails.clinic_number}/regimen`
+					: null;
 
-                promises.push(
-                    new Promise((resolve, reject) => {
-                        if (regimenUrl) {
-                            request.get(regimenUrl, (err, res_, body) => {
-                                if (err) {
-                                    return;
-                                }
+				promises.push(
+					new Promise((resolve, reject) => {
+						if (regimenUrl) {
+							request.get(regimenUrl, (err, res_, body) => {
+								if (err) {
+									return;
+								}
 
-                                let programData;
+								let programData;
 
-                                try {
-                                    programData = JSON.parse(body);
-                                    const programItem = programData.message[0] || {};
-                                    finalJson.programs.push({
-                                        name,
-                                        facility: facilityName,
-                                        patient_observations: []
-                                    });
-                                    const patientObservations =
-                                        finalJson.programs[finalJson.programs.length - 1]
-                                            .patient_observations;
-                                    for (const [key, value] of Object.entries(programItem)) {
-                                        // Convert key to human-readable format
-                                        const label = key
-                                            .replace(/_/g, " ")
-                                            .replace(/\b\w/g, (c) => c.toUpperCase());
-                                        // Add label and value to patient observations
-                                        patientObservations.push({ label, value });
-                                    }
-                                } catch (parseError) {
-                                    reject(parseError);
-                                }
+								try {
+									programData = JSON.parse(body);
+									const programItem = programData.message[0] || {};
+									finalJson.programs.push({
+										name,
+										facility: facilityName,
+										patient_observations: []
+									});
+									const patientObservations =
+										finalJson.programs[finalJson.programs.length - 1]
+											.patient_observations;
+									for (const [key, value] of Object.entries(programItem)) {
+										// Convert key to human-readable format
+										const label = key
+											.replace(/_/g, " ")
+											.replace(/\b\w/g, (c) => c.toUpperCase());
+										// Add label and value to patient observations
+										patientObservations.push({ label, value });
+									}
+								} catch (parseError) {
+									reject(parseError);
+								}
 
-                                resolve();
-                            });
-                        } else {
-                            finalJson.programs.push({
-                                name,
-                                facility: facilityName,
-                                patient_observations: []
-                            });
-                            resolve();
-                        }
-                    })
-                );
-            }
+								resolve();
+							});
+						} else {
+							finalJson.programs.push({
+								name,
+								facility: facilityName,
+								patient_observations: []
+							});
+							resolve();
+						}
+					})
+				);
+			}
 
-            await Promise.all(promises);
+			await Promise.all(promises);
 
-            return res.status(200).json(finalJson);
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                msg: "Error occurred while fetching patient data"
-            });
-        }
-    }
+			return res.status(200).json(finalJson);
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				msg: "Error occurred while fetching patient data"
+			});
+		}
+	}
 );
-
 
 module.exports = router;
 //module.exports = { router, users };
