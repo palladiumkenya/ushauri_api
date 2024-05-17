@@ -878,14 +878,15 @@ router.post(
 			}
 
 			if (check_username) {
-				//User Account Not Active- Show Page to Enter Program Indentification Details
+
 				//Search if Program Details Exist
 				let check_program = await NUserprograms.findOne({
 					where: {
 						[Op.and]: [
 							{ program_identifier: check_program_valid.id },
 							{ user_id: base64.decode(user_id) },
-							{ program_type: "1" } // Set 1 for HIV program
+							{ is_active: 1 },
+							{ program_type: "1" } // ART program
 						]
 					}
 				});
@@ -966,7 +967,7 @@ router.post(
 				if (new_user_program) {
 					return res.status(200).json({
 						success: true,
-						msg: "Program Registration Succesfully."
+						msg: "Program registration was succesfully."
 					});
 				} else {
 					return res.status(200).json({
@@ -978,44 +979,24 @@ router.post(
 		} else {
 			// other programs set up
 			if (check_username) {
-				//Search if Program Details Exist
 				let check_other_program = await NUserprograms.findOne({
 					where: {
 						[Op.and]: [
 							{ user_id: base64.decode(user_id) },
+							{ is_active: 1 },
 							{ program_type: program_id } // for other programs
 						]
 					}
 				});
 
-				if (!check_other_program) {
-					//Update Login & Active Login
+				if (check_other_program) {
 
-					const log_active_login = await NUsers.update(
-						{ is_active: "1" },
-						{ where: { id: base64.decode(user_id) } }
-					);
-					//Save Program Details If Exist
-					const new_user_program = await NUserprograms.create({
-						user_id: base64.decode(user_id),
-						program_type: program_id,
-						is_active: "1",
-						activation_date: today,
-						created_at: today,
-						updated_at: today
+					return res.status(200).json({
+						success: true,
+						msg: "Program registration record already exists."
 					});
 
-					if (new_user_program) {
-						return res.status(200).json({
-							success: true,
-							msg: "Program Registration Succesfully"
-						});
-					} else {
-						return res.status(200).json({
-							success: false,
-							msg: "An error occurred, could not create program record"
-						});
-					}
+
 				} else if (existing_other_program) {
 					const update_program = await NUserprograms.update(
 						{ is_active: "1" },
@@ -1041,10 +1022,31 @@ router.post(
 						});
 					}
 				} else {
-					return res.status(200).json({
-						success: true,
-						msg: "Program Already Exist Succesfully."
+					const log_active_login = await NUsers.update(
+						{ is_active: "1" },
+						{ where: { id: base64.decode(user_id) } }
+					);
+					//Save Program Details If Exist
+					const new_user_program = await NUserprograms.create({
+						user_id: base64.decode(user_id),
+						program_type: program_id,
+						is_active: "1",
+						activation_date: today,
+						created_at: today,
+						updated_at: today
 					});
+
+					if (new_user_program) {
+						return res.status(200).json({
+							success: true,
+							msg: "Program registration was succesfully"
+						});
+					} else {
+						return res.status(200).json({
+							success: false,
+							msg: "An error occurred, could not create program record"
+						});
+					}
 				}
 			} else {
 				//Show Error Message
