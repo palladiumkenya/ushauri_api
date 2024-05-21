@@ -1652,15 +1652,15 @@ router.get(
 					});
 				});
 			} else {
-				return res.status(500).json({
+				return res.status(200).json({
 					success: false,
-					msg: "No VL Records Found"
+					msg: "No Lab results records found"
 				});
 			}
 		} else {
-			return res.status(500).json({
+			return res.status(200).json({
 				success: false,
-				msg: "No VL Records Found"
+				msg: "You've not enrolled to this program to view lab results"
 			});
 		}
 	}
@@ -1722,9 +1722,9 @@ router.get(
 
 					// return console.log(obj_)
 					if (
-						obj_.message === "No results for the given CCC Number were found"
+						obj_.message === "No lab results for the given CCC Number were found"
 					) {
-						sp_status.push("No VL Results Found");
+						sp_status.push("No lab records found");
 					} else {
 						var obj2 = obj_.results;
 
@@ -1789,13 +1789,13 @@ router.get(
 			} else {
 				return res.status(500).json({
 					success: false,
-					msg: "No VL Records Found"
+					msg: "No lab records found"
 				});
 			}
 		} else {
-			return res.status(500).json({
+			return res.status(200).json({
 				success: false,
-				msg: "No VL Records Found"
+				msg: "You've not enrolled to this program to view lab results"
 			});
 		}
 	}
@@ -2912,7 +2912,7 @@ router.get(
 		if (!check_patient) {
 			return res.status(200).json({
 				success: false,
-				msg: "User not found"
+				msg: "No drug delivery request found"
 			});
 		} else {
 			try {
