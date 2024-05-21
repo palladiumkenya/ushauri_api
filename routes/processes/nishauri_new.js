@@ -870,6 +870,7 @@ router.post(
 				}
 			});
 
+
 			if (!check_valid_user) {
 				return res.status(200).json({
 					success: false,
@@ -899,16 +900,30 @@ router.post(
 						]
 					}
 				});
+				let check_art_user = await NUserprograms.findOne({
+					where: {
+						[Op.and]: [
+							{ program_identifier: { [Op.ne]: check_program_valid.id } },
+							{ user_id: base64.decode(user_id) },
+							{ program_type: program_id }
+						]
+					}
+				});
 
-
+				if (check_art_user) {
+					return res.status(200).json({
+						success: false,
+						msg: `The ART Program details does not belong to your records`
+					});
+				}
 				if (check_program) {
 					return res.status(200).json({
 						success: false,
 						msg: "Program registration record already exists"
 					});
-					//Update Login & Active Login
 
 				} else if (existing_other_program) {
+
 					if (!check_program_valid) {
 						return res.status(200).json({
 							success: false,
