@@ -1075,7 +1075,7 @@ router.post(
 						});
 					}
 				}
-			
+
 		}
 	}
 );
@@ -1514,9 +1514,7 @@ router.post(
 				appointment_id: app_id,
 				reason: reason_,
 				request_date: today,
-				proposed_date: moment(proposed_date_, "DD/MM/YYYY").format(
-					"YYYY-MM-DD"
-				),
+				proposed_date: proposed_date_,
 				created_at: today,
 				updated_at: today
 			});
