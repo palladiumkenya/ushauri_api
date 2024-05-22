@@ -428,7 +428,10 @@ router.post("/verifyotp", async (req, res) => {
 			user_id: base64.encode(check_username.id),
 			page_id: 0
 		};
-
+		const active_user = await NUsers.update(
+			{ is_active: "1" },
+			{ where: { id: base64.decode(user_id) } }
+		);
 		//return success on OTP Verification
 		return res.status(200).json({
 			success: true,
@@ -817,9 +820,9 @@ router.post(
 		}
 
 		//Check If User Exists
-		let check_username = await NUsers.findOne({
+		let check_username = await NUserprograms.findOne({
 			where: {
-				[Op.and]: [{ id: base64.decode(user_id) }]
+				[Op.and]: [{ id: base64.decode(user_id) }, { program_type: program_id }]
 			}
 		});
 		// existing program
@@ -846,11 +849,18 @@ router.post(
 					msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`
 				});
 			}
-
-			//User Is Not Active
 			//Validate Program In HIV
 			let check_program_valid = await Client.findOne({
 				where: { clinic_number: ccc_no }
+			});
+
+			let check_program_new = await NUserprograms.findOne({
+				where: {
+					[Op.and]: [
+						{ user_id: base64.decode(user_id) },
+						{ program_type: "1" } // ART program
+					]
+				}
 			});
 
 			if (!check_program_valid) {
@@ -870,7 +880,6 @@ router.post(
 				}
 			});
 
-
 			if (!check_valid_user) {
 				return res.status(200).json({
 					success: false,
@@ -878,8 +887,7 @@ router.post(
 				});
 			}
 
-			if (check_username) {
-
+			if (existing_other_program) {
 				//Search if Program Details Exist
 				let check_program = await NUserprograms.findOne({
 					where: {
@@ -915,15 +923,12 @@ router.post(
 						success: false,
 						msg: `The ART Program details does not belong to your records`
 					});
-				}
-				if (check_program) {
+				} else if (check_program) {
 					return res.status(200).json({
 						success: false,
 						msg: "Program registration record already exists"
 					});
-
 				} else if (existing_other_program) {
-
 					if (!check_program_valid) {
 						return res.status(200).json({
 							success: false,
@@ -962,38 +967,51 @@ router.post(
 					}
 				}
 			} else {
-				//Show Error Message
-				const log_active_login = await NUsers.update(
-					{ is_active: "1" },
-					{ where: { id: base64.decode(user_id) } }
-				);
-				//Save Program Details If Exist
-				const new_user_program = await NUserprograms.create({
-					user_id: base64.decode(user_id),
-					program_type: "1",
-					program_identifier: check_program_valid.id,
-					moh_upi_no: upi_no,
-					is_active: "1",
-					activation_date: today,
-					created_at: today,
-					updated_at: today
-				});
 
-				if (new_user_program) {
+				let check_all_program = await NUserprograms.findOne({
+					where: {
+						[Op.and]: [
+							{ user_id: base64.decode(user_id) },
+							{ is_active: 1 },
+							{ program_type: program_id } // for other programs
+						]
+					}
+				});
+				if (check_all_program) {
 					return res.status(200).json({
 						success: true,
-						msg: "Program registration was succesfully."
+						msg: "Program registration record already exists."
 					});
 				} else {
+					const new_user_program = await NUserprograms.create({
+						user_id: base64.decode(user_id),
+						program_type: "1",
+						program_identifier: check_program_valid.id,
+						moh_upi_no: upi_no,
+						is_active: "1",
+						activation_date: today,
+						created_at: today,
+						updated_at: today
+					});
+
+					if (new_user_program) {
+						return res.status(200).json({
+							success: true,
+							msg: "Program registration was succesfully."
+						});
+					} else {
 					return res.status(200).json({
 						success: false,
 						msg: "An error occurred, could not create program record"
 					});
 				}
+				}
+
+
 			}
 		} else {
 			// other programs set up
-			if (check_username) {
+
 				let check_other_program = await NUserprograms.findOne({
 					where: {
 						[Op.and]: [
@@ -1005,13 +1023,10 @@ router.post(
 				});
 
 				if (check_other_program) {
-
 					return res.status(200).json({
 						success: true,
 						msg: "Program registration record already exists."
 					});
-
-
 				} else if (existing_other_program) {
 					const update_program = await NUserprograms.update(
 						{ is_active: "1" },
@@ -1037,11 +1052,8 @@ router.post(
 						});
 					}
 				} else {
-					const log_active_login = await NUsers.update(
-						{ is_active: "1" },
-						{ where: { id: base64.decode(user_id) } }
-					);
 					//Save Program Details If Exist
+
 					const new_user_program = await NUserprograms.create({
 						user_id: base64.decode(user_id),
 						program_type: program_id,
@@ -1063,13 +1075,7 @@ router.post(
 						});
 					}
 				}
-			} else {
-				//Show Error Message
-				return res.status(200).json({
-					success: false,
-					msg: "Program registration record already exists"
-				});
-			}
+			
 		}
 	}
 );
@@ -1722,7 +1728,8 @@ router.get(
 
 					// return console.log(obj_)
 					if (
-						obj_.message === "No lab results for the given CCC Number were found"
+						obj_.message ===
+						"No lab results for the given CCC Number were found"
 					) {
 						sp_status.push("No lab records found");
 					} else {
