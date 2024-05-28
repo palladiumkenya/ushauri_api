@@ -47,7 +47,9 @@ const {
   NLogs
 } = require("../../models/n_logs");
 const { parse } = require("path");
-
+const {
+  NChatLogs
+} = require("../../models/n_chat_log");
 
 
 generateOtp = function (size) {
@@ -67,10 +69,10 @@ router.post('/signup', async(req, res) =>  {
     let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
 
-   
+
 
     //Check if Terms Are Accepted
-   
+
     let boolVal;
 
     // using the JSON.parse() method
@@ -143,7 +145,7 @@ router.post('/signup', async(req, res) =>  {
         created_at:today,
         updated_at:today,
     });
-    
+
     if(new_user){
         return res
         .status(200)
@@ -159,7 +161,7 @@ router.post('/signup', async(req, res) =>  {
             msg: 'An error occurred, could not create signup record',
         });
     }
-   
+
 });
 
 
@@ -187,7 +189,7 @@ router.post('/signin', async(req, res) =>  {
         var password_hash=check_username.password;
         //console.log(password_hash);
         const verified = bcrypt.compareSync(password_1, password_hash);
-        if(verified) 
+        if(verified)
         {
 
            if(check_username.is_active==='0'){
@@ -196,7 +198,7 @@ router.post('/signin', async(req, res) =>  {
                 user_id: base64.encode(check_username.id),
                 page_id: 0,
             }
-            
+
              try {
                 const log_login = await NUsers.update(
                   { last_login: today },
@@ -230,7 +232,7 @@ router.post('/signin', async(req, res) =>  {
                 user_id: base64.encode(check_username.id),
                 page_id: 1,
             }
-            
+
              try {
                 const log_login = await NUsers.update(
                   { last_login: today },
@@ -258,7 +260,7 @@ router.post('/signin', async(req, res) =>  {
                 });
               }
 
-           }    
+           }
         }else{
             return res
             .status(200)
@@ -267,7 +269,7 @@ router.post('/signin', async(req, res) =>  {
                 msg: 'Wrong Password Provided',
             });
         }
-    
+
       }else{
         return res
         .status(200)
@@ -277,8 +279,8 @@ router.post('/signin', async(req, res) =>  {
         });
       }
 
-  
-   
+
+
 });
 
 
@@ -309,7 +311,7 @@ router.post('/resetpassword', async(req, res) =>  {
         //Generate OTP and send to Users Via Email or Telephone Number
         let vOTP=generateOtp(5);
 
-        //Send SMS       
+        //Send SMS
         const header_details= {
            "rejectUnauthorized": false,
             url: process.env.SMS_API_URL,
@@ -319,7 +321,7 @@ router.post('/resetpassword', async(req, res) =>  {
               Accept: 'application/json',
               'api-token': process.env.SMS_API_KEY
             },
-          
+
             body: {
                 'destination': check_username.msisdn,
                 'msg': 'Dear Nishauri User, Your OTP for password reset is '+vOTP+'. Valid for the next 24 hours.',
@@ -339,7 +341,7 @@ router.post('/resetpassword', async(req, res) =>  {
                 success: false,
                msg: 'Error Sending OTP',
             });
-        }   
+        }
         });
 
          //Save OTP Details
@@ -352,8 +354,8 @@ router.post('/resetpassword', async(req, res) =>  {
             user_id: base64.encode(check_username.id),
             page_id: 3,
         }
-        
-          //return success on OTP 
+
+          //return success on OTP
           return res
           .status(200)
           .json({
@@ -361,7 +363,7 @@ router.post('/resetpassword', async(req, res) =>  {
               msg: 'OTP sent successfully',
               data:l
           });
-    
+
       }else{
         return res
         .status(200)
@@ -371,8 +373,8 @@ router.post('/resetpassword', async(req, res) =>  {
         });
       }
 
-  
-   
+
+
 });
 
 //Verify OTP Details
@@ -397,8 +399,8 @@ router.post('/verifyotp', async(req, res) =>  {
             user_id: base64.encode(check_username.id),
             page_id: 0,
         }
-        
-          //return success on OTP Verification 
+
+          //return success on OTP Verification
           return res
           .status(200)
           .json({
@@ -406,11 +408,11 @@ router.post('/verifyotp', async(req, res) =>  {
               msg: 'OTP Verified Successfully',
               data:l
           });
-        
-        
-    
+
+
+
       }else{
-        //return success on OTP Verification 
+        //return success on OTP Verification
         return res
         .status(200)
         .json({
@@ -418,16 +420,16 @@ router.post('/verifyotp', async(req, res) =>  {
             msg: 'Invalid or Expired OTP'
         });
       }
-   
+
 });
 
-//update password 
+//update password
 router.post('/updatepassword', async(req, res) =>  {
     let password_1 = req.body.password;
     let password_2 = req.body.re_password;
     let user_id = req.body.user_id;
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
-    
+
      //Check if Passwords Are Similar
      if (password_1 !== password_2) {
 
@@ -447,7 +449,7 @@ router.post('/updatepassword', async(req, res) =>  {
           { password: password_hash },
           { where: { id: base64.decode(user_id)} }
         )
-      
+
         return res
         .status(200)
         .json({
@@ -463,21 +465,21 @@ router.post('/updatepassword', async(req, res) =>  {
         });
       }
 
-    
-   
-  
-   
+
+
+
+
 });
 
 
-//Set Programs 
+//Set Programs
 router.post('/validate_program', async(req, res) =>  {
   let ccc_no = req.body.ccc_no;
   let upi_no = req.body.upi_no;
   let firstname = req.body.firstname.toUpperCase().trim(); //Trim & Capitalize FirstName
   let user_id = req.body.user_id;
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
-  
+
     //Check if CCC is 10 digits
     if (ccc_no.length != 10 ) {
 
@@ -488,8 +490,8 @@ router.post('/validate_program', async(req, res) =>  {
               msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`,
           });
 
-  }  
-  
+  }
+
   //Check If User Exists
   var check_username= await NUsers.findOne({
       where: {
@@ -499,7 +501,7 @@ router.post('/validate_program', async(req, res) =>  {
         ]
       }
     });
-    
+
 
 
   //User Is Not Active
@@ -514,9 +516,9 @@ router.post('/validate_program', async(req, res) =>  {
         ),
           { clinic_number: ccc_no }
         ]
-      } 
+      }
       });
-      
+
     //console.log(check_program_valid);
 
    if(!check_program_valid)
@@ -555,12 +557,12 @@ router.post('/validate_program', async(req, res) =>  {
           { profile_otp_date: today, profile_otp_number: vOTP},
           { where: { id:  base64.decode(user_id) } }
         );
-    
-        }     
+
+        }
 
        }else
        {
-          vOTP=generateOtp(5); //OTP expired or Not sent yet.. Generate a New OTP 
+          vOTP=generateOtp(5); //OTP expired or Not sent yet.. Generate a New OTP
             //Update New OTP
             const log_OTP = await NUsers.update(
             { profile_otp_date: today, profile_otp_number: vOTP},
@@ -568,10 +570,10 @@ router.post('/validate_program', async(req, res) =>  {
           );
        }
 
-      
 
-       
-       //Send SMS       
+
+
+       //Send SMS
        const header_details= {
           "rejectUnauthorized": false,
            url: process.env.SMS_API_URL,
@@ -581,7 +583,7 @@ router.post('/validate_program', async(req, res) =>  {
              Accept: 'application/json',
              'api-token': process.env.SMS_API_KEY
            },
-         
+
            body: {
                'destination': check_program_valid.phone_no,
                'msg': 'Dear Nishauri User, Your OTP to complete profile is '+vOTP+'. Valid for the next 24 hours.',
@@ -607,10 +609,10 @@ router.post('/validate_program', async(req, res) =>  {
         } else {
           // Success! Do something with the response body
           console.log('Success:', body.status);
-        }   
+        }
        });
 
-      
+
 
          var l = {
            user_id: base64.encode(check_username.id),
@@ -619,7 +621,7 @@ router.post('/validate_program', async(req, res) =>  {
            firstname:firstname,
            phoneno:check_program_valid.phone_no
        }
-       
+
 
       //Sent OTP Number
       return res
@@ -629,10 +631,10 @@ router.post('/validate_program', async(req, res) =>  {
           msg: 'User OTP sent out successfully',
           data:l,
       });
-  
+
   }else{
 
-      //Show Error Message 
+      //Show Error Message
       return res
       .status(500)
       .json({
@@ -641,11 +643,11 @@ router.post('/validate_program', async(req, res) =>  {
       });
 
   }
- 
+
 });
 
 
-//Set Programs 
+//Set Programs
 router.post('/setprogram', async(req, res) =>  {
     let ccc_no = req.body.ccc_no;
     let upi_no = req.body.upi_no;
@@ -653,7 +655,7 @@ router.post('/setprogram', async(req, res) =>  {
     let user_id = req.body.user_id;
     let otp=req.body.otp_number;
     let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
-    
+
       //Check if CCC is 10 digits
       if (ccc_no.length != 10 ) {
 
@@ -664,8 +666,8 @@ router.post('/setprogram', async(req, res) =>  {
                 msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`,
             });
 
-    }  
-    
+    }
+
     //Check If User Exists
       let check_username= await NUsers.findOne({
         where: {
@@ -676,7 +678,7 @@ router.post('/setprogram', async(req, res) =>  {
         }
       });
 
-      
+
 
     //User Is Not Active
     //Validate Program In HI
@@ -690,7 +692,7 @@ router.post('/setprogram', async(req, res) =>  {
         ),
           { clinic_number: ccc_no }
         ]
-      } 
+      }
       });
 
      if(!check_program_valid)
@@ -759,7 +761,7 @@ router.post('/setprogram', async(req, res) =>  {
             created_at:today,
             updated_at:today,
         });
-        
+
         if(new_user_program){
             return res
             .status(200)
@@ -775,7 +777,7 @@ router.post('/setprogram', async(req, res) =>  {
                 msg: 'An error occurred, could not create program record',
             });
         }
-       
+
         }else
         {
           return res
@@ -786,11 +788,11 @@ router.post('/setprogram', async(req, res) =>  {
           });
 
         }
-        
-    
+
+
     }else{
 
-        //Show Error Message 
+        //Show Error Message
         return res
         .status(500)
         .json({
@@ -799,7 +801,7 @@ router.post('/setprogram', async(req, res) =>  {
         });
 
     }
-   
+
 });
 
 
@@ -808,7 +810,7 @@ router.post('/setprogram', async(req, res) =>  {
 router.get('/profile',  async (req, res) => {
   const userid = req.query.user_id;
   //console.log(userid);
-  
+
       try{
 
           const conn = mysql.createPool({
@@ -821,7 +823,7 @@ router.get('/profile',  async (req, res) => {
               debug: true,
               multipleStatements: true,
             });
-            
+
            let  sql = `CALL sp_nishauri_profile(?)`;
            let todo = [base64.decode(userid)];
             conn.query(sql,todo, (error, results, fields) => {
@@ -841,9 +843,9 @@ router.get('/profile',  async (req, res) => {
             });
 
       }catch(err){
-  
+
       }
-  
+
 });
 
 
@@ -853,7 +855,7 @@ router.get('/profile',  async (req, res) => {
 router.get('/current_appt',  async (req, res) => {
   const userid = req.query.user_id;
   //console.log(userid);
-  
+
       try{
 
           const conn = mysql.createPool({
@@ -866,7 +868,7 @@ router.get('/current_appt',  async (req, res) => {
               debug: true,
               multipleStatements: true,
             });
-            
+
            let  sql = `CALL sp_nishauri_current_appt(?)`;
            let todo = [base64.decode(userid)];
             conn.query(sql,todo, (error, results, fields) => {
@@ -888,9 +890,9 @@ router.get('/current_appt',  async (req, res) => {
             });
 
       }catch(err){
-  
+
       }
-  
+
 });
 
 
@@ -898,7 +900,7 @@ router.get('/current_appt',  async (req, res) => {
 router.get('/appointment_trends',  async (req, res) => {
   const userid = req.query.user_id;
   //console.log(userid);
-  
+
       try{
 
           const conn = mysql.createPool({
@@ -911,7 +913,7 @@ router.get('/appointment_trends',  async (req, res) => {
               debug: true,
               multipleStatements: true,
             });
-            
+
            let  sql = `CALL sp_nishauri_appointment_trend(?)`;
            let todo = [base64.decode(userid)];
             conn.query(sql,todo, (error, results, fields) => {
@@ -933,9 +935,9 @@ router.get('/appointment_trends',  async (req, res) => {
             });
 
       }catch(err){
-  
+
       }
-  
+
 });
 
 
@@ -945,7 +947,7 @@ router.get('/appointment_trends',  async (req, res) => {
 router.get('/appointment_missed',  async (req, res) => {
   const userid = req.query.user_id;
   //console.log(userid);
-  
+
       try{
 
           const conn = mysql.createPool({
@@ -958,7 +960,7 @@ router.get('/appointment_missed',  async (req, res) => {
               debug: true,
               multipleStatements: true,
             });
-            
+
            let  sql = `CALL sp_nishauri_appt_missed(?)`;
            let todo = [base64.decode(userid)];
             conn.query(sql,todo, (error, results, fields) => {
@@ -978,16 +980,16 @@ router.get('/appointment_missed',  async (req, res) => {
             });
 
       }catch(err){
-  
+
       }
-  
+
 });
 
 //previous appointment list
 router.get('/appointment_previous',  async (req, res) => {
   const userid = req.query.user_id;
   //console.log(userid);
-  
+
       try{
 
           const conn = mysql.createPool({
@@ -1000,7 +1002,7 @@ router.get('/appointment_previous',  async (req, res) => {
               debug: true,
               multipleStatements: true,
             });
-            
+
            let  sql = `CALL sp_nishauri_history_appt(?)`;
            let todo = [base64.decode(userid)];
             conn.query(sql,todo, (error, results, fields) => {
@@ -1020,16 +1022,16 @@ router.get('/appointment_previous',  async (req, res) => {
             });
 
       }catch(err){
-  
+
       }
-  
+
 });
 
 //previous appointment list
 router.get('/appointment_future',  async (req, res) => {
   const userid = req.query.user_id;
   //console.log(userid);
-  
+
       try{
 
           const conn = mysql.createPool({
@@ -1042,7 +1044,7 @@ router.get('/appointment_future',  async (req, res) => {
               debug: true,
               multipleStatements: true,
             });
-            
+
            let  sql = `CALL sp_nishauri_future_appt(?)`;
            let todo = [base64.decode(userid)];
             conn.query(sql,todo, (error, results, fields) => {
@@ -1062,9 +1064,9 @@ router.get('/appointment_future',  async (req, res) => {
             });
 
       }catch(err){
-  
+
       }
-  
+
 });
 
 
@@ -1076,8 +1078,8 @@ router.post('/reschedule', async(req, res) =>  {
   let reason_ = req.body.reason;
   let proposed_date_ = req.body.reschedule_date;
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
-  
-  
+
+
   //Check if we already have an existing reschedule request
 
    //Search if Program Details Exist
@@ -1092,7 +1094,7 @@ router.post('/reschedule', async(req, res) =>  {
   if(!check_reschedule_request_exists)
   {
 
-    
+
       //Save Program Details If Exist
       const  new_appt_request = await Napptreschedule.create({
         appointment_id:app_id,
@@ -1102,7 +1104,7 @@ router.post('/reschedule', async(req, res) =>  {
         created_at:today,
         updated_at:today,
     });
-    
+
     if(new_appt_request){
         return res
         .status(200)
@@ -1122,7 +1124,7 @@ router.post('/reschedule', async(req, res) =>  {
   }else{
 
     //Return Appointment Reschedule Already exist
-       //Show Error Message 
+       //Show Error Message
        return res
        .status(200)
        .json({
@@ -1131,18 +1133,18 @@ router.post('/reschedule', async(req, res) =>  {
        });
 
 
-      } 
- 
+      }
+
 });
 
 //Fetch Regimen
 
 router.get('/vl_result', async(req, res) =>  {
   const userid = req.query.user_id;
-  
+
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
   console.log(base64.decode(userid));
-  
+
   //Check if we already have an existing reschedule request
 
    //Search if Program Details Exist
@@ -1166,7 +1168,7 @@ router.get('/vl_result', async(req, res) =>  {
      }
     });
 
-  
+
     if(check_program_valid)
     {
       //Call mLab Instance
@@ -1178,20 +1180,20 @@ router.get('/vl_result', async(req, res) =>  {
         body: JSON.parse(client_payload),
         "rejectUnauthorized": false,
 
-       
+
       }
 
       request.post(url_details, (err, res_, body) => {
         if (err) {
           return console.log(err)
         }
-      
-    
+
+
      var obj_ = body;
      //obj.messege.sort
-     
+
       //return console.log(obj_)
-     if (obj_.message === 'No results for the given CCC Number were found') 
+     if (obj_.message === 'No results for the given CCC Number were found')
      {
             var l = {
               viral_load:'Not Available',
@@ -1200,12 +1202,12 @@ router.get('/vl_result', async(req, res) =>  {
      }else
      {
       var obj2 = obj_.results;
-    
+
             obj2.sort((a, b) => {
                 return new Date(b.lab_order_date) - new Date(a.lab_order_date); // ascending
-            }); 
+            });
             var sp_status=[];
-            
+
 
             obj2.forEach(obj => {
               Object.entries(obj).forEach(([key, value]) => {
@@ -1219,8 +1221,8 @@ router.get('/vl_result', async(req, res) =>  {
                     // sp_status='';
                     }else
                     {
-                  
-                  if (value_.includes('LDL')) {            
+
+                  if (value_.includes('LDL')) {
                       sp_status.push('VS')
                       //console.log(sp_status);
                   } else {
@@ -1232,15 +1234,15 @@ router.get('/vl_result', async(req, res) =>  {
                       sp_status.push('UVS')
 
                     }
-                   
+
                   }
                 }
                   }
               });
-            
+
 
           });
-         
+
           if(sp_status[0]=='VS')
           {
             var viral_load__='Viral Suppressed';
@@ -1256,7 +1258,7 @@ router.get('/vl_result', async(req, res) =>  {
      }
      var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'VL_RESULTS'});
 
-  
+
         return res
       .status(200)
       .json({
@@ -1266,9 +1268,9 @@ router.get('/vl_result', async(req, res) =>  {
       });
 
       });
-      
 
-    
+
+
     }else
     {
       return res
@@ -1288,17 +1290,17 @@ router.get('/vl_result', async(req, res) =>  {
           success: false,
           msg: 'No VL Records Found',
       });
-      } 
- 
+      }
+
 });
 
 
 router.get('/vl_results', async(req, res) =>  {
   const userid = req.query.user_id;
-  
+
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
   console.log(base64.decode(userid));
-  
+
   //Check if we already have an existing reschedule request
 
    //Search if Program Details Exist
@@ -1322,7 +1324,7 @@ router.get('/vl_results', async(req, res) =>  {
      }
     });
 
-  
+
     if(check_program_valid)
     {
       //Call mLab Instance
@@ -1335,43 +1337,43 @@ router.get('/vl_results', async(req, res) =>  {
         body: JSON.parse(client_payload),
         "rejectUnauthorized": false,
 
-       
+
       }
 
       request.post(url_details, (err, res_, body) => {
         if (err) {
           return console.log(err)
         }
-      
-    
+
+
      var obj_ = body;
      var sp_status=[];
 
      //obj.messege.sort
-     
+
      // return console.log(obj_)
-     if (obj_.message === 'No results for the given CCC Number were found') 
+     if (obj_.message === 'No results for the given CCC Number were found')
      {
       sp_status.push('No VL Results Found')
 
      }else
      {
       var obj2 = obj_.results;
-    
+
             obj2.sort((a, b) => {
                 return new Date(b.date_collected) - new Date(a.date_collected); // ascending
-            }); 
-            
+            });
+
 
             obj2.forEach(obj => {
-              
+
                var lab_order_date_=obj.date_collected;
                var result_type_=obj.units;
- 
-              
+
+
               Object.entries(obj).forEach(([key, value]) => {
              //Loop through the result set from mLab
-             
+
                   if(key=='result_content')
                   {
                     // console.log(`${value}`);
@@ -1381,8 +1383,8 @@ router.get('/vl_results', async(req, res) =>  {
                     // sp_status='';
                     }else
                     {
-                  
-                  if (value_.includes('LDL')) {            
+
+                  if (value_.includes('LDL')) {
                       sp_status.push({result:'<LDL copies/ml', status: 'Viral Suppressed', date: lab_order_date_ , plot: parseInt(49)})
                       //console.log(sp_status);
                   } else {
@@ -1390,25 +1392,25 @@ router.get('/vl_results', async(req, res) =>  {
                     {
                       sp_status.push({result:value_.replace(/[^0-9]/g, '')+' copies/ml', status: 'Viral Suppressed', date: lab_order_date_,  plot: parseInt(value_.replace(/[^0-9]/g, ''))})
 
-                     
+
                     }else
                     {
                       sp_status.push({result:value_.replace(/[^0-9]/g, '')+' copies/ml', status: 'Viral unsuppressed', date: lab_order_date_ , plot: parseInt(value_.replace(/[^0-9]/g, ''))})
 
                     }
-                   
+
                   }
                 }
                   }
               });
-            
+
           });
-         
-        
+
+
      }
      var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'VL_RESULTS'});
 
-  
+
         return res
       .status(200)
       .json({
@@ -1419,7 +1421,7 @@ router.get('/vl_results', async(req, res) =>  {
 
       });
 
-    
+
     }else
     {
       return res
@@ -1439,8 +1441,8 @@ router.get('/vl_results', async(req, res) =>  {
           success: false,
           msg: 'No VL Records Found',
       });
-      } 
- 
+      }
+
 });
 
 
@@ -1452,12 +1454,12 @@ var eid_results_out=function(hei_no) {
   client_payload='{"ccc_number": "1607320220018"}';
 
   // client_payload='{"ccc_number": "'+hei_no+'"}';
-     
+
      const url_details = {
        url: process.env.MLAB_URL,
        json: true,
        body: JSON.parse(client_payload),
-       "rejectUnauthorized": false,      
+       "rejectUnauthorized": false,
      }
      var sp_status=[];
 
@@ -1473,11 +1475,11 @@ var eid_results_out=function(hei_no) {
         //console.log(obj_);
 
        // var sp_status=[];
-      if (obj_.message === 'No results for the given CCC Number were found') 
+      if (obj_.message === 'No results for the given CCC Number were found')
       {
       // sp_status.push('No Results Found');
        sp_status=[];
- 
+
       }else
       {
         //console.log(body.results);
@@ -1485,16 +1487,16 @@ var eid_results_out=function(hei_no) {
 
         obj2.sort((a, b) => {
             return new Date(b.date_collected) - new Date(a.date_collected); // ascending
-        }); 
+        });
         //  console.log(obj2);
 
-        
+
 
         obj2.forEach(obj => {
 
         var lab_order_date_=obj.date_collected;
         var result_type_=obj.result_type;
-        //Loop through Objects 
+        //Loop through Objects
 
       Object.entries(obj).forEach(([key, value]) => {
 
@@ -1509,32 +1511,32 @@ var eid_results_out=function(hei_no) {
           {
             if(result_type_=='2'){ //Allow only for EID results
             sp_status.push({result:value_, result_type:'PCR Result', date: lab_order_date_ });
-           
+
             }
           }
         }
 
       });
-          
+
 
         });
 
 
         console.log(sp_status);
         return_variable=sp_status;
-        
+
       }
 
-     
+
 
 
       //
-      
+
       //dependants_.push({dependant_name:dependants[i].dependant_name,d_age:dependants[i].dependant_age,d_results:sp_status});
     });
     return return_variable;
   }
-  
+
   router.get('/eid_results', async(req, res) =>  {
   const userid = req.query.user_id;
   try{
@@ -1548,7 +1550,7 @@ var eid_results_out=function(hei_no) {
         debug: true,
         multipleStatements: true,
       });
-      
+
      let  sql = `CALL sp_nishauri_dependants(?)`;
      let todo = [base64.decode(userid)];
       conn.query(sql,todo, (error, results, fields) => {
@@ -1562,14 +1564,14 @@ var eid_results_out=function(hei_no) {
          //console.log(dependants);
 
          var dependants_=[];
-       
+
          for (var i in dependants) {
           //console.log(dependants[i].hei_no);
           //Loop Through EID Results
           var eidresults_=[];
           eidresults_= eid_results_out('jf');
           console.log(eidresults_);
-     
+
           dependants_.push({dependant_name:dependants[i].dependant_name,d_age:dependants[i].dependant_age,d_results:eidresults_});
 
         }
@@ -1586,17 +1588,17 @@ var eid_results_out=function(hei_no) {
 
 }catch(err){
 
-} 
+}
 });
 
 
 //Fetch Regimen
 router.get('/regimen', async(req, res) =>  {
   const userid = req.query.user_id;
-  
+
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
   console.log(base64.decode(userid));
-  
+
   //Check if we already have an existing reschedule request
 
    //Search if Program Details Exist
@@ -1620,7 +1622,7 @@ router.get('/regimen', async(req, res) =>  {
      }
     });
 
-  
+
     if(check_program_valid)
     {
       //Call mLab Instance
@@ -1643,9 +1645,9 @@ router.get('/regimen', async(req, res) =>  {
       });
 
       });
-      
 
-    
+
+
     }else
     {
       return res
@@ -1665,8 +1667,8 @@ router.get('/regimen', async(req, res) =>  {
           success: false,
           msg: 'Regimen Records Found',
       });
-      } 
- 
+      }
+
 });
 
 
@@ -1677,7 +1679,7 @@ router.get('/artdirectory', async(req, res) =>  {
 
   //console.log(art_search);
 
-  
+
   let today = moment(new Date().toDateString()).tz("Africa/Nairobi").format("YYYY-MM-DD H:M:S");
   //console.log(base64.decode(userid));
   if(!isNaN(art_search))
@@ -1692,10 +1694,10 @@ router.get('/artdirectory', async(req, res) =>  {
 
 
   }
-  
+
   console.log(param_search_num);
   console.log(param_search_string);
-  //Search ART directory from 
+  //Search ART directory from
    request.get(process.env.ART_URL+'directory/'+param_search_num+'/'+param_search_string, (err, res_, body) => {
         if (err) {
           return console.log(err)
@@ -1713,16 +1715,16 @@ router.get('/artdirectory', async(req, res) =>  {
       });
 
       });
-      
+
 });
 
 
-//Fetch Dependants 
+//Fetch Dependants
 
 router.get('/dependants',  async (req, res) => {
   const userid = req.query.user_id;
   //console.log(userid);
-  
+
       try{
 
           const conn = mysql.createPool({
@@ -1735,7 +1737,7 @@ router.get('/dependants',  async (req, res) => {
               debug: true,
               multipleStatements: true,
             });
-            
+
            let  sql = `CALL sp_nishauri_dependants(?)`;
            let todo = [base64.decode(userid)];
             conn.query(sql,todo, (error, results, fields) => {
@@ -1755,12 +1757,12 @@ router.get('/dependants',  async (req, res) => {
             });
 
       }catch(err){
-  
+
       }
-  
+
 });
 
-//Fetch Dependants 
+//Fetch Dependants
 
 router.post('/bmi_calculator',  async (req, res) => {
   heigh = parseFloat(req.body.height);
@@ -1771,7 +1773,7 @@ router.post('/bmi_calculator',  async (req, res) => {
 
   //number to string format
 
- // bmi = weigh/(heigh*heigh) 
+ // bmi = weigh/(heigh*heigh)
     //if (heigh<=3){
   //    weigh=weigh
   //  } else if (heigh>3 && heigh<10){
@@ -1791,25 +1793,25 @@ router.post('/bmi_calculator',  async (req, res) => {
         bmi:bmi,
         comment:'Underweight',
     }
-     
+
   } else if (18.5 <= bmi && bmi < 25) {
     var l = {
       bmi:bmi,
       comment:'Normalweight',
   }
-    
+
   } else if (25 <= bmi && bmi < 30) {
     var l = {
       bmi:bmi,
       comment:'Overweight',
   }
-      
+
   } else {
     var l = {
       bmi:bmi,
       comment:'Obese',
   }
-     
+
   }
 
   var log_activity_=NLogs.create({ user_id:base64.decode(userid), access:'BMICALCULATOR'});
@@ -1846,6 +1848,15 @@ router.post('/chat', async (req, res) => {
         // results is an array consisting of messages collected during execution
         console.log('results: %j', messages);
 
+        const responseMessage = messages.toString();
+
+        // Save the chat log
+        let chatlog = NChatLogs.create({
+            user_id: base64.decode(userid),
+            quiz: question_,
+            response: responseMessage
+        });
+
 
         res.status(200).json({
             success: true,
@@ -1853,7 +1864,7 @@ router.post('/chat', async (req, res) => {
             question:question_
         });
     });
-    
+
 //}));
 
   // spawn new child process to call the python script
@@ -1875,7 +1886,7 @@ router.post('/chat', async (req, res) => {
  //});
 
  //});
-   
+
 });
 
 
@@ -1883,7 +1894,7 @@ router.post('/chat', async (req, res) => {
 router.get('/appointments',  async (req, res) => {
   const ccc_no = req.query.ccc_no;
   //console.log(userid);
-  
+
       try{
 
           const conn = mysql.createPool({
@@ -1896,7 +1907,7 @@ router.get('/appointments',  async (req, res) => {
               debug: true,
               multipleStatements: true,
             });
-            
+
            let  sql = `CALL sp_dawa_drop_appt(?)`;
            let todo = [ccc_no];
             conn.query(sql,todo, (error, results, fields) => {
@@ -1918,9 +1929,9 @@ router.get('/appointments',  async (req, res) => {
             });
 
       }catch(err){
-  
+
       }
-  
+
 });
 
 
@@ -1936,13 +1947,13 @@ function getAccessToken(url, callback) {
     json: true,
     body: JSON.parse(auth_payload)
   }
-  request.post(url_details, function (err, httpResponse, body) { 
+  request.post(url_details, function (err, httpResponse, body) {
       //return token=httpResponse.body;
 
      //console.log(httpResponse);
       var statusCode = httpResponse.statusCode;
       finalData = httpResponse.body;
-      
+
       callback(finalData);
       // we are done
       return;
@@ -1985,19 +1996,19 @@ var check_program_valid='';
     // console.log(token_generated);
      // parsedBody= JSON.parse(token_generated);
       token_generated_=token_generated.auth_token;
-     // console.log(token_generated_); 
+     // console.log(token_generated_);
     //Call Active Surveys Endpoints
   request.get(process.env.PSURVEY_URL+'api/current/user/'+check_program_valid.mfl_code+'/'+check_program_valid.clinic_number,{ 'headers':{
     'Authorization':'Token '+token_generated_
   }} , function (err, respond) {
-      console.log(token_generated_); 
+      console.log(token_generated_);
 
-      //console.log(respond); 
-      //console.log(verified_data); 
+      //console.log(respond);
+      //console.log(verified_data);
       if(res.statusCode==400)
       {
        res.send(respond);
-      
+
       }else if (res.statusCode==200)
       {
           verified_data=JSON.parse(respond.body);
@@ -2012,7 +2023,7 @@ var check_program_valid='';
      {
        res.send(respond);
 
-      }  
+      }
      //res.send(respond);
   });
 
@@ -2056,19 +2067,19 @@ router.post("/getactive_q", async (req, res) => {
      //console.log(token_generated);
      // parsedBody= JSON.parse(token_generated);
       token_generated_=token_generated.auth_token;
-     // console.log(token_generated_); 
+     // console.log(token_generated_);
     //Call Active Questionnaire Endpoint
   request.get(process.env.PSURVEY_URL+'api/questionnaire/active/'+check_program_valid.mfl_code+'/'+check_program_valid.clinic_number,{ 'headers':{
     'Authorization':'Token '+token_generated_
   }} , function (err, respond) {
-     // console.log(token_generated_); 
+     // console.log(token_generated_);
 
-      //console.log(respond); 
-      //console.log(verified_data); 
+      //console.log(respond);
+      //console.log(verified_data);
       if(res.statusCode==400)
       {
        res.send(respond);
-      
+
       }else if (res.statusCode==200)
       {
           verified_data=JSON.parse(respond.body);
@@ -2086,7 +2097,7 @@ router.post("/getactive_q", async (req, res) => {
       }else
       {
         res.send(respond);
-      }  
+      }
      //res.send(respond);
   });
 
@@ -2119,7 +2130,7 @@ router.post("/start_q", async (req, res_) => {
      //console.log(token_generated);
      // parsedBody= JSON.parse(token_generated);
       token_generated_=token_generated.auth_token;
- 
+
     const url_details = {
       url: process.env.PSURVEY_URL+'api/questionnaire/start/',
       json: true,
@@ -2137,10 +2148,10 @@ router.post("/start_q", async (req, res_) => {
      if(res.statusCode==400)
      {
       res_.send(body);
-     
+
      }else if (res.statusCode==200)
      {
-    
+
      //const body_ = JSON.parse(body);
 
      //var link=body_[0]['link'];
@@ -2155,7 +2166,7 @@ router.post("/start_q", async (req, res_) => {
         link: parseInt(q_id),
         session: body.session
         };
-   
+
       res_.send(return_);
 
      }else if(res.statusCode==500)
@@ -2196,19 +2207,19 @@ router.post("/next_q", async (req, res) => {
      //console.log(token_generated);
      // parsedBody= JSON.parse(token_generated);
       token_generated_=token_generated.auth_token;
-     // console.log(token_generated_); 
+     // console.log(token_generated_);
     //Call Session ID Endpoint
   request.get(process.env.PSURVEY_URL+'api/questions/answer/'+next_q_+'/'+session_,{ 'headers':{
     'Authorization':'Token '+token_generated_
   }} , function (err, respond) {
-     // console.log(token_generated_); 
+     // console.log(token_generated_);
 
-      //console.log(respond); 
-      //console.log(verified_data); 
+      //console.log(respond);
+      //console.log(verified_data);
       if(res.statusCode==400)
       {
        res.send(respond);
-      
+
       }else if (res.statusCode==200)
       {
         console.log(respond.body);
@@ -2224,7 +2235,7 @@ router.post("/next_q", async (req, res) => {
      {
        res.send(respond);
 
-      }  
+      }
      //res.send(respond);
   });
 
@@ -2247,7 +2258,7 @@ router.post("/q_answer", async (req, res) => {
     post_payload='{"session": "'+session_+'", "question": "'+question_+'", "answer": "'+answer_+'", "open_text": "'+open_text_+'"}';
     console.log(post_payload);
 
- 
+
   //Get Token
   var token_generated_='';
   var verified_data='';
@@ -2257,7 +2268,7 @@ router.post("/q_answer", async (req, res) => {
       //console.log(token_generated);
       // parsedBody= JSON.parse(token_generated);
        token_generated_=token_generated.auth_token;
-  
+
      const url_details = {
        url: process.env.PSURVEY_URL+'api/questions/answer/',
        json: true,
@@ -2266,7 +2277,7 @@ router.post("/q_answer", async (req, res) => {
          'Authorization':'Token '+token_generated_
        }
      }
- 
+
      request.post(url_details, (err, res_, body) => {
        if (err) {
          return console.log(err)
@@ -2275,7 +2286,7 @@ router.post("/q_answer", async (req, res) => {
       if(res_.statusCode==400)
       {
         res.send(body);
-      
+
       }else if (res_.statusCode==200)
       {
       // var link=body[0]['link'];
@@ -2300,14 +2311,14 @@ router.post("/q_answer", async (req, res) => {
         link: parseInt(q_id),
         session: parseInt(session_),
         };
-   
+
         res.send(return_);
 
     }
 
-     
+
        //res_.send(body);
- 
+
       }else if(res_.statusCode==500)
       {
 
@@ -2317,7 +2328,7 @@ router.post("/q_answer", async (req, res) => {
      {
 
       res.send(body);
- 
+
       }
      // res_.send(body);
      })

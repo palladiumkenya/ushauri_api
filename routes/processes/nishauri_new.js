@@ -46,6 +46,8 @@ const { NCourier } = require("../../models/n_courier");
 const { masterFacility } = require("../../models/master_facility");
 const { NBmi } = require("../../models/n_bmi");
 const { NpatientObs } = require("../../models/n_patient_obs");
+const { NReviews } = require("../../models/n_reviews");
+const { NprogramOTP } = require("../../models/n_program_otp");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -841,12 +843,30 @@ router.post(
 			let ccc_no = req.body.ccc_no;
 			let upi_no = req.body.upi_no;
 			let firstname = req.body.firstname;
+			let program_otp = req.body.program_otp;
 
 			//Check if CCC is 10 digits
 			if (ccc_no.length != 10) {
 				return res.status(200).json({
 					success: false,
 					msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`
+				});
+			}
+            // check if the otp is valid
+			let check_otp = await NprogramOTP.findOne({
+				where: {
+					[Op.and]: [
+						{ user_id: base64.decode(user_id) },
+						{ program_id: program_id },
+						{ program_otp: program_otp }
+					]
+				}
+			});
+
+			if (!check_otp) {
+				return res.status(200).json({
+					success: false,
+					msg: `Invalid OTP Provided`
 				});
 			}
 			//Validate Program In HIV
@@ -967,7 +987,6 @@ router.post(
 					}
 				}
 			} else {
-
 				let check_all_program = await NUserprograms.findOne({
 					where: {
 						[Op.and]: [
@@ -1000,82 +1019,79 @@ router.post(
 							msg: "Program registration was succesfully."
 						});
 					} else {
-					return res.status(200).json({
-						success: false,
-						msg: "An error occurred, could not create program record"
-					});
-				}
-				}
-
-
-			}
-		} else {
-			// other programs set up
-
-				let check_other_program = await NUserprograms.findOne({
-					where: {
-						[Op.and]: [
-							{ user_id: base64.decode(user_id) },
-							{ is_active: 1 },
-							{ program_type: program_id } // for other programs
-						]
-					}
-				});
-
-				if (check_other_program) {
-					return res.status(200).json({
-						success: true,
-						msg: "Program registration record already exists."
-					});
-				} else if (existing_other_program) {
-					const update_program = await NUserprograms.update(
-						{ is_active: "1" },
-						{
-							where: {
-								[Op.and]: [
-									{ user_id: base64.decode(user_id) },
-									{ program_type: program_id } // for other programs
-								]
-							}
-						}
-					);
-
-					if (update_program) {
-						return res.status(200).json({
-							success: true,
-							msg: "Program activation was Succesfully"
-						});
-					} else {
-						return res.status(200).json({
-							success: false,
-							msg: "An error occurred, could not activate program record"
-						});
-					}
-				} else {
-					//Save Program Details If Exist
-
-					const new_user_program = await NUserprograms.create({
-						user_id: base64.decode(user_id),
-						program_type: program_id,
-						is_active: "1",
-						activation_date: today,
-						created_at: today,
-						updated_at: today
-					});
-
-					if (new_user_program) {
-						return res.status(200).json({
-							success: true,
-							msg: "Program registration was succesfully"
-						});
-					} else {
 						return res.status(200).json({
 							success: false,
 							msg: "An error occurred, could not create program record"
 						});
 					}
 				}
+			}
+		} else {
+			// other programs set up
 
+			let check_other_program = await NUserprograms.findOne({
+				where: {
+					[Op.and]: [
+						{ user_id: base64.decode(user_id) },
+						{ is_active: 1 },
+						{ program_type: program_id } // for other programs
+					]
+				}
+			});
+
+			if (check_other_program) {
+				return res.status(200).json({
+					success: true,
+					msg: "Program registration record already exists."
+				});
+			} else if (existing_other_program) {
+				const update_program = await NUserprograms.update(
+					{ is_active: "1" },
+					{
+						where: {
+							[Op.and]: [
+								{ user_id: base64.decode(user_id) },
+								{ program_type: program_id } // for other programs
+							]
+						}
+					}
+				);
+
+				if (update_program) {
+					return res.status(200).json({
+						success: true,
+						msg: "Program activation was Succesfully"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "An error occurred, could not activate program record"
+					});
+				}
+			} else {
+				//Save Program Details If Exist
+
+				const new_user_program = await NUserprograms.create({
+					user_id: base64.decode(user_id),
+					program_type: program_id,
+					is_active: "1",
+					activation_date: today,
+					created_at: today,
+					updated_at: today
+				});
+
+				if (new_user_program) {
+					return res.status(200).json({
+						success: true,
+						msg: "Program registration was succesfully"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "An error occurred, could not create program record"
+					});
+				}
+			}
 		}
 	}
 );
@@ -3496,6 +3512,411 @@ router.get(
 				success: false,
 				msg: "Error occurred while fetching patient data"
 			});
+		}
+	}
+);
+
+router.post(
+	"/chat_review",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.body.user_id;
+		let rate = req.body.rate;
+		let reviews = req.body.reviews;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
+
+		const new_review = await NReviews.create({
+			user_id: base64.decode(user_id),
+			rate: rate,
+			reviews: reviews,
+			created_at: today,
+			updated_at: today
+		});
+
+		if (new_review) {
+			return res.status(200).json({
+				success: true,
+				msg: "Thank you for your feedback. "
+			});
+		} else {
+			return res.status(200).json({
+				success: false,
+				msg: "An error occurred, could not process your review"
+			});
+		}
+	}
+);
+
+router.post(
+	"/validateprograms",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		//common body requests for all programs
+		let program_id = req.body.program_id;
+		let user_id = req.body.user_id;
+		//	let otp = req.body.otp_number;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
+
+		let programs = await NprogramTypes.findOne({
+			where: {
+				is_active: 1,
+				id: program_id
+			}
+		});
+
+		if (!programs) {
+			return res.status(200).json({
+				success: false,
+				msg: "The program is not Active"
+			});
+		}
+
+		//Check If User Exists
+		let check_username = await NUserprograms.findOne({
+			where: {
+				[Op.and]: [{ id: base64.decode(user_id) }, { program_type: program_id }]
+			}
+		});
+		// existing program
+		let existing_other_program = await NUserprograms.findOne({
+			where: {
+				[Op.and]: [
+					{ user_id: base64.decode(user_id) },
+					{ is_active: 0 },
+					{ program_type: program_id }
+				]
+			}
+		});
+
+		// Hiv program set up
+		if (program_id === 1) {
+			let ccc_no = req.body.ccc_no;
+			let upi_no = req.body.upi_no;
+			let firstname = req.body.firstname;
+
+			//Check if CCC is 10 digits
+			if (ccc_no.length != 10) {
+				return res.status(200).json({
+					success: false,
+					msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`
+				});
+			}
+			//Validate Program In HIV
+			let check_program_valid = await Client.findOne({
+				where: { clinic_number: ccc_no }
+			});
+
+			let check_program_new = await NUserprograms.findOne({
+				where: {
+					[Op.and]: [
+						{ user_id: base64.decode(user_id) },
+						{ program_type: "1" } // ART program
+					]
+				}
+			});
+
+			if (!check_program_valid) {
+				// if (
+				// 	check_program_valid.f_name.toUpperCase() !== firstname.toUpperCase()
+				// ) {
+				return res.status(200).json({
+					success: false,
+					msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
+				});
+				// }
+			}
+
+			let check_valid_user = await Client.findOne({
+				where: {
+					[Op.and]: [{ f_name: firstname }, { clinic_number: ccc_no }]
+				}
+			});
+
+			if (!check_valid_user) {
+				return res.status(200).json({
+					success: false,
+					msg: `The First Name does not match with CCC Number: ${ccc_no} in Nishauri`
+				});
+			}
+
+			if (existing_other_program) {
+				//Search if Program Details Exist
+				let check_program = await NUserprograms.findOne({
+					where: {
+						[Op.and]: [
+							{ program_identifier: check_program_valid.id },
+							{ user_id: base64.decode(user_id) },
+							{ is_active: 1 },
+							{ program_type: "1" } // ART program
+						]
+					}
+				});
+				let existing_other_program = await NUserprograms.findOne({
+					where: {
+						[Op.and]: [
+							{ user_id: base64.decode(user_id) },
+							{ is_active: 0 },
+							{ program_type: program_id }
+						]
+					}
+				});
+				let check_art_user = await NUserprograms.findOne({
+					where: {
+						[Op.and]: [
+							{ program_identifier: { [Op.ne]: check_program_valid.id } },
+							{ user_id: base64.decode(user_id) },
+							{ program_type: program_id }
+						]
+					}
+				});
+
+				if (check_art_user) {
+					return res.status(200).json({
+						success: false,
+						msg: `The ART Program details does not belong to your records`
+					});
+				} else if (check_program) {
+					return res.status(200).json({
+						success: false,
+						msg: "Program registration record already exists"
+					});
+				} else if (existing_other_program) {
+					if (!check_program_valid) {
+						return res.status(200).json({
+							success: false,
+							msg: `Invalid CCC Number: ${ccc_no}, The CCC Number does not match in Nishauri`
+						});
+					}
+					if (!check_valid_user) {
+						return res.status(200).json({
+							success: false,
+							msg: `The First Name does not match with CCC Number: ${ccc_no} in Nishauri `
+						});
+					}
+
+					let vOTP = generateOtp(5);
+
+					//Send OTP
+					const header_details = {
+						rejectUnauthorized: false,
+						url: process.env.SMS_API_URL,
+						method: "POST",
+						json: true,
+						headers: {
+							Accept: "application/json",
+							"api-token": process.env.SMS_API_KEY
+						},
+
+						body: {
+							destination: check_valid_user.phone_no,
+							msg:
+								"Dear Nishauri User, Your OTP to set up program is " +
+								vOTP +
+								". Valid for the next 24 hours.",
+							sender_id: check_valid_user.phone_no,
+							gateway: process.env.SMS_SHORTCODE
+						}
+					};
+
+					request.post(header_details, (err, res, body) => {
+						if (err) {
+							console.log(err);
+							//Error Sending OTP
+							return res.status(200).json({
+								success: false,
+								msg: "Error Sending OTP"
+							});
+						}
+					});
+
+					let check_otp = await NprogramOTP.findOne({
+						where: {
+							[Op.and]: [
+								{ user_id: base64.decode(user_id) },
+								{ program_id: program_id }
+							]
+						}
+					});
+					//Save OTP
+					if (check_otp) {
+						const save_OTP = await NprogramOTP.update(
+							{ program_otp: vOTP },
+							{
+								where: {
+									[Op.and]: [
+										{ user_id: base64.decode(user_id) },
+										{ program_id: program_id }
+									]
+								}
+							}
+						);
+					} else {
+						//Save OTP
+						const save_OTP = await NprogramOTP.create({
+							user_id: base64.decode(user_id),
+							program_id: program_id,
+							program_otp: vOTP,
+							created_at: today,
+							updated_at: today
+						});
+					}
+
+					var l = {
+						// user_id: base64.encode(check_username.id),
+						phoneno: check_program_valid.phone_no,
+						otp: existing_other_program.program_otp
+					};
+
+					//Send OTP Number
+					return res.status(200).json({
+						success: true,
+						msg: "User OTP sent out successfully",
+						data: l
+					});
+				}
+			} else {
+				let check_all_program = await NUserprograms.findOne({
+					where: {
+						[Op.and]: [
+							{ user_id: base64.decode(user_id) },
+							{ is_active: 1 },
+							{ program_type: program_id } // for other programs
+						]
+					}
+				});
+				if (check_all_program) {
+					return res.status(200).json({
+						success: true,
+						msg: "Program registration record already exists."
+					});
+				} else {
+					let vOTP = generateOtp(5);
+
+					//Send OTP
+					const header_details = {
+						rejectUnauthorized: false,
+						url: process.env.SMS_API_URL,
+						method: "POST",
+						json: true,
+						headers: {
+							Accept: "application/json",
+							"api-token": process.env.SMS_API_KEY
+						},
+
+						body: {
+							destination: check_valid_user.phone_no,
+							msg:
+								"Dear Nishauri User, Your OTP to set up program is " +
+								vOTP +
+								". Valid for the next 24 hours.",
+							sender_id: check_valid_user.phone_no,
+							gateway: process.env.SMS_SHORTCODE
+						}
+					};
+
+					request.post(header_details, (err, res, body) => {
+						if (err) {
+							console.log(err);
+							//Error Sending OTP
+							return res.status(200).json({
+								success: false,
+								msg: "Error Sending OTP"
+							});
+						}
+					});
+					//Save OTP
+					const save_OTP = await NprogramOTP.create({
+						user_id: base64.decode(user_id),
+						program_id: program_id,
+						program_otp: vOTP,
+						created_at: today,
+						updated_at: today
+					});
+
+					var l = {
+						// user_id: base64.encode(check_username.id),
+						phoneno: check_program_valid.phone_no,
+						otp: vOTP
+					};
+
+					//Send OTP Number
+					return res.status(200).json({
+						success: true,
+						msg: "User OTP sent out successfully",
+						data: l
+					});
+				}
+			}
+		} else {
+			// other programs set up
+
+			let check_other_program = await NUserprograms.findOne({
+				where: {
+					[Op.and]: [
+						{ user_id: base64.decode(user_id) },
+						{ is_active: 1 },
+						{ program_type: program_id } // for other programs
+					]
+				}
+			});
+
+			if (check_other_program) {
+				return res.status(200).json({
+					success: true,
+					msg: "Program registration record already exists."
+				});
+			} else if (existing_other_program) {
+				const update_program = await NUserprograms.update(
+					{ is_active: "1" },
+					{
+						where: {
+							[Op.and]: [
+								{ user_id: base64.decode(user_id) },
+								{ program_type: program_id } // for other programs
+							]
+						}
+					}
+				);
+
+				if (update_program) {
+					return res.status(200).json({
+						success: true,
+						msg: "Program activation was Succesfully"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "An error occurred, could not activate program record"
+					});
+				}
+			} else {
+				//Save Program Details If Exist
+
+				const new_user_program = await NUserprograms.create({
+					user_id: base64.decode(user_id),
+					program_type: program_id,
+					is_active: "1",
+					activation_date: today,
+					created_at: today,
+					updated_at: today
+				});
+
+				if (new_user_program) {
+					return res.status(200).json({
+						success: true,
+						msg: "Program registration was succesfully"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "An error occurred, could not create program record"
+					});
+				}
+			}
 		}
 	}
 );
