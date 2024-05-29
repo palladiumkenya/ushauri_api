@@ -9,6 +9,7 @@ const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.JWT_SECRET
 };
+const Sequelize = require("sequelize");
 
 module.exports = passport => {
   passport.use(
