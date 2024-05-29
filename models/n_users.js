@@ -25,7 +25,8 @@ const NUsers = sequelize.sequelize.define(
         otp_gen_hour: Sequelize.TIME,
         profile_otp_number:Sequelize.STRING,
         profile_otp_date:Sequelize.DATEONLY,
-        profile_status: Sequelize.STRING
+        profile_status: Sequelize.STRING,
+        refresh_token: Sequelize.STRING
         
     }, {
         timestamps: true,
