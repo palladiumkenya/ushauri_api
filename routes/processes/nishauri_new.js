@@ -20,6 +20,8 @@ require("dotenv").config();
 //const Op = require("sequelize");
 const { Op } = require("sequelize");
 var bcrypt = require("bcrypt");
+const crypto = require('crypto');
+
 
 //const Sequelize = require("sequelize");
 
@@ -168,6 +170,91 @@ router.post("/signup", async (req, res) => {
 	}
 });
 
+
+//Token Refresh
+router.post("/refreshtoken", async (req, res) => {
+	let  refreshToken  = req.body.token;
+	let _user_id  = req.body.user_id;
+
+	try {
+		console.log(_user_id);
+
+	let user = NUsers.findOne({
+        where: {
+         id: base64.decode(_user_id), 
+		 refresh_token:refreshToken
+        }
+       });
+
+	if (!user) {
+	  return res.status(403).json({ message: "Invalid refresh token" });
+	}else
+	{
+		let newToken = jwt.sign(
+			{ username: _user_id },
+			process.env.JWT_SECRET,
+			{ expiresIn: "3h" }
+		  );
+
+		let newRefreshToken = crypto.randomBytes(64).toString('hex');
+
+		var l = {
+			user_id: base64.encode(_user_id),
+			token: newToken,
+			refreshToken: newRefreshToken, 
+		};
+
+		let today = moment(new Date().toDateString()).format("YYYY-MM-DD HH:mm:ss");
+		const log_login = await NUsers.update(
+			{ last_login: today, refresh_token:newRefreshToken },
+			{ where: { id: base64.decode(_user_id) } }
+		);
+
+		return res.status(200).json({
+			success: true,
+			msg: "New access token generated",
+			data: l
+		});
+
+		 
+
+	}
+	} catch (err) {
+		return res.status(400).json({ msg: "Error Occurred While Generating Token" });
+
+	}
+		
+  });
+
+  //Token Revocation
+  router.post("/revoke_token",async (req, res) => {
+	let  refreshToken  = req.body.token;
+	let _user_id  = req.body.user_id;
+
+	let user = NUsers.findOne({
+        where: {
+         id: base64.decode(_user_id), 
+		 refresh_token:refreshToken
+        }
+       });
+	//onst user = users.find((u) => u.refreshToken === refreshToken);
+	if (!user) {
+	  return res.status(400).json({ message: "Invalid refresh token" });
+	}
+	const log_login = await NUsers.update(
+		{ refresh_token:null },
+		{ where: { id: base64.decode(_user_id) } }
+	);
+	var l = {
+		user_id: base64.encode(_user_id) 
+	};
+	return res.status(200).json({
+		success: true,
+		msg: "Logout Successful",
+		data: l
+	});
+  });
+
 //Sign-In Users
 router.post("/signin", async (req, res) => {
 	let vusername = req.body.user_name;
@@ -228,8 +315,9 @@ router.post("/signin", async (req, res) => {
 				};
 
 				try {
+					const refreshToken = crypto.randomBytes(64).toString('hex');
 					const log_login = await NUsers.update(
-						{ last_login: today },
+						{ last_login: today, refresh_token:refreshToken },
 						{ where: { id: check_username.id } }
 					);
 					const token = jwt.sign(
@@ -246,6 +334,7 @@ router.post("/signin", async (req, res) => {
 						user_id: base64.encode(check_username.id),
 						page_id: 1,
 						token: token,
+						refreshToken: refreshToken, 
 						account_verified: check_username.is_active
 					};
 

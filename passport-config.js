@@ -20,7 +20,10 @@ module.exports = passport => {
      // console.log(jwt_payload.username);
       const user = NUsers.findOne({
         where: {
-         id: jwt_payload.username
+         id: jwt_payload.username,
+        refresh_token: {
+        [Sequelize.Op.ne]: null  // Sequelize operator for 'not equal to null'
+        }
         }
        });
 
