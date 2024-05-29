@@ -147,7 +147,7 @@ router.post("/signup", async (req, res) => {
 			} else {
 				// Log the error for debugging
 				console.error("Error creating user profile");
-				return res.status(500).json({
+				return res.status(200).json({
 					success: false,
 					msg: "Error creating user profile"
 				});
@@ -155,7 +155,7 @@ router.post("/signup", async (req, res) => {
 		} else {
 			// Log the error for debugging
 			console.error("Error creating user");
-			return res.status(500).json({
+			return res.status(200).json({
 				success: false,
 				msg: "Error creating user"
 			});
@@ -181,7 +181,7 @@ router.post("/refreshtoken", async (req, res) => {
 
 	let user = NUsers.findOne({
         where: {
-         id: base64.decode(_user_id), 
+         id: base64.decode(_user_id),
 		 refresh_token:refreshToken
         }
        });
@@ -199,9 +199,9 @@ router.post("/refreshtoken", async (req, res) => {
 		let newRefreshToken = crypto.randomBytes(64).toString('hex');
 
 		var l = {
-			user_id: base64.encode(_user_id),
+			user_id: _user_id,
 			token: newToken,
-			refreshToken: newRefreshToken, 
+			refreshToken: newRefreshToken,
 		};
 
 		let today = moment(new Date().toDateString()).format("YYYY-MM-DD HH:mm:ss");
@@ -216,14 +216,14 @@ router.post("/refreshtoken", async (req, res) => {
 			data: l
 		});
 
-		 
+
 
 	}
 	} catch (err) {
 		return res.status(400).json({ msg: "Error Occurred While Generating Token" });
 
 	}
-		
+
   });
 
   //Token Revocation
@@ -233,7 +233,7 @@ router.post("/refreshtoken", async (req, res) => {
 
 	let user = NUsers.findOne({
         where: {
-         id: base64.decode(_user_id), 
+         id: base64.decode(_user_id),
 		 refresh_token:refreshToken
         }
        });
@@ -246,7 +246,7 @@ router.post("/refreshtoken", async (req, res) => {
 		{ where: { id: base64.decode(_user_id) } }
 	);
 	var l = {
-		user_id: base64.encode(_user_id) 
+		user_id: _user_id
 	};
 	return res.status(200).json({
 		success: true,
@@ -334,7 +334,7 @@ router.post("/signin", async (req, res) => {
 						user_id: base64.encode(check_username.id),
 						page_id: 1,
 						token: token,
-						refreshToken: refreshToken, 
+						refreshToken: refreshToken,
 						account_verified: check_username.is_active
 					};
 
