@@ -675,7 +675,7 @@ router.post(
 			});
 		} else {
 			//Show Error Message
-			return res.status(500).json({
+			return res.status(200).json({
 				success: false,
 				msg: "User doesnt exists"
 			});
@@ -3917,6 +3917,85 @@ router.post(
 					});
 				}
 			}
+		}
+	}
+);
+
+// resend otp to program setup
+router.post(
+	"/rendsendotp",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.body.user_id;
+		let program_id = req.body.program_id;
+		let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+
+		let check_username = await NUsers.findOne({
+			where: {
+				[Op.and]: [{ is_active: "0" }, { id: base64.decode(user_id) }]
+			}
+		});
+
+		if (check_username) {
+			let vOTP = generateOtp(5);
+
+			//Send SMS
+			const header_details = {
+				rejectUnauthorized: false,
+				url: process.env.SMS_API_URL,
+				method: "POST",
+				json: true,
+				headers: {
+					Accept: "application/json",
+					"api-token": process.env.SMS_API_KEY
+				},
+
+				body: {
+					destination: check_username.msisdn,
+					msg:
+						"Dear Nishauri User, Your OTP to complete profile is " +
+						vOTP +
+						". Valid for the next 24 hours.",
+					sender_id: check_username.msisdn,
+					gateway: process.env.SMS_SHORTCODE
+				}
+			};
+
+			request.post(header_details, (err, res, body) => {
+				if (err) {
+					console.log(err);
+					//Error Sending OTP
+					return res.status(200).json({
+						success: false,
+						msg: "Error Sending OTP"
+					});
+				}
+			});
+
+			//Save OTP Details
+			const log_OTP = await NUsers.update(
+				{ profile_otp_date: today, profile_otp_number: vOTP },
+				{ where: { id: base64.decode(user_id) } }
+			);
+
+			var l = {
+				user_id: base64.encode(check_username.id),
+				phoneno: check_username.msisdn,
+				otp: check_username.profile_otp_number
+			};
+
+			//Sent OTP Number
+			return res.status(200).json({
+				success: true,
+				msg: "User OTP sent out successfully",
+				data: l
+			});
+		} else {
+			//Show Error Message
+			return res.status(200).json({
+				success: false,
+				msg: "User doesnt exists"
+			});
 		}
 	}
 );
