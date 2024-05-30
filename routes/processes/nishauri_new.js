@@ -20,8 +20,7 @@ require("dotenv").config();
 //const Op = require("sequelize");
 const { Op } = require("sequelize");
 var bcrypt = require("bcrypt");
-const crypto = require('crypto');
-
+const crypto = require("crypto");
 
 //const Sequelize = require("sequelize");
 
@@ -170,79 +169,74 @@ router.post("/signup", async (req, res) => {
 	}
 });
 
-
 //Token Refresh
 router.post("/refreshtoken", async (req, res) => {
-	let  refreshToken  = req.body.token;
-	let _user_id  = req.body.user_id;
+	let refreshToken = req.body.token;
+	let _user_id = req.body.user_id;
 
 	try {
 		console.log(_user_id);
 
-	let user = NUsers.findOne({
-        where: {
-         id: base64.decode(_user_id),
-		 refresh_token:refreshToken
-        }
-       });
-
-	if (!user) {
-	  return res.status(403).json({ message: "Invalid refresh token" });
-	}else
-	{
-		let newToken = jwt.sign(
-			{ username: _user_id },
-			process.env.JWT_SECRET,
-			{ expiresIn: "3h" }
-		  );
-
-		let newRefreshToken = crypto.randomBytes(64).toString('hex');
-
-		var l = {
-			user_id: _user_id,
-			token: newToken,
-			refreshToken: newRefreshToken,
-		};
-
-		let today = moment(new Date().toDateString()).format("YYYY-MM-DD HH:mm:ss");
-		const log_login = await NUsers.update(
-			{ last_login: today, refresh_token:newRefreshToken },
-			{ where: { id: base64.decode(_user_id) } }
-		);
-
-		return res.status(200).json({
-			success: true,
-			msg: "New access token generated",
-			data: l
+		let user = NUsers.findOne({
+			where: {
+				id: base64.decode(_user_id),
+				refresh_token: refreshToken
+			}
 		});
 
+		if (!user) {
+			return res.status(403).json({ message: "Invalid refresh token" });
+		} else {
+			let newToken = jwt.sign({ username: _user_id }, process.env.JWT_SECRET, {
+				expiresIn: "3h"
+			});
 
+			let newRefreshToken = crypto.randomBytes(64).toString("hex");
 
-	}
+			var l = {
+				user_id: _user_id,
+				token: newToken,
+				refreshToken: newRefreshToken
+			};
+
+			let today = moment(new Date().toDateString()).format(
+				"YYYY-MM-DD HH:mm:ss"
+			);
+			const log_login = await NUsers.update(
+				{ last_login: today, refresh_token: newRefreshToken },
+				{ where: { id: base64.decode(_user_id) } }
+			);
+
+			return res.status(200).json({
+				success: true,
+				msg: "New access token generated",
+				data: l
+			});
+		}
 	} catch (err) {
-		return res.status(400).json({ msg: "Error Occurred While Generating Token" });
-
+		return res
+			.status(400)
+			.json({ msg: "Error Occurred While Generating Token" });
 	}
+});
 
-  });
-
-  //Token Revocation
-  router.post("/revoke_token",async (req, res) => {
-	let  refreshToken  = req.body.token;
-	let _user_id  = req.body.user_id;
+//Token Revocation
+router.post("/revoke_token", async (req, res) => {
+	let refreshToken = req.body.token;
+	let _user_id = req.body.user_id;
 
 	let user = NUsers.findOne({
-        where: {
-         id: base64.decode(_user_id),
-		 refresh_token:refreshToken
-        }
-       });
+		where: {
+			id: base64.decode(_user_id),
+			refresh_token: refreshToken
+		}
+	});
 	//onst user = users.find((u) => u.refreshToken === refreshToken);
 	if (!user) {
-	  return res.status(400).json({ message: "Invalid refresh token" });
+		return res.status(400).json({ message: "Invalid refresh token" });
 	}
 	const log_login = await NUsers.update(
-		{ refresh_token:null },
+		{ refresh_token: null },
 		{ where: { id: base64.decode(_user_id) } }
 	);
 	var l = {
@@ -253,7 +247,7 @@ router.post("/refreshtoken", async (req, res) => {
 		msg: "Logout Successful",
 		data: l
 	});
-  });
+});
 
 //Sign-In Users
 router.post("/signin", async (req, res) => {
@@ -315,9 +309,9 @@ router.post("/signin", async (req, res) => {
 				};
 
 				try {
-					const refreshToken = crypto.randomBytes(64).toString('hex');
+					const refreshToken = crypto.randomBytes(64).toString("hex");
 					const log_login = await NUsers.update(
-						{ last_login: today, refresh_token:refreshToken },
+						{ last_login: today, refresh_token: refreshToken },
 						{ where: { id: check_username.id } }
 					);
 					const token = jwt.sign(
@@ -941,7 +935,7 @@ router.post(
 					msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`
 				});
 			}
-            // check if the otp is valid
+			// check if the otp is valid
 			let check_otp = await NprogramOTP.findOne({
 				where: {
 					[Op.and]: [
@@ -4012,17 +4006,25 @@ router.post(
 
 // resend otp to program setup
 router.post(
-	"/rendsendotp",
+	"/resendotp",
 	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
 		let user_id = req.body.user_id;
 		let program_id = req.body.program_id;
+		let ccc_no = req.body.ccc_no;
 		let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
 		let check_username = await NUsers.findOne({
 			where: {
-				[Op.and]: [{ is_active: "0" }, { id: base64.decode(user_id) }]
+				[Op.and]: [
+					{ is_active: "1" },
+					{ id: base64.decode(user_id) }
+				]
 			}
+		});
+
+		let check_program_valid = await Client.findOne({
+			where: { clinic_number: ccc_no }
 		});
 
 		if (check_username) {
@@ -4040,12 +4042,12 @@ router.post(
 				},
 
 				body: {
-					destination: check_username.msisdn,
+					destination: check_program_valid.phone_no,
 					msg:
-						"Dear Nishauri User, Your OTP to complete profile is " +
+						"Dear Nishauri User, Your OTP to set up program is " +
 						vOTP +
 						". Valid for the next 24 hours.",
-					sender_id: check_username.msisdn,
+					sender_id: check_program_valid.phone_no,
 					gateway: process.env.SMS_SHORTCODE
 				}
 			};
@@ -4061,16 +4063,41 @@ router.post(
 				}
 			});
 
-			//Save OTP Details
-			const log_OTP = await NUsers.update(
-				{ profile_otp_date: today, profile_otp_number: vOTP },
-				{ where: { id: base64.decode(user_id) } }
-			);
+			let check_otp = await NprogramOTP.findOne({
+				where: {
+					[Op.and]: [
+						{ user_id: base64.decode(user_id) },
+						{ program_id: program_id }
+					]
+				}
+			});
+			//Save OTP
+			if (check_otp) {
+				const save_OTP = await NprogramOTP.update(
+					{ program_otp: vOTP },
+					{
+						where: {
+							[Op.and]: [
+								{ user_id: base64.decode(user_id) },
+								{ program_id: program_id }
+							]
+						}
+					}
+				);
+			} else {
+				//Save OTP
+				const save_OTP = await NprogramOTP.create({
+					user_id: base64.decode(user_id),
+					program_id: program_id,
+					program_otp: vOTP,
+					created_at: today,
+					updated_at: today
+				});
+			}
 
 			var l = {
-				user_id: base64.encode(check_username.id),
-				phoneno: check_username.msisdn,
-				otp: check_username.profile_otp_number
+				phoneno: check_program_valid.phone_no,
+				otp: vOTP
 			};
 
 			//Sent OTP Number
@@ -4083,7 +4110,7 @@ router.post(
 			//Show Error Message
 			return res.status(200).json({
 				success: false,
-				msg: "User doesnt exists"
+				msg: "User doesnt exists or is inactive"
 			});
 		}
 	}
