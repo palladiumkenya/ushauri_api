@@ -89,6 +89,8 @@ router.post("/signup", async (req, res) => {
 		}
 	});
 
+	let refreshToken = crypto.randomBytes(64).toString("hex");
+
 	if (check_user_phone) {
 		return res.status(200).json({
 			success: false,
@@ -106,7 +108,7 @@ router.post("/signup", async (req, res) => {
 			password: password_hash,
 			email: email_address,
 			terms_accepted: true,
-			is_active: 0,
+			is_active: "0",
 			created_at: today,
 			updated_at: today
 		});
@@ -126,6 +128,11 @@ router.post("/signup", async (req, res) => {
 				created_at: today,
 				updated_at: today
 			});
+			
+			const log_login_attempt = await NUsers.update(
+				{ refresh_token: refreshToken },
+				{ where: { id: new_user.id } }
+			);
 
 			if (new_profile) {
 				const token = jwt.sign(
@@ -139,6 +146,7 @@ router.post("/signup", async (req, res) => {
 					msg: "Signup successfully",
 					data: {
 						token: token,
+						refreshToken: refreshToken,
 						user_id: base64.encode(new_user.id), // Use the decoded user ID
 						account_verified: new_user.is_active
 					}
@@ -267,6 +275,8 @@ router.post("/signin", async (req, res) => {
 		}
 	});
 
+	let refreshToken = crypto.randomBytes(64).toString("hex");
+
 	//console.log(check_username.password);
 
 	if (check_username) {
@@ -282,16 +292,23 @@ router.post("/signin", async (req, res) => {
 						expiresIn: "3h"
 					}
 				);
+
+
+				const log_login_attempt = await NUsers.update(
+					{ refresh_token: refreshToken },
+					{ where: { id: check_username.id } }
+				);
 				//Log Login Date
 				var l = {
 					user_id: base64.encode(check_username.id),
 					page_id: 0,
 					token: token,
+					refreshToken: refreshToken,
 					account_verified: check_username.is_active
 				};
 
 				return res.status(200).json({
-					success: true,
+					success: false,
 					msg: "Failed to sign-in, Your account is not verified kindly verify",
 					data: l
 				});
@@ -309,7 +326,7 @@ router.post("/signin", async (req, res) => {
 				};
 
 				try {
-					const refreshToken = crypto.randomBytes(64).toString("hex");
+
 					const log_login = await NUsers.update(
 						{ last_login: today, refresh_token: refreshToken },
 						{ where: { id: check_username.id } }
