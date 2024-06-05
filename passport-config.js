@@ -1,5 +1,6 @@
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
+// const express = require('express');
 
 
 
@@ -7,16 +8,29 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET
+  secretOrKey: process.env.JWT_SECRET,
+  passReqToCallback: true
 };
 const Sequelize = require("sequelize");
 
+// const app = express();
+
 module.exports = passport => {
   passport.use(
-    new JwtStrategy(opts, (jwt_payload, done) => {
+    new JwtStrategy(opts, async (req, jwt_payload, done) => {
       const {
         NUsers
       } = require("./models/n_users");
+      const { NToken } = require("./models/n_revoke_token");
+      const token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+
+      const revokedToken = await NToken.findOne({
+        where: { token: token }
+      });
+
+      if (revokedToken) {
+        return done(null, false, { message: 'Token has been revoked' });
+      }
 
      // console.log(jwt_payload.username);
       const user = NUsers.findOne({
@@ -38,4 +52,5 @@ module.exports = passport => {
       return done(null, false);
     })
   );
+  // app.use(passport.initialize());
 };

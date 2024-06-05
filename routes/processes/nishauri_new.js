@@ -9,6 +9,7 @@ const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 
 const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
 const passport = require("passport");
 const { Buffer } = require("buffer");
 const axios = require("axios");
@@ -49,6 +50,7 @@ const { NBmi } = require("../../models/n_bmi");
 const { NpatientObs } = require("../../models/n_patient_obs");
 const { NReviews } = require("../../models/n_reviews");
 const { NprogramOTP } = require("../../models/n_program_otp");
+const { NToken } = require("../../models/n_revoke_token");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -128,7 +130,7 @@ router.post("/signup", async (req, res) => {
 				created_at: today,
 				updated_at: today
 			});
-			
+
 			const log_login_attempt = await NUsers.update(
 				{ refresh_token: refreshToken },
 				{ where: { id: new_user.id } }
@@ -138,7 +140,7 @@ router.post("/signup", async (req, res) => {
 				const token = jwt.sign(
 					{ userId: new_user.id, username: new_user.username },
 					process.env.JWT_SECRET,
-					{ expiresIn: "3h" }
+					{ expiresIn: "1h", jwtid: uuidv4() }
 				);
 
 				return res.status(200).json({
@@ -215,6 +217,11 @@ router.post("/refreshtoken", async (req, res) => {
 				{ where: { id: base64.decode(_user_id) } }
 			);
 
+			await NToken.create({
+				token: refreshToken,
+				user_id: base64.decode(_user_id)
+			});
+
 			return res.status(200).json({
 				success: true,
 				msg: "New access token generated",
@@ -247,6 +254,10 @@ router.post("/revoke_token", async (req, res) => {
 		{ refresh_token: null },
 		{ where: { id: base64.decode(_user_id) } }
 	);
+	await NToken.create({
+		token: refreshToken,
+		user_id: base64.decode(_user_id)
+	});
 	var l = {
 		user_id: _user_id
 	};
@@ -289,10 +300,10 @@ router.post("/signin", async (req, res) => {
 					{ username: check_username.id },
 					process.env.JWT_SECRET,
 					{
-						expiresIn: "3h"
+						expiresIn: "1h",
+						jwtid: uuidv4()
 					}
 				);
-
 
 				const log_login_attempt = await NUsers.update(
 					{ refresh_token: refreshToken },
@@ -326,7 +337,6 @@ router.post("/signin", async (req, res) => {
 				};
 
 				try {
-
 					const log_login = await NUsers.update(
 						{ last_login: today, refresh_token: refreshToken },
 						{ where: { id: check_username.id } }
@@ -4033,10 +4043,7 @@ router.post(
 
 		let check_username = await NUsers.findOne({
 			where: {
-				[Op.and]: [
-					{ is_active: "1" },
-					{ id: base64.decode(user_id) }
-				]
+				[Op.and]: [{ is_active: "1" }, { id: base64.decode(user_id) }]
 			}
 		});
 
