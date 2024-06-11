@@ -3136,7 +3136,7 @@ router.post(
 				}
 			} else {
 				return res.status(200).json({
-					success: true,
+					success: false,
 					msg: "Invalid Confirmation code"
 				});
 			}
