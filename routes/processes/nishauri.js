@@ -52,6 +52,8 @@ const {
 } = require("../../models/n_chat_log");
 
 
+
+
 generateOtp = function (size) {
     const zeros = '0'.repeat(size - 1);
     const x = parseFloat('1' + zeros);
@@ -1851,10 +1853,11 @@ router.post('/chat', async (req, res) => {
         const responseMessage = messages.toString();
 
         // Save the chat log
-        let chatlog = NChatLogs.create({
-            user_id: base64.decode(userid),
-            quiz: question_,
-            response: responseMessage
+    
+        var log_chat = NChatLogs.create({
+          user_id: base64.decode(userid),
+          quiz:question_,
+          response: messages.toString()
         });
 
 
