@@ -52,6 +52,9 @@ const { NReviews } = require("../../models/n_reviews");
 const { NprogramOTP } = require("../../models/n_program_otp");
 const { NToken } = require("../../models/n_revoke_token");
 
+const { NChatLogs } = require("../../models/n_chat_log");
+
+
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
 	const x = parseFloat("1" + zeros);
@@ -2318,12 +2321,20 @@ router.post(
 			}
 			//var obj_ = body;
 			//console.log(body);
+
 			var log_activity_ = NLogs.create({
 				user_id: base64.decode(userid),
 				access: "CHAT"
 			});
 
 			var obj = JSON.parse(body);
+
+			var log_chat = NChatLogs.create({
+				user_id: base64.decode(userid),
+				quiz:question_,
+				response: obj.response
+			});
+
 			return res.status(200).json({
 				success: true,
 				msg: obj.response,
