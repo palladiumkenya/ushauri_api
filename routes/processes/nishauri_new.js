@@ -150,6 +150,7 @@ router.post("/signup", async (req, res) => {
 						token: token,
 						refreshToken: refreshToken,
 						user_id: base64.encode(new_user.id), // Use the decoded user ID
+						phone_no: new_user.msisdn,
 						account_verified: new_user.is_active
 					}
 				});
@@ -356,6 +357,7 @@ router.post("/signin", async (req, res) => {
 						page_id: 1,
 						token: token,
 						refreshToken: refreshToken,
+						phone_no: check_username.msisdn,
 						account_verified: check_username.is_active
 					};
 
