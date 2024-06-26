@@ -53,7 +53,7 @@ const { NprogramOTP } = require("../../models/n_program_otp");
 const { NToken } = require("../../models/n_revoke_token");
 
 const { NChatLogs } = require("../../models/n_chat_log");
-
+const { NFAQ } = require("../../models/n_faq");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -2331,7 +2331,7 @@ router.post(
 
 			var log_chat = NChatLogs.create({
 				user_id: base64.decode(userid),
-				quiz:question_,
+				quiz: question_,
 				response: obj.response
 			});
 
@@ -4152,6 +4152,34 @@ router.post(
 		}
 	}
 );
+router.get("/get_faqs", passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+	try {
+		let questions = await NFAQ.findAll({
+			where: {
+				status: "1"
+			}
+		});
+		if (questions) {
+			return res.status(200).json({
+				success: true,
+				message: "FAQs were successfully retrieved",
+				questions: questions
+			});
+		} else {
+			return res.status(200).json({
+				success: false,
+				message: "Could not get the FAQs"
+			});
+		}
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to retrieve FAQs",
+			error: error.message
+		});
+	}
+});
 
 module.exports = router;
 //module.exports = { router, users };
