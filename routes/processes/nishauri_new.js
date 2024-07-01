@@ -4152,33 +4152,280 @@ router.post(
 		}
 	}
 );
-router.get("/get_faqs", passport.authenticate("jwt", { session: false }),
+router.get(
+	"/get_faqs",
+	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
-	try {
-		let questions = await NFAQ.findAll({
-			where: {
-				status: "1"
-			}
-		});
-		if (questions) {
-			return res.status(200).json({
-				success: true,
-				message: "FAQs were successfully retrieved",
-				questions: questions
+		try {
+			let questions = await NFAQ.findAll({
+				where: {
+					status: "1"
+				}
 			});
-		} else {
-			return res.status(200).json({
+			if (questions) {
+				return res.status(200).json({
+					success: true,
+					message: "FAQs were successfully retrieved",
+					questions: questions
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					message: "Could not get the FAQs"
+				});
+			}
+		} catch (error) {
+			return res.status(500).json({
 				success: false,
-				message: "Could not get the FAQs"
+				message: "Failed to retrieve FAQs",
+				error: error.message
 			});
 		}
-	} catch (error) {
-		return res.status(500).json({
-			success: false,
-			message: "Failed to retrieve FAQs",
-			error: error.message
-		});
 	}
+);
+
+const termsAndConditions = {
+	termsConditions: {
+		title: "Terms and Conditions for System Users",
+		introduction:
+			'These Terms and Conditions ("Agreement") govern your use of this Health Information System ("System") as a healthcare provider and/or implementer. By accessing or using the System, you agree to comply with these Terms and Conditions.',
+		sections: [
+			{
+				header: "Data Handling and Access",
+				content: [
+					"You shall handle health data in compliance with the agreed-upon data handling policies and procedures as set out by Ministry of Health Kenya and Kenya Data Protection Act 2019.",
+					"Access and use the data stored within the System solely for authorized purposes related to patient care, public health initiatives, or as permitted by applicable Kenyan laws and regulations."
+				]
+			},
+			{
+				header: "Security and Confidentiality",
+				content: [
+					"You shall maintain the confidentiality and security of health data by adhering to the established security protocols, access controls, and encryption measures.",
+					"Prevent unauthorized access, loss, or disclosure of data and promptly report any potential breaches or security incidents to the appropriate legal channels, the System implementers."
+				]
+			},
+			{
+				header: "Data Accuracy and Completeness",
+				content: [
+					"You are responsible for ensuring the accuracy and completeness of the health data you input or modify within the System.",
+					"Regularly review and update the data to maintain its integrity, relevance, and usefulness for healthcare provision and public good purposes."
+				]
+			},
+			{
+				header: "Purpose-Limited Use",
+				content: [
+					"Utilize the health data stored within the System solely for the purposes specified in these Terms and Conditions, such as patient care, public health analysis, or healthcare service improvement.",
+					"Refrain from using the data for personal or unauthorized purposes that may compromise privacy or violate data protection regulations."
+				]
+			},
+			{
+				header: "Training and Awareness",
+				content: [
+					"Stay informed and updated on the proper use and handling of health data.",
+					"Participate in training sessions or educational programs provided by the System implementors to enhance your understanding of data privacy, security practices, and compliance requirements."
+				]
+			},
+			{
+				header: "Data Subject Rights",
+				content: [
+					"Respect the rights of individuals regarding their health data.",
+					"Promptly address any requests from patients regarding access, rectification, or erasure of their personal information as permitted by applicable data protection laws."
+				]
+			},
+			{
+				header: "Reporting and Compliance",
+				content: [
+					"Report any concerns, breaches, or incidents related to health data handling promptly to the right legal channels and the System implementers or designated authority within your organization.",
+					"Comply with internal policies and procedures as well as applicable laws and regulations governing health data retention and protection."
+				]
+			},
+			{
+				header: "Third-Party Usage",
+				content: [
+					"If you engage any third-party service providers who have access to the health data, ensure they comply with these Terms and Conditions and adhere to appropriate data protection and security measures.",
+					"Enter into appropriate agreements with third parties to safeguard the confidentiality and security of the data they handle.",
+					"Data from this system will be transmitted to the National Datawarehouse for purposes of promoting continuity of healthcare services and for health implementation monitoring, reporting, and research purposes. The data in the NDW will be handled in accordance with Kenyan data protection laws and other relevant regulations."
+				]
+			},
+			{
+				header: "Auditing and Monitoring",
+				content: [
+					"Cooperate with audits, assessments, or monitoring activities conducted to ensure compliance with these Terms and Conditions.",
+					"Provide necessary information and access to systems as requested for compliance verification and data protection purposes."
+				]
+			},
+			{
+				header: "Modification or Termination of Agreement",
+				content: [
+					"The System Implementers reserves the right to modify or terminate this Agreement at any time.",
+					"Notice of any changes will be provided in advance, and your continued use of the System following such notice constitutes acceptance of the modified Agreement."
+				]
+			},
+			{
+				header: "Entire Agreement",
+				content: [
+					"These Terms and Conditions constitute the entire agreement between you and the System Implementer regarding your use of the System. If you do not agree with any part of these Terms and Conditions, please refrain from accessing or using the System.",
+					"By accessing or using the System, you acknowledge that you have read, understood, and agreed to these Terms and Conditions."
+				]
+			}
+		]
+	},
+	privacyPolicy: {
+		title: "Privacy Policy",
+		introduction:
+			'This Privacy Policy ("Policy") describes how we, as KenyaHMIS project providing the Health Information System ("System"), collects, uses, discloses, and protects personal information in connection with the System. We are committed to safeguarding your privacy and ensuring the confidentiality and security of your personal data.',
+		sections: [
+			{
+				header: "Collection of Personal Information",
+				content: [
+					"We may collect personal information from various stakeholders, including healthcare providers, health facilities, patients, clients, and system users, as necessary for the functioning of the System.",
+					"Personal information may include but is not limited to names, contact details, health records, and other information relevant to the provision of healthcare services and system usage."
+				]
+			},
+			{
+				header: "Use of Personal Information",
+				content: [
+					"Personal information collected will be used for the purposes of healthcare provision, health data management (Includes access, processing, sharing, use etc.), retention, analysis, and improvement of healthcare services.",
+					"We may also use personal information to communicate with system users, provide support, and facilitate the proper functioning of the System."
+				]
+			},
+			{
+				header: "Disclosure of Personal Information",
+				content: [
+					"We may share personal information with authorized personnel, including healthcare providers, administrators, and other stakeholders involved in the provision of healthcare services.",
+					"Personal information may also be disclosed to comply with legal obligations, enforce our rights, or protect the rights, safety, or security of individuals or the public."
+				]
+			},
+			{
+				header: "Data Security",
+				content: [
+					"We implement appropriate technical and organizational measures to protect personal information from unauthorized access, loss, misuse, or disclosure.",
+					"We maintain security protocols, access controls, and encryption measures to ensure the confidentiality, integrity, and availability of personal data within the System."
+				]
+			},
+			{
+				header: "Data Retention",
+				content: [
+					"Personal information will be retained for as long as necessary to fulfill the purposes for which it was collected and in accordance with applicable Kenyan laws and regulations including but not limited to The Kenya Data Protection Act 2019.",
+					"We adhere to data retention policies and procedures to ensure that personal information is retained securely and in compliance with privacy requirements."
+				]
+			},
+			{
+				header: "Data Subject Rights",
+				content: [
+					"Individuals have the right to access, rectify, or request the deletion of their personal information as permitted by applicable data protection laws.",
+					"Requests related to personal information should be submitted to the healthcare provider, designated contact person or administrator as applicable by law."
+				]
+			},
+			{
+				header: "Third-Party Services and Links",
+				content: [
+					"The System may integrate with or provide links to third-party services or systems within the healthcare ecosystem.",
+					"This Privacy Policy applies solely to the System, and we are not responsible for the privacy practices or content of third-party services or systems."
+				]
+			},
+			{
+				header: "Updates to the Privacy Policy",
+				content: [
+					"We reserve the right to update or modify this Privacy Policy at any time.",
+					"Changes to the Policy will be communicated through appropriate channels or by posting an updated version on the System or our website."
+				]
+			},
+			{
+				header: "Contact Information",
+				content: [
+					"If you have any questions, concerns, or requests regarding this Privacy Policy or the handling of personal information, please contact the KenyaHMIS Project through https://kenyahmis.org/contact/",
+					"By using the System, you consent to the collection, use, and disclosure of personal information as described in this Privacy Policy. If you do not agree with any part of this Policy, please refrain from using the System."
+				]
+			},
+			{
+				header: "Effective Date",
+				content: [
+					"This Privacy Policy is effective as of version released in May 2023 and shall remain in effect until modified or replaced.",
+					"By accessing or using the System, you acknowledge that you have read, understood, and agreed to this Privacy Policy."
+				]
+			}
+		]
+	},
+	healthDataTerms: {
+		title: "Terms and Conditions for Collecting Health Data",
+		introduction:
+			"To be used for consenting in Data collection either for data provided directly or indirectly. Data Subjects should be aware of their rights.",
+		sections: [
+			{
+				header: "Consent",
+				content: [
+					"By using this digital health solution and providing your health data, you explicitly consent to its collection, storage, and processing for the specified purposes outlined in these terms and conditions. You have the right to withdraw your consent at any time."
+				]
+			},
+			{
+				header: "Lawful Basis",
+				content: [
+					"The collection and processing of your health data will be carried out based on one or more lawful bases as defined by applicable Kenyan data protection laws, including but not limited to the Kenya Data Protection Act 2019."
+				]
+			},
+			{
+				header: "Purpose and Scope",
+				content: [
+					"Your health data will be collected for the purpose of health service provision (e.g., medical treatment, medical reviews, and assessment etc.). The data collected will be limited to what is necessary and directly relevant to the specified health provision purpose.",
+					"This health data will be stored, persisted, and processed for the purpose of promoting public health and advancing healthcare initiatives for the public good. This may include analysis, statistical purposes, policy development, research and improving healthcare services.",
+					"Additional data will be collected to manage user accounts and profile information that is used to create user accounts for digital health solutions. The personal data facilitates user access to different functionalities of the solution that are available to account users."
+				]
+			},
+			{
+				header: "Data Security",
+				content: [
+					"We implement appropriate technical and organizational measures to ensure the security and confidentiality of your health data. These measures include safeguards against unauthorized access, loss, or disclosure, and regular monitoring and updating of security protocols."
+				]
+			},
+			{
+				header: "Data Retention",
+				content: [
+					"Your health data will be retained for a period necessary to fulfill the specified purpose and comply with legal obligations. After this period, your data will be securely and permanently anonymized or archived in Ministry of Health Kenya Repositories, unless there is a legal basis or legitimate reason for its continued retention."
+				]
+			},
+			{
+				header: "Data Sharing",
+				content: [
+					"Your health data may be shared with authorized third parties, such as healthcare providers, research institutions, MoH Kenya affiliates or public health authorities, to facilitate the specified purpose. Any sharing of data will be conducted in compliance with applicable Kenyan laws and with appropriate data protection agreements in place."
+				]
+			},
+			{
+				header: "Data Subject Rights",
+				content: [
+					"You have the right to access, rectify, and erase your health data, as well as the right to restrict processing and object to automated decision-making. To exercise these rights or for any inquiries or concerns regarding your health data, please contact the KenyaHMIS through https://kenyahmis.org/contact/ or the Ministry of Health (MoH) Kenya through https://www.health.go.ke/contact-us/. Please note, however, that we might need to retain certain information when there is a legal obligation or lawful basis to do so."
+				]
+			},
+			{
+				header: "Data Protection Officer",
+				content: [
+					"We have appointed a Data Protection Officer (DPO) who can be contacted regarding any matters related to the collection, storage, and processing of your health data. The DPO contacts will be provided by the healthcare provider whenever needed."
+				]
+			},
+			{
+				header: "Data Breach Notification",
+				content: [
+					"In the event of a data breach that may pose risks to your rights and freedoms, we will promptly notify you and/ or the relevant supervisory authority in compliance with applicable data protection laws."
+				]
+			},
+			{
+				header: "Changes to Terms and Conditions",
+				content: [
+					"We reserve the right to modify or update these terms and conditions. Any changes will be communicated to you through appropriate means and will require your renewed consent if necessary."
+				]
+			},
+			{
+				header: "Final Acknowledgment",
+				content: [
+					"By providing your health data, you acknowledge that you have read, understood, and agreed to these terms and conditions. If you do not agree with any of the provisions outlined herein, please refrain from providing your health data."
+				]
+			}
+		]
+	}
+};
+
+router.get("/terms_conditions", (req, res) => {
+	res.json(termsAndConditions);
 });
 
 module.exports = router;
