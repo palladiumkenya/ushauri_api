@@ -9,7 +9,7 @@ const NUsers = sequelize.sequelize.define(
             primaryKey: true,
             autoIncrement: true
         },
-      
+
         password:Sequelize.STRING,
         last_login:Sequelize.STRING,
         first_name:Sequelize.STRING,
@@ -26,8 +26,9 @@ const NUsers = sequelize.sequelize.define(
         profile_otp_number:Sequelize.STRING,
         profile_otp_date:Sequelize.DATEONLY,
         profile_status: Sequelize.STRING,
-        refresh_token: Sequelize.STRING
-        
+        refresh_token: Sequelize.STRING,
+        app_version: Sequelize.STRING
+
     }, {
         timestamps: true,
         paranoid: true,

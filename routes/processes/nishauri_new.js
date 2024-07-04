@@ -74,6 +74,7 @@ router.post("/signup", async (req, res) => {
 	let dob = req.body.dob;
 	let gender = req.body.gender;
 	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
+	let app_version = req.body.app_version;
 
 	// Check if Terms Are Accepted
 	let boolVal;
@@ -135,7 +136,7 @@ router.post("/signup", async (req, res) => {
 			});
 
 			const log_login_attempt = await NUsers.update(
-				{ refresh_token: refreshToken },
+				{ refresh_token: refreshToken, last_login: today, app_version: app_version },
 				{ where: { id: new_user.id } }
 			);
 
@@ -276,6 +277,7 @@ router.post("/revoke_token", async (req, res) => {
 router.post("/signin", async (req, res) => {
 	let vusername = req.body.user_name;
 	let password_1 = req.body.password;
+	let app_version = req.body.app_version;
 	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
 	//Check If User Exists
@@ -342,7 +344,7 @@ router.post("/signin", async (req, res) => {
 
 				try {
 					const log_login = await NUsers.update(
-						{ last_login: today, refresh_token: refreshToken },
+						{ last_login: today, refresh_token: refreshToken, app_version: app_version },
 						{ where: { id: check_username.id } }
 					);
 					const token = jwt.sign(
