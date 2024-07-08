@@ -321,6 +321,7 @@ router.post("/signin", async (req, res) => {
 					page_id: 0,
 					token: token,
 					refreshToken: refreshToken,
+					phone_no: check_username.msisdn,
 					account_verified: check_username.is_active
 				};
 
