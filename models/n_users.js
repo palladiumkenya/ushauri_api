@@ -27,7 +27,9 @@ const NUsers = sequelize.sequelize.define(
         profile_otp_date:Sequelize.DATEONLY,
         profile_status: Sequelize.STRING,
         refresh_token: Sequelize.STRING,
-        app_version: Sequelize.STRING
+        app_version: Sequelize.STRING,
+        chatbot_consent: Sequelize.STRING,
+        chatbot_consent_date: Sequelize.DATE
 
     }, {
         timestamps: true,

@@ -136,7 +136,11 @@ router.post("/signup", async (req, res) => {
 			});
 
 			const log_login_attempt = await NUsers.update(
-				{ refresh_token: refreshToken, last_login: today, app_version: app_version },
+				{
+					refresh_token: refreshToken,
+					last_login: today,
+					app_version: app_version
+				},
 				{ where: { id: new_user.id } }
 			);
 
@@ -345,7 +349,11 @@ router.post("/signin", async (req, res) => {
 
 				try {
 					const log_login = await NUsers.update(
-						{ last_login: today, refresh_token: refreshToken, app_version: app_version },
+						{
+							last_login: today,
+							refresh_token: refreshToken,
+							app_version: app_version
+						},
 						{ where: { id: check_username.id } }
 					);
 					const token = jwt.sign(
@@ -4430,6 +4438,56 @@ const termsAndConditions = {
 router.get("/terms_conditions", (req, res) => {
 	res.json(termsAndConditions);
 });
+router.post(
+	"/chat_consent",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.body.user_id;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
+
+		let user_consent = await NUsers.findOne({
+			where: {
+				id: base64.decode(user_id)
+			}
+		});
+
+		if (user_consent.chatbot_consent === "1") {
+			const consent = await NUsers.update(
+				{ chatbot_consent_date: today, chatbot_consent: "0" },
+				{ where: { id: base64.decode(user_id) } }
+			);
+			if (consent) {
+				return res.status(200).json({
+					success: true,
+					msg: "Consent was successfully revoked"
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "An error occurred, could not consent"
+				});
+			}
+		} else {
+			const new_consent = await NUsers.update(
+				{ chatbot_consent_date: today, chatbot_consent: "1" },
+				{ where: { id: base64.decode(user_id) } }
+			);
+			if (new_consent) {
+				return res.status(200).json({
+					success: true,
+					msg: "Consent was successfull"
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "An error occurred, could not consent"
+				});
+			}
+		}
+	}
+);
 
 module.exports = router;
 //module.exports = { router, users };
