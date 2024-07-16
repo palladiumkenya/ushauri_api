@@ -12,7 +12,9 @@ const NpatientObs = sequelize.sequelize.define(
 
         lab_data:Sequelize.JSON,
         patient_ob:Sequelize.JSON,
-        user_id:Sequelize.INTEGER
+        user_id:Sequelize.INTEGER,
+        height:Sequelize.DOUBLE,
+        weight:Sequelize.DOUBLE
     }, {
         timestamps: true,
         paranoid: true,

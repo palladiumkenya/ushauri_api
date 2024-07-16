@@ -298,9 +298,26 @@ router.post("/signin", async (req, res) => {
 
 	let refreshToken = crypto.randomBytes(64).toString("hex");
 
+	// check for if profile is up to date
+	async function isProfileComplete(userId) {
+		let userProfile = await NUserProfile.findOne({ where: { user_id: userId } });
+
+		if (!userProfile) return 0;
+
+		const { f_name, l_name, gender, dob } = userProfile;
+		if (!f_name || !l_name || !gender || !dob) {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+
 	//console.log(check_username.password);
 
 	if (check_username) {
+		let userId = check_username.id;
+		let profile_complete = await isProfileComplete(userId);
+
 		var password_hash = check_username.password;
 		//console.log(password_hash);
 		const verified = bcrypt.compareSync(password_1, password_hash);
@@ -326,7 +343,8 @@ router.post("/signin", async (req, res) => {
 					token: token,
 					refreshToken: refreshToken,
 					phone_no: check_username.msisdn,
-					account_verified: check_username.is_active
+					account_verified: check_username.is_active,
+					profile_complete: `${profile_complete}`
 				};
 
 				return res.status(200).json({
@@ -372,7 +390,8 @@ router.post("/signin", async (req, res) => {
 						token: token,
 						refreshToken: refreshToken,
 						phone_no: check_username.msisdn,
-						account_verified: check_username.is_active
+						account_verified: check_username.is_active,
+						profile_complete: `${profile_complete}`
 					};
 
 					// Trigger data retrieval from getVLResults function
@@ -4496,7 +4515,7 @@ router.get(
 			const user_id = req.query.user_id;
 
 			const user_consent = await NUsers.findOne({
-				attributes: ['chatbot_consent', 'chatbot_consent_date'],
+				attributes: ["chatbot_consent", "chatbot_consent_date"],
 				where: {
 					id: base64.decode(user_id)
 				}
@@ -4527,6 +4546,18 @@ router.get(
 	}
 );
 
+router.post(
+	"/post_bmi",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.body.user_id;
+		let height = req.body.height;
+		let weight = req.body.weight;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
+	}
+);
 
 module.exports = router;
 //module.exports = { router, users };
