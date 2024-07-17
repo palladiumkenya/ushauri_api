@@ -54,6 +54,7 @@ const { NToken } = require("../../models/n_revoke_token");
 
 const { NChatLogs } = require("../../models/n_chat_log");
 const { NFAQ } = require("../../models/n_faq");
+const { NBmiLog } = require("../../models/n_bmi_log");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -300,7 +301,9 @@ router.post("/signin", async (req, res) => {
 
 	// check for if profile is up to date
 	async function isProfileComplete(userId) {
-		let userProfile = await NUserProfile.findOne({ where: { user_id: userId } });
+		let userProfile = await NUserProfile.findOne({
+			where: { user_id: userId }
+		});
 
 		if (!userProfile) return 0;
 
@@ -4553,9 +4556,77 @@ router.post(
 		let user_id = req.body.user_id;
 		let height = req.body.height;
 		let weight = req.body.weight;
+		let results = req.body.results;
 		let today = moment(new Date().toDateString())
 			.tz("Africa/Nairobi")
 			.format("YYYY-MM-DD H:M:S");
+
+		let user = await NUsers.findOne({
+			where: {
+				id: base64.decode(user_id)
+			}
+		});
+
+		if (user) {
+			let existing_bmi = await NBmiLog.findOne({
+				where: {
+					user_id: base64.decode(user_id),
+					created_at: {
+						[Op.gte]: new Date(today), 
+						[Op.lt]: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000)
+					  }
+				}
+			});
+		if (existing_bmi) {
+			const update_bmi = await NBmiLog.update(
+				{ height: height,
+					weight: weight,
+					results: results,
+					updated_at: today
+				 },
+				{ where: { user_id: base64.decode(user_id) } }
+			);
+
+			if (update_bmi) {
+				return res.status(200).json({
+					success: true,
+					msg: "BMI results was successfully logged up"
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "Error occured while logging BMI results"
+				});
+			}
+		} else {
+			const new_bmi = await NBmiLog.create({
+				height: height,
+				weight: weight,
+				results: results,
+				user_id: base64.decode(user_id),
+				created_at: today,
+				updated_at: today
+			});
+			if (new_bmi) {
+				return res.status(200).json({
+					success: true,
+					msg: "BMI results was successfully logged"
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "Error occured while logging BMI results"
+				});
+			}
+
+		}
+
+		} else {
+			return res.status(404).json({
+				success: false,
+				msg: "User not found"
+			});
+		}
 	}
 );
 
