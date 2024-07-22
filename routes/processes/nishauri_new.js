@@ -55,6 +55,7 @@ const { NToken } = require("../../models/n_revoke_token");
 const { NChatLogs } = require("../../models/n_chat_log");
 const { NFAQ } = require("../../models/n_faq");
 const { NBmiLog } = require("../../models/n_bmi_log");
+const { NBloodPressure } = require("../../models/n_blood_pressure");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -4572,55 +4573,54 @@ router.post(
 				where: {
 					user_id: base64.decode(user_id),
 					created_at: {
-						[Op.gte]: new Date(today), 
+						[Op.gte]: new Date(today),
 						[Op.lt]: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000)
-					  }
+					}
 				}
 			});
-		if (existing_bmi) {
-			const update_bmi = await NBmiLog.update(
-				{ height: height,
+			if (existing_bmi) {
+				const update_bmi = await NBmiLog.update(
+					{
+						height: height,
+						weight: weight,
+						results: results,
+						updated_at: today
+					},
+					{ where: { user_id: base64.decode(user_id) } }
+				);
+
+				if (update_bmi) {
+					return res.status(200).json({
+						success: true,
+						msg: "BMI results was successfully logged up"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "Error occured while logging BMI results"
+					});
+				}
+			} else {
+				const new_bmi = await NBmiLog.create({
+					height: height,
 					weight: weight,
 					results: results,
+					user_id: base64.decode(user_id),
+					created_at: today,
 					updated_at: today
-				 },
-				{ where: { user_id: base64.decode(user_id) } }
-			);
-
-			if (update_bmi) {
-				return res.status(200).json({
-					success: true,
-					msg: "BMI results was successfully logged up"
 				});
-			} else {
-				return res.status(200).json({
-					success: false,
-					msg: "Error occured while logging BMI results"
-				});
+				if (new_bmi) {
+					return res.status(200).json({
+						success: true,
+						msg: "BMI results was successfully logged"
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						msg: "Error occured while logging BMI results"
+					});
+				}
 			}
-		} else {
-			const new_bmi = await NBmiLog.create({
-				height: height,
-				weight: weight,
-				results: results,
-				user_id: base64.decode(user_id),
-				created_at: today,
-				updated_at: today
-			});
-			if (new_bmi) {
-				return res.status(200).json({
-					success: true,
-					msg: "BMI results was successfully logged"
-				});
-			} else {
-				return res.status(200).json({
-					success: false,
-					msg: "Error occured while logging BMI results"
-				});
-			}
-
-		}
-
 		} else {
 			return res.status(404).json({
 				success: false,
@@ -4629,6 +4629,53 @@ router.post(
 		}
 	}
 );
+router.post(
+	"/blood_pressure",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.body.user_id;
+		let systolic = req.body.systolic;
+		let diastolic = req.body.diastolic;
+		let pulse_rate = req.body.pulse_rate;
+		let notes = req.body.notes;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
 
+		let user = await NUsers.findOne({
+			where: {
+				id: base64.decode(user_id)
+			}
+		});
+
+		if (user) {
+			const new_blood_pressure = await NBloodPressure.create({
+				systolic: systolic,
+				diastolic: diastolic,
+				pulse_rate: pulse_rate,
+				user_id: base64.decode(user_id),
+				notes: notes,
+				created_at: today,
+				updated_at: today
+			});
+			if (new_blood_pressure) {
+				return res.status(200).json({
+					success: true,
+					msg: "You successfully logged your blood pressure"
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "Could not logged your blood pressure"
+				});
+			}
+		} else {
+			return res.status(404).json({
+				success: false,
+				msg: "User not found"
+			});
+		}
+	}
+);
 module.exports = router;
 //module.exports = { router, users };
