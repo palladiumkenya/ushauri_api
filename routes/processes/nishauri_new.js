@@ -4677,5 +4677,53 @@ router.post(
 		}
 	}
 );
+
+router.get(
+	"/get_blood_pressure",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.query.user_id;
+
+			let blood_pressure = await NBloodPressure.findAll({
+				attributes: ["systolic", "diastolic", "pulse_rate", "notes", "created_at"],
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
+
+			if (blood_pressure && blood_pressure.length > 0) {
+				let transformedData = blood_pressure.map(bp => {
+				  return {
+					systolic: bp.systolic,
+					diastolic: bp.diastolic,
+					pulse_rate: bp.pulse_rate,
+					notes: bp.notes,
+					date_time: moment(bp.created_at).format('YYYY-MM-DD HH:mm:ss')
+				  };
+				});
+
+				return res.status(200).json({
+				  success: true,
+				  message: "User blood pressure logs retrieved successfully",
+				  data: {
+					blood_pressure: transformedData,
+					user_id: user_id
+				  }
+				});
+			  } else {
+				return res.status(404).json({
+				  success: false,
+				  message: "No blood pressure data found for this User"
+				});
+			  }
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				message: "Internal Server Error"
+			});
+		}
+	}
+);
 module.exports = router;
 //module.exports = { router, users };
