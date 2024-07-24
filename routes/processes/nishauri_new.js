@@ -4725,5 +4725,52 @@ router.get(
 		}
 	}
 );
+
+router.get(
+	"/get_bmi",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.query.user_id;
+
+			let bmi_log = await NBmiLog.findAll({
+				attributes: ["weight", "height", "results", "created_at"],
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
+
+			if (bmi_log && bmi_log.length > 0) {
+				let final_bmi = bmi_log.map(bp => {
+				  return {
+					weight: bp.weight,
+					height: bp.height,
+					results: bp.results,
+					date: moment(bp.created_at).format('YYYY-MM-DD')
+				  };
+				});
+
+				return res.status(200).json({
+				  success: true,
+				  message: "User BMI logs retrieved successfully",
+				  data: {
+					bmi_log: final_bmi,
+					user_id: user_id
+				  }
+				});
+			  } else {
+				return res.status(404).json({
+				  success: false,
+				  message: "No BMI data found for this User"
+				});
+			  }
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				message: "Internal Server Error"
+			});
+		}
+	}
+);
 module.exports = router;
 //module.exports = { router, users };
