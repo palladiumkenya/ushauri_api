@@ -4686,37 +4686,43 @@ router.get(
 			let user_id = req.query.user_id;
 
 			let blood_pressure = await NBloodPressure.findAll({
-				attributes: ["systolic", "diastolic", "pulse_rate", "notes", "created_at"],
+				attributes: [
+					"systolic",
+					"diastolic",
+					"pulse_rate",
+					"notes",
+					"created_at"
+				],
 				where: {
 					user_id: base64.decode(user_id)
 				}
 			});
 
 			if (blood_pressure && blood_pressure.length > 0) {
-				let transformedData = blood_pressure.map(bp => {
-				  return {
-					systolic: bp.systolic,
-					diastolic: bp.diastolic,
-					pulse_rate: bp.pulse_rate,
-					notes: bp.notes,
-					date_time: moment(bp.created_at).format('YYYY-MM-DD HH:mm:ss')
-				  };
+				let transformedData = blood_pressure.map((bp) => {
+					return {
+						systolic: bp.systolic,
+						diastolic: bp.diastolic,
+						pulse_rate: bp.pulse_rate,
+						notes: bp.notes,
+						date_time: moment(bp.created_at).format("YYYY-MM-DD HH:mm:ss")
+					};
 				});
 
 				return res.status(200).json({
-				  success: true,
-				  message: "User blood pressure logs retrieved successfully",
-				  data: {
-					blood_pressure: transformedData,
-					user_id: user_id
-				  }
+					success: true,
+					message: "User blood pressure logs retrieved successfully",
+					data: {
+						blood_pressure: transformedData,
+						user_id: user_id
+					}
 				});
-			  } else {
+			} else {
 				return res.status(404).json({
-				  success: false,
-				  message: "No blood pressure data found for this User"
+					success: false,
+					message: "No blood pressure data found for this User"
 				});
-			  }
+			}
 		} catch (error) {
 			return res.status(500).json({
 				success: false,
@@ -4741,30 +4747,79 @@ router.get(
 			});
 
 			if (bmi_log && bmi_log.length > 0) {
-				let final_bmi = bmi_log.map(bp => {
-				  return {
-					weight: bp.weight,
-					height: bp.height,
-					results: bp.results,
-					date: moment(bp.created_at).format('YYYY-MM-DD')
-				  };
+				let final_bmi = bmi_log.map((bp) => {
+					return {
+						weight: bp.weight,
+						height: bp.height,
+						results: bp.results,
+						date: moment(bp.created_at).format("YYYY-MM-DD")
+					};
 				});
 
 				return res.status(200).json({
-				  success: true,
-				  message: "User BMI logs retrieved successfully",
-				  data: {
-					bmi_log: final_bmi,
-					user_id: user_id
-				  }
+					success: true,
+					message: "User BMI logs retrieved successfully",
+					data: {
+						bmi_log: final_bmi,
+						user_id: user_id
+					}
 				});
-			  } else {
+			} else {
 				return res.status(404).json({
-				  success: false,
-				  message: "No BMI data found for this User"
+					success: false,
+					message: "No BMI data found for this User"
 				});
-			  }
+			}
 		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				message: "Internal Server Error"
+			});
+		}
+	}
+);
+router.get(
+	"/patient_data",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.query.user_id;
+
+			let check_program = await NUserprograms.findOne({
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
+
+			let patient = await Client.findOne({
+				attributes: [
+					"dob","gender"
+				],
+				where: {
+					id: check_program.program_identifier
+				}
+			});
+			if (patient) {
+				patient = patient.toJSON();
+				patient.gender = patient.gender === 1 ? 'Female' : patient.gender === 2 ? 'Male' : 'Unknown';
+			  }
+
+			if (patient) {
+				return res.status(200).json({
+					success: true,
+					message: "Patient data retrieved successfully",
+					data: {
+						patient_data: patient
+					}
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					message: "Could not find the data"
+				});
+			}
+		} catch (error) {
+			console.log(error);
 			return res.status(500).json({
 				success: false,
 				message: "Internal Server Error"
