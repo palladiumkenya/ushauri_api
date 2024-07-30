@@ -4787,7 +4787,7 @@ router.get(
 
 			let check_program = await NUserprograms.findOne({
 				where: {
-					user_id: base64.decode(user_id)
+					[Op.and]: [{ program_type: "1" }, { user_id: base64.decode(user_id) }]
 				}
 			});
 
