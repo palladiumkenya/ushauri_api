@@ -4802,9 +4802,6 @@ router.get(
 			if (patient) {
 				patient = patient.toJSON();
 				patient.gender = patient.gender === 1 ? 'Female' : patient.gender === 2 ? 'Male' : 'Unknown';
-			  }
-
-			if (patient) {
 				return res.status(200).json({
 					success: true,
 					message: "Patient data retrieved successfully",
