@@ -56,6 +56,8 @@ const { NChatLogs } = require("../../models/n_chat_log");
 const { NFAQ } = require("../../models/n_faq");
 const { NBmiLog } = require("../../models/n_bmi_log");
 const { NBloodPressure } = require("../../models/n_blood_pressure");
+const { NBloodSugar } = require("../../models/n_blood_sugar");
+
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -4816,7 +4818,99 @@ router.get(
 				});
 			}
 		} catch (error) {
-			console.log(error);
+			return res.status(500).json({
+				success: false,
+				message: "Internal Server Error"
+			});
+		}
+	}
+);
+router.post(
+	"/blood_sugar",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.body.user_id;
+		let level = req.body.level;
+		let condition = req.body.condition;
+		let notes = req.body.notes;
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
+
+		let user = await NUsers.findOne({
+			where: {
+				id: base64.decode(user_id)
+			}
+		});
+
+		if (user) {
+			const new_blood_sugar = await NBloodSugar.create({
+				level: level,
+				condition: condition,
+				user_id: base64.decode(user_id),
+				notes: notes,
+				created_at: today,
+				updated_at: today
+			});
+			if (new_blood_sugar) {
+				return res.status(200).json({
+					success: true,
+					msg: "You successfully logged your blood sugar"
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "Could not logged your blood sugar"
+				});
+			}
+		} else {
+			return res.status(404).json({
+				success: false,
+				msg: "User not found"
+			});
+		}
+	}
+);
+
+router.get(
+	"/get_blood_sugar",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.query.user_id;
+
+			let blood_sugar = await NBloodSugar.findAll({
+				attributes: ["level", "condition", "notes", "created_at"],
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
+
+			if (blood_sugar && blood_sugar.length > 0) {
+				let final_blood_sugar = blood_sugar.map((bp) => {
+					return {
+						level: bp.level,
+						condition: bp.condition,
+						notes: bp.notes,
+						date: moment(bp.created_at).format("YYYY-MM-DD HH:mm:ss")
+					};
+				});
+
+				return res.status(200).json({
+					success: true,
+					message: "User Blood sugar logs retrieved successfully",
+					data: {
+						blood_sugar: final_blood_sugar,
+						user_id: user_id
+					}
+				});
+			} else {
+				return res.status(404).json({
+					success: false,
+					message: "No Blood sugar data found for this User"
+				});
+			}
+		} catch (error) {
 			return res.status(500).json({
 				success: false,
 				message: "Internal Server Error"
