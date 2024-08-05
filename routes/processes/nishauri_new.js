@@ -4764,7 +4764,7 @@ router.get(
 					success: true,
 					message: "User BMI logs retrieved successfully",
 					data: {
-						bmi_log: final_bmi,
+						bmi_log: bmi_log,
 						user_id: user_id
 					}
 				});
@@ -4902,7 +4902,7 @@ router.get(
 					success: true,
 					message: "User Blood sugar logs retrieved successfully",
 					data: {
-						blood_sugar: final_blood_sugar,
+						blood_sugar: blood_sugar,
 						user_id: user_id
 					}
 				});
