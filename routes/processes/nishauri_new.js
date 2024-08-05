@@ -4700,6 +4700,8 @@ router.get(
 				}
 			});
 
+			//console.log(blood_pressure);
+
 			if (blood_pressure && blood_pressure.length > 0) {
 				let transformedData = blood_pressure.map((bp) => {
 					return {
@@ -4707,15 +4709,15 @@ router.get(
 						diastolic: bp.diastolic,
 						pulse_rate: bp.pulse_rate,
 						notes: bp.notes,
-						date_time: moment(bp.created_at).format("YYYY-MM-DD HH:mm:ss")
+						date_time: moment(bp.created_at).format("YYYY-MM-DD H:h:s")
 					};
-				});
 
+				});
 				return res.status(200).json({
 					success: true,
 					message: "User blood pressure logs retrieved successfully",
 					data: {
-						blood_pressure: transformedData,
+						blood_pressure: blood_pressure,
 						user_id: user_id
 					}
 				});
