@@ -58,7 +58,6 @@ const { NBmiLog } = require("../../models/n_bmi_log");
 const { NBloodPressure } = require("../../models/n_blood_pressure");
 const { NBloodSugar } = require("../../models/n_blood_sugar");
 
-
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
 	const x = parseFloat("1" + zeros);
@@ -4573,11 +4572,13 @@ router.post(
 		if (user) {
 			let existing_bmi = await NBmiLog.findOne({
 				where: {
-					user_id: base64.decode(user_id),
-					created_at: {
-						[Op.gte]: new Date(today),
-						[Op.lt]: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000)
-					}
+					[Op.and]: [
+						{ user_id: base64.decode(user_id) },
+						{ created_at: {
+							[Op.gte]: new Date(today),
+							[Op.lt]: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000)
+						} }
+					]
 				}
 			});
 			if (existing_bmi) {
@@ -4588,7 +4589,17 @@ router.post(
 						results: results,
 						updated_at: today
 					},
-					{ where: { user_id: base64.decode(user_id) } }
+					{
+						where: {
+							[Op.and]: [
+								{ user_id: base64.decode(user_id) },
+								{ created_at: {
+									[Op.gte]: new Date(today),
+									[Op.lt]: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000)
+								} }
+							]
+						}
+					}
 				);
 
 				if (update_bmi) {
@@ -4711,7 +4722,6 @@ router.get(
 						notes: bp.notes,
 						date_time: moment(bp.created_at).format("YYYY-MM-DD H:h:s")
 					};
-
 				});
 				return res.status(200).json({
 					success: true,
@@ -4796,16 +4806,19 @@ router.get(
 			});
 
 			let patient = await Client.findOne({
-				attributes: [
-					"dob","gender"
-				],
+				attributes: ["dob", "gender"],
 				where: {
 					id: check_program.program_identifier
 				}
 			});
 			if (patient) {
 				patient = patient.toJSON();
-				patient.gender = patient.gender === 1 ? 'Female' : patient.gender === 2 ? 'Male' : 'Unknown';
+				patient.gender =
+					patient.gender === 1
+						? "Female"
+						: patient.gender === 2
+						? "Male"
+						: "Unknown";
 				return res.status(200).json({
 					success: true,
 					message: "Patient data retrieved successfully",
