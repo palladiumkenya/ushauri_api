@@ -78,6 +78,7 @@ router.post("/signup", async (req, res) => {
 	let gender = req.body.gender;
 	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 	let app_version = req.body.app_version;
+	let fcm_token = req.body.fcm_token;
 
 	// Check if Terms Are Accepted
 	let boolVal;
@@ -142,7 +143,8 @@ router.post("/signup", async (req, res) => {
 				{
 					refresh_token: refreshToken,
 					last_login: today,
-					app_version: app_version
+					app_version: app_version,
+					fcm_token: fcm_token
 				},
 				{ where: { id: new_user.id } }
 			);
@@ -285,6 +287,7 @@ router.post("/signin", async (req, res) => {
 	let vusername = req.body.user_name;
 	let password_1 = req.body.password;
 	let app_version = req.body.app_version;
+	let fcm_token = req.body.fcm_token;
 	let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
 	//Check If User Exists
@@ -375,7 +378,8 @@ router.post("/signin", async (req, res) => {
 						{
 							last_login: today,
 							refresh_token: refreshToken,
-							app_version: app_version
+							app_version: app_version,
+							fcm_token: fcm_token
 						},
 						{ where: { id: check_username.id } }
 					);
