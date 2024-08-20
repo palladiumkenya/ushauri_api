@@ -1805,9 +1805,9 @@ router.get(
 						});
 
 						if (sp_status[0] == "VS") {
-							var viral_load__ = "Viral Suppressed";
+							var viral_load__ = "Virally Suppressed";
 						} else {
-							var viral_load__ = "Viral Unsuppressed";
+							var viral_load__ = "Virally Unsuppressed";
 						}
 
 						var l = {
@@ -1923,7 +1923,7 @@ router.get(
 										if (value_.includes("LDL")) {
 											sp_status.push({
 												result: "<LDL copies/ml",
-												status: "Viral Suppressed",
+												status: "Virally Suppressed",
 												date: lab_order_date_,
 												plot: parseInt(49)
 											});
@@ -1932,14 +1932,14 @@ router.get(
 											if (value_.replace(/[^0-9]/g, "") < 200) {
 												sp_status.push({
 													result: value_.replace(/[^0-9]/g, "") + " copies/ml",
-													status: "Viral Suppressed",
+													status: "Virally Suppressed",
 													date: lab_order_date_,
 													plot: parseInt(value_.replace(/[^0-9]/g, ""))
 												});
 											} else {
 												sp_status.push({
 													result: value_.replace(/[^0-9]/g, "") + " copies/ml",
-													status: "Viral unsuppressed",
+													status: "Virally Unsuppressed",
 													date: lab_order_date_,
 													plot: parseInt(value_.replace(/[^0-9]/g, ""))
 												});
