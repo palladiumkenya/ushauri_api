@@ -14,6 +14,9 @@ const passport = require("passport");
 const { Buffer } = require("buffer");
 const axios = require("axios");
 
+const admin = require('firebase-admin');
+const cron = require('node-cron');
+
 const users = [];
 
 module.exports = { router, users };
@@ -32,6 +35,7 @@ require("dotenv").config();
 const mysql = require("mysql2");
 const { NUsers } = require("../../models/n_users");
 const { NUserprograms } = require("../../models/n_user_programs");
+const mysql_promise = require('mysql2/promise');
 
 const { Client } = require("../../models/client");
 const { Napptreschedule } = require("../../models/n_appoint_reschedule");
@@ -65,6 +69,14 @@ generateOtp = function (size) {
 	const confirmationCode = String(Math.floor(x + Math.random() * y));
 	return confirmationCode;
 };
+
+// const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const fs = require('fs');
+const serviceAccount = JSON.parse(fs.readFileSync("routes/serviceAccount.json", 'utf8'));
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 router.post("/signup", async (req, res) => {
 	let phone = req.body.msisdn;
@@ -4937,5 +4949,182 @@ router.get(
 		}
 	}
 );
+
+const messaging = admin.messaging();
+
+const sendReminder = (registrationToken, appointmentDate, daysBefore) => {
+    const appointment = new Date(appointmentDate);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = appointment.toLocaleDateString(undefined, options);
+
+    let messageBody = '';
+
+    if (daysBefore === 7) {
+        messageBody = `Your appointment is on ${formattedDate}.`;
+    } else if (daysBefore === 1) {
+        messageBody = 'Your appointment is tomorrow.';
+    }
+
+    const message = {
+        notification: {
+            title: 'Appointment Reminder',
+            body: messageBody
+        },
+        token: registrationToken
+    };
+
+    messaging.send(message)
+        .then((response) => {
+            console.log('Successfully sent message:', response);
+        })
+        .catch((error) => {
+            console.error('Error sending message:', error);
+        });
+};
+
+const scheduleReminders = (registrationToken, appointmentDate) => {
+    const appointment = new Date(appointmentDate);
+
+    const reminderHour7DaysBefore = 11;
+    const reminderMinute7DaysBefore = 0;
+    const reminderHour1DayBefore = 11;
+    const reminderMinute1DayBefore = 0;
+
+    const sevenDaysBefore = new Date(appointment);
+    sevenDaysBefore.setDate(sevenDaysBefore.getDate() - 7);
+    sevenDaysBefore.setHours(reminderHour7DaysBefore, reminderMinute7DaysBefore, 0, 0);
+
+    const oneDayBefore = new Date(appointment);
+    oneDayBefore.setDate(oneDayBefore.getDate() - 1);
+    oneDayBefore.setHours(reminderHour1DayBefore, reminderMinute1DayBefore, 0, 0);
+
+    const cronExpressionSevenDays = `${sevenDaysBefore.getMinutes()} ${sevenDaysBefore.getHours()} ${sevenDaysBefore.getDate()} ${sevenDaysBefore.getMonth() + 1} *`;
+    const cronExpressionOneDay = `${oneDayBefore.getMinutes()} ${oneDayBefore.getHours()} ${oneDayBefore.getDate()} ${oneDayBefore.getMonth() + 1} *`;
+
+
+    cron.schedule(cronExpressionSevenDays, () => {
+        sendReminder(registrationToken, appointmentDate, 7);
+    });
+
+    cron.schedule(cronExpressionOneDay, () => {
+        sendReminder(registrationToken, appointmentDate, 1);
+    });
+};
+
+const run = async () => {
+    const conn = await mysql_promise.createPool({
+        connectionLimit: 10,
+        host: process.env.DB_SERVER,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        debug: false,
+        multipleStatements: true
+    });
+
+    try {
+        const [users] = await conn.query('SELECT id FROM tbl_nishauri_users');
+        for (const user of users) {
+            const userId = user.id;
+
+            const [results] = await conn.query('CALL sp_dawa_drop_appt(?)', [userId]);
+            const appointments = results[0];
+
+            if (appointments.length === 0) {
+                // console.log(`User ${userId} does not have upcoming appointments.`);
+                continue;
+            }
+
+            for (const appointment of appointments) {
+                const { appointment_date, fcm_token: registrationToken } = appointment;
+                if (registrationToken) {
+                    scheduleReminders(registrationToken, appointment_date);
+                } else {
+                    // console.log('No FCM token for user:', userId);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error.message);
+    } finally {
+        await conn.end();
+    }
+};
+
+run();
+
+
+
+// dawa drop notification
+const sendStatusChangeNotification = (registrationToken, status) => {
+    const message = {
+        notification: {
+            title: 'Dawa Drop Status Update',
+            body: `Your order has been ${status}.`
+        },
+        token: registrationToken
+    };
+
+    messaging.send(message)
+        .then((response) => {
+            console.log('Successfully sent status change notification:', response);
+        })
+        .catch((error) => {
+            console.error('Error sending status change notification:', error);
+        });
+};
+
+const checkAndSendStatusNotification = (program, registrationToken) => {
+    const { status, approved_date, dispatched_date } = program;
+
+    if (status === 'Approved' && approved_date) {
+        sendStatusChangeNotification(registrationToken, 'Approved');
+    } else if (status === 'Dispatched' && dispatched_date) {
+        sendStatusChangeNotification(registrationToken, 'Dispatched');
+    } else {
+        console.log('No status change detected or missing date.');
+    }
+};
+
+const push = async () => {
+    const conn = await mysql_promise.createPool({
+        connectionLimit: 10,
+        host: process.env.DB_SERVER,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        debug: false,
+        multipleStatements: true
+    });
+
+    try {
+        const [users] = await conn.query('SELECT id, fcm_token FROM tbl_nishauri_users');
+        for (const user of users) {
+            const userId = user.id;
+            const registrationToken = user.fcm_token;
+
+            const [results] = await conn.query('CALL sp_nishauri_drug_delivery(?)', [userId]);
+
+            const programs = results[0] || [];  // Ensure the correct result set is used
+
+            if (programs.length > 0) {
+                for (const program of programs) {
+                    checkAndSendStatusNotification(program, registrationToken);
+                }
+            } else {
+               // console.log(`User ${userId} does not have any drug delivery programs.`);
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error.message);
+    } finally {
+        await conn.end();
+    }
+};
+
+push();
+
 module.exports = router;
 //module.exports = { router, users };
