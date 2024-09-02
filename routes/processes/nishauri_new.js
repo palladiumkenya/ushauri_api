@@ -4812,7 +4812,7 @@ router.get(
 	"/patient_data",
 	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
-		try {
+
 			let user_id = req.query.user_id;
 
 			let check_program = await NUserprograms.findOne({
@@ -4820,40 +4820,41 @@ router.get(
 					[Op.and]: [{ program_type: "1" }, { user_id: base64.decode(user_id) }]
 				}
 			});
-
-			let patient = await Client.findOne({
-				attributes: ["dob", "gender"],
-				where: {
-					id: check_program.program_identifier
-				}
-			});
-			if (patient) {
-				patient = patient.toJSON();
-				patient.gender =
-					patient.gender === 1
-						? "Female"
-						: patient.gender === 2
-						? "Male"
-						: "Unknown";
-				return res.status(200).json({
-					success: true,
-					message: "Patient data retrieved successfully",
-					data: {
-						patient_data: patient
+			if(check_program)
+			{
+				let patient = await Client.findOne({
+					attributes: ["dob", "gender"],
+					where: {
+						id: check_program.program_identifier
 					}
 				});
+				if (patient) {
+					patient = patient.toJSON();
+					patient.gender =
+						patient.gender === 1
+							? "Female"
+							: patient.gender === 2
+							? "Male"
+							: "Unknown";
+					return res.status(200).json({
+						success: true,
+						message: "Patient data retrieved successfully",
+						data: {
+							patient_data: patient
+						}
+					});
+				} else {
+					return res.status(200).json({
+						success: false,
+						message: "Could not find the data"
+					});
+				}
 			} else {
 				return res.status(200).json({
 					success: false,
-					message: "Could not find the data"
+					message: "Could not find the patient data"
 				});
 			}
-		} catch (error) {
-			return res.status(500).json({
-				success: false,
-				message: "Internal Server Error"
-			});
-		}
 	}
 );
 router.post(
@@ -5077,13 +5078,16 @@ const sendStatusChangeNotification = (registrationToken, status) => {
 
 const checkAndSendStatusNotification = (program, registrationToken) => {
     const { status, approved_date, dispatched_date } = program;
+	const approveDateOnly = new Date(approved_date).toISOString().split('T')[0];
+	const dispatchedDateOnly = new Date(dispatched_date).toISOString().split('T')[0];
+	const currentDate = new Date().toISOString().split('T')[0];
 
-    if (status === 'Approved' && approved_date) {
+    if (status === 'Approved' && approveDateOnly === currentDate) {
         sendStatusChangeNotification(registrationToken, 'Approved');
-    } else if (status === 'Dispatched' && dispatched_date) {
+    } else if (status === 'Dispatched' && dispatchedDateOnly === currentDate) {
         sendStatusChangeNotification(registrationToken, 'Dispatched');
     } else {
-        console.log('No status change detected or missing date.');
+        // console.log('No status change detected or missing date.');
     }
 };
 
@@ -5125,6 +5129,84 @@ const push = async () => {
 };
 
 push();
+
+// appointment reschedule request status update notification
+const sendStatusRescheduleNotification = (registrationToken, r_status) => {
+    if (!registrationToken) {
+        //console.error('Error: Missing registration token.');
+        return;
+    }
+
+    const message = {
+        notification: {
+            title: 'Appointment Reschedule Status Update',
+            body: `Your appointment reschedule request has been ${r_status}.`
+        },
+        token: registrationToken
+    };
+
+    messaging.send(message)
+        .then((response) => {
+            console.log('Successfully sent status change notification:', response);
+        })
+        .catch((error) => {
+            console.error('Error sending status change notification:', error);
+        });
+};
+
+const checkAndSendRescheduleStatusNotification = (reschedule, registrationToken) => {
+    const { r_status, process_date } = reschedule;
+	const processDateOnly = new Date(process_date).toISOString().split('T')[0];
+	const currentDate = new Date().toISOString().split('T')[0];
+
+    if (r_status === '1' && processDateOnly === currentDate) {
+        sendStatusRescheduleNotification(registrationToken, 'Approved');
+    } else if (r_status === '2' && processDateOnly === currentDate) {
+        sendStatusRescheduleNotification(registrationToken, 'Rejected');
+    } else {
+        // console.log('No status change detected or missing date.');
+    }
+};
+
+const pass = async () => {
+    const conn = await mysql_promise.createPool({
+        connectionLimit: 10,
+        host: process.env.DB_SERVER,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        debug: false,
+        multipleStatements: true
+    });
+
+    try {
+        const [users] = await conn.query('SELECT id, fcm_token FROM tbl_nishauri_users');
+        for (const user of users) {
+            const userId = user.id;
+            const registrationToken = user.fcm_token;
+
+            const [results] = await conn.query('CALL sp_nishauri_current_appt(?)', [userId]);
+
+            const programs = results[0] || [];
+
+            if (programs.length > 0) {
+                for (const reschedule of programs) {
+                    checkAndSendRescheduleStatusNotification(reschedule, registrationToken);
+                }
+            } else {
+                //console.log(`No programs found for user ID ${userId}`);
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error.message);
+    } finally {
+        await conn.end();
+    }
+};
+
+pass();
+
 
 module.exports = router;
 //module.exports = { router, users };
