@@ -2886,6 +2886,10 @@ router.post(
 						created_at: today,
 						updated_at: today
 					});
+					var log_activity_ = NLogs.create({
+						user_id: base64.decode(user_id),
+						access: "DAWADROP"
+					});
 					if (new_order) {
 						return res.status(200).json({
 							success: true,
@@ -2914,6 +2918,10 @@ router.post(
 						is_received: 0,
 						created_at: today,
 						updated_at: today
+					});
+					var log_activity_ = NLogs.create({
+						user_id: base64.decode(user_id),
+						access: "DAWADROP"
 					});
 					if (new_order) {
 						return res.status(200).json({
@@ -4617,6 +4625,10 @@ router.post(
 						}
 					}
 				);
+				var log_activity_ = NLogs.create({
+					user_id: base64.decode(user_id),
+					access: "BMICALCULATOR"
+				});
 
 				if (update_bmi) {
 					return res.status(200).json({
@@ -4638,6 +4650,11 @@ router.post(
 					created_at: today,
 					updated_at: today
 				});
+				var log_activity_ = NLogs.create({
+					user_id: base64.decode(user_id),
+					access: "BMICALCULATOR"
+				});
+
 				if (new_bmi) {
 					return res.status(200).json({
 						success: true,
@@ -4650,6 +4667,7 @@ router.post(
 					});
 				}
 			}
+
 		} else {
 			return res.status(404).json({
 				success: false,
@@ -4686,6 +4704,10 @@ router.post(
 				notes: notes,
 				created_at: today,
 				updated_at: today
+			});
+			var log_activity_ = NLogs.create({
+				user_id: base64.decode(user_id),
+				access: "BLOODPRESSURE"
 			});
 			if (new_blood_pressure) {
 				return res.status(200).json({
@@ -4883,6 +4905,10 @@ router.post(
 				notes: notes,
 				created_at: today,
 				updated_at: today
+			});
+			var log_activity_ = NLogs.create({
+				user_id: base64.decode(user_id),
+				access: "BLOODSUGAR"
 			});
 			if (new_blood_sugar) {
 				return res.status(200).json({
