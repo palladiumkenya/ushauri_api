@@ -14,8 +14,8 @@ const passport = require("passport");
 const { Buffer } = require("buffer");
 const axios = require("axios");
 
-const admin = require('firebase-admin');
-const cron = require('node-cron');
+const admin = require("firebase-admin");
+const cron = require("node-cron");
 
 const users = [];
 
@@ -35,7 +35,7 @@ require("dotenv").config();
 const mysql = require("mysql2");
 const { NUsers } = require("../../models/n_users");
 const { NUserprograms } = require("../../models/n_user_programs");
-const mysql_promise = require('mysql2/promise');
+const mysql_promise = require("mysql2/promise");
 
 const { Client } = require("../../models/client");
 const { Napptreschedule } = require("../../models/n_appoint_reschedule");
@@ -61,6 +61,7 @@ const { NFAQ } = require("../../models/n_faq");
 const { NBmiLog } = require("../../models/n_bmi_log");
 const { NBloodPressure } = require("../../models/n_blood_pressure");
 const { NBloodSugar } = require("../../models/n_blood_sugar");
+const { NMenstrual } = require("../../models/n_menstrual");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -71,11 +72,13 @@ generateOtp = function (size) {
 };
 
 // const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-const fs = require('fs');
-const serviceAccount = JSON.parse(fs.readFileSync("routes/serviceAccount.json", 'utf8'));
+const fs = require("fs");
+const serviceAccount = JSON.parse(
+	fs.readFileSync("routes/serviceAccount.json", "utf8")
+);
 
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+	credential: admin.credential.cert(serviceAccount)
 });
 
 router.post("/signup", async (req, res) => {
@@ -4598,10 +4601,14 @@ router.post(
 				where: {
 					[Op.and]: [
 						{ user_id: base64.decode(user_id) },
-						{ created_at: {
-							[Op.gte]: new Date(today),
-							[Op.lt]: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000)
-						} }
+						{
+							created_at: {
+								[Op.gte]: new Date(today),
+								[Op.lt]: new Date(
+									new Date(today).getTime() + 24 * 60 * 60 * 1000
+								)
+							}
+						}
 					]
 				}
 			});
@@ -4617,10 +4624,14 @@ router.post(
 						where: {
 							[Op.and]: [
 								{ user_id: base64.decode(user_id) },
-								{ created_at: {
-									[Op.gte]: new Date(today),
-									[Op.lt]: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000)
-								} }
+								{
+									created_at: {
+										[Op.gte]: new Date(today),
+										[Op.lt]: new Date(
+											new Date(today).getTime() + 24 * 60 * 60 * 1000
+										)
+									}
+								}
 							]
 						}
 					}
@@ -4667,7 +4678,6 @@ router.post(
 					});
 				}
 			}
-
 		} else {
 			return res.status(404).json({
 				success: false,
@@ -4834,49 +4844,47 @@ router.get(
 	"/patient_data",
 	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
+		let user_id = req.query.user_id;
 
-			let user_id = req.query.user_id;
-
-			let check_program = await NUserprograms.findOne({
+		let check_program = await NUserprograms.findOne({
+			where: {
+				[Op.and]: [{ program_type: "1" }, { user_id: base64.decode(user_id) }]
+			}
+		});
+		if (check_program) {
+			let patient = await Client.findOne({
+				attributes: ["dob", "gender"],
 				where: {
-					[Op.and]: [{ program_type: "1" }, { user_id: base64.decode(user_id) }]
+					id: check_program.program_identifier
 				}
 			});
-			if(check_program)
-			{
-				let patient = await Client.findOne({
-					attributes: ["dob", "gender"],
-					where: {
-						id: check_program.program_identifier
+			if (patient) {
+				patient = patient.toJSON();
+				patient.gender =
+					patient.gender === 1
+						? "Female"
+						: patient.gender === 2
+						? "Male"
+						: "Unknown";
+				return res.status(200).json({
+					success: true,
+					message: "Patient data retrieved successfully",
+					data: {
+						patient_data: patient
 					}
 				});
-				if (patient) {
-					patient = patient.toJSON();
-					patient.gender =
-						patient.gender === 1
-							? "Female"
-							: patient.gender === 2
-							? "Male"
-							: "Unknown";
-					return res.status(200).json({
-						success: true,
-						message: "Patient data retrieved successfully",
-						data: {
-							patient_data: patient
-						}
-					});
-				} else {
-					return res.status(200).json({
-						success: false,
-						message: "Could not find the data"
-					});
-				}
 			} else {
 				return res.status(200).json({
 					success: false,
-					message: "Could not find the patient data"
+					message: "Could not find the data"
 				});
 			}
+		} else {
+			return res.status(200).json({
+				success: false,
+				message: "Could not find the patient data"
+			});
+		}
 	}
 );
 router.post(
@@ -4980,259 +4988,539 @@ router.get(
 const messaging = admin.messaging();
 
 const sendReminder = (registrationToken, appointmentDate, daysBefore) => {
-    const appointment = new Date(appointmentDate);
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    const formattedDate = appointment.toLocaleDateString(undefined, options);
+	const appointment = new Date(appointmentDate);
+	const options = { year: "numeric", month: "long", day: "numeric" };
+	const formattedDate = appointment.toLocaleDateString(undefined, options);
 
-    let messageBody = '';
+	let messageBody = "";
 
-    if (daysBefore === 7) {
-        messageBody = `Your appointment is on ${formattedDate}.`;
-    } else if (daysBefore === 1) {
-        messageBody = 'Your appointment is tomorrow.';
-    }
+	if (daysBefore === 7) {
+		messageBody = `Your appointment is on ${formattedDate}.`;
+	} else if (daysBefore === 1) {
+		messageBody = "Your appointment is tomorrow.";
+	}
 
-    const message = {
-        notification: {
-            title: 'Appointment Reminder',
-            body: messageBody
-        },
-        token: registrationToken
-    };
+	const message = {
+		notification: {
+			title: "Appointment Reminder",
+			body: messageBody
+		},
+		token: registrationToken
+	};
 
-    messaging.send(message)
-        .then((response) => {
-            console.log('Successfully sent message:', response);
-        })
-        .catch((error) => {
-            console.error('Error sending message:', error);
-        });
+	messaging
+		.send(message)
+		.then((response) => {
+			console.log("Successfully sent message:", response);
+		})
+		.catch((error) => {
+			console.error("Error sending message:", error);
+		});
 };
 
 const scheduleReminders = (registrationToken, appointmentDate) => {
-    const appointment = new Date(appointmentDate);
+	const appointment = new Date(appointmentDate);
 
-    const reminderHour7DaysBefore = 11;
-    const reminderMinute7DaysBefore = 0;
-    const reminderHour1DayBefore = 11;
-    const reminderMinute1DayBefore = 0;
+	const reminderHour7DaysBefore = 11;
+	const reminderMinute7DaysBefore = 0;
+	const reminderHour1DayBefore = 11;
+	const reminderMinute1DayBefore = 0;
 
-    const sevenDaysBefore = new Date(appointment);
-    sevenDaysBefore.setDate(sevenDaysBefore.getDate() - 7);
-    sevenDaysBefore.setHours(reminderHour7DaysBefore, reminderMinute7DaysBefore, 0, 0);
+	const sevenDaysBefore = new Date(appointment);
+	sevenDaysBefore.setDate(sevenDaysBefore.getDate() - 7);
+	sevenDaysBefore.setHours(
+		reminderHour7DaysBefore,
+		reminderMinute7DaysBefore,
+		0,
+		0
+	);
 
-    const oneDayBefore = new Date(appointment);
-    oneDayBefore.setDate(oneDayBefore.getDate() - 1);
-    oneDayBefore.setHours(reminderHour1DayBefore, reminderMinute1DayBefore, 0, 0);
+	const oneDayBefore = new Date(appointment);
+	oneDayBefore.setDate(oneDayBefore.getDate() - 1);
+	oneDayBefore.setHours(reminderHour1DayBefore, reminderMinute1DayBefore, 0, 0);
 
-    const cronExpressionSevenDays = `${sevenDaysBefore.getMinutes()} ${sevenDaysBefore.getHours()} ${sevenDaysBefore.getDate()} ${sevenDaysBefore.getMonth() + 1} *`;
-    const cronExpressionOneDay = `${oneDayBefore.getMinutes()} ${oneDayBefore.getHours()} ${oneDayBefore.getDate()} ${oneDayBefore.getMonth() + 1} *`;
+	const cronExpressionSevenDays = `${sevenDaysBefore.getMinutes()} ${sevenDaysBefore.getHours()} ${sevenDaysBefore.getDate()} ${
+		sevenDaysBefore.getMonth() + 1
+	} *`;
+	const cronExpressionOneDay = `${oneDayBefore.getMinutes()} ${oneDayBefore.getHours()} ${oneDayBefore.getDate()} ${
+		oneDayBefore.getMonth() + 1
+	} *`;
 
+	cron.schedule(cronExpressionSevenDays, () => {
+		sendReminder(registrationToken, appointmentDate, 7);
+	});
 
-    cron.schedule(cronExpressionSevenDays, () => {
-        sendReminder(registrationToken, appointmentDate, 7);
-    });
-
-    cron.schedule(cronExpressionOneDay, () => {
-        sendReminder(registrationToken, appointmentDate, 1);
-    });
+	cron.schedule(cronExpressionOneDay, () => {
+		sendReminder(registrationToken, appointmentDate, 1);
+	});
 };
 
 const run = async () => {
-    const conn = await mysql_promise.createPool({
-        connectionLimit: 10,
-        host: process.env.DB_SERVER,
-        port: process.env.DB_PORT,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        debug: false,
-        multipleStatements: true
-    });
+	const conn = await mysql_promise.createPool({
+		connectionLimit: 10,
+		host: process.env.DB_SERVER,
+		port: process.env.DB_PORT,
+		user: process.env.DB_USER,
+		password: process.env.DB_PASSWORD,
+		database: process.env.DB_NAME,
+		debug: false,
+		multipleStatements: true
+	});
 
-    try {
-        const [users] = await conn.query('SELECT id FROM tbl_nishauri_users');
-        for (const user of users) {
-            const userId = user.id;
+	try {
+		const [users] = await conn.query("SELECT id FROM tbl_nishauri_users");
+		for (const user of users) {
+			const userId = user.id;
 
-            const [results] = await conn.query('CALL sp_dawa_drop_appt(?)', [userId]);
-            const appointments = results[0];
+			const [results] = await conn.query("CALL sp_dawa_drop_appt(?)", [userId]);
+			const appointments = results[0];
 
-            if (appointments.length === 0) {
-                // console.log(`User ${userId} does not have upcoming appointments.`);
-                continue;
-            }
+			if (appointments.length === 0) {
+				// console.log(`User ${userId} does not have upcoming appointments.`);
+				continue;
+			}
 
-            for (const appointment of appointments) {
-                const { appointment_date, fcm_token: registrationToken } = appointment;
-                if (registrationToken) {
-                    scheduleReminders(registrationToken, appointment_date);
-                } else {
-                    // console.log('No FCM token for user:', userId);
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        await conn.end();
-    }
+			for (const appointment of appointments) {
+				const { appointment_date, fcm_token: registrationToken } = appointment;
+				if (registrationToken) {
+					scheduleReminders(registrationToken, appointment_date);
+				} else {
+					// console.log('No FCM token for user:', userId);
+				}
+			}
+		}
+	} catch (error) {
+		console.error("Error:", error.message);
+	} finally {
+		await conn.end();
+	}
 };
 
 run();
 
-
-
 // dawa drop notification
 const sendStatusChangeNotification = (registrationToken, status) => {
-    const message = {
-        notification: {
-            title: 'Dawa Drop Status Update',
-            body: `Your order has been ${status}.`
-        },
-        token: registrationToken
-    };
+	const message = {
+		notification: {
+			title: "Dawa Drop Status Update",
+			body: `Your order has been ${status}.`
+		},
+		token: registrationToken
+	};
 
-    messaging.send(message)
-        .then((response) => {
-            console.log('Successfully sent status change notification:', response);
-        })
-        .catch((error) => {
-            console.error('Error sending status change notification:', error);
-        });
+	messaging
+		.send(message)
+		.then((response) => {
+			console.log("Successfully sent status change notification:", response);
+		})
+		.catch((error) => {
+			console.error("Error sending status change notification:", error);
+		});
 };
 
 const checkAndSendStatusNotification = (program, registrationToken) => {
-    const { status, approved_date, dispatched_date } = program;
-	const approveDateOnly = new Date(approved_date).toISOString().split('T')[0];
-	const dispatchedDateOnly = new Date(dispatched_date).toISOString().split('T')[0];
-	const currentDate = new Date().toISOString().split('T')[0];
+	const { status, approved_date, dispatched_date } = program;
+	const approveDateOnly = new Date(approved_date).toISOString().split("T")[0];
+	const dispatchedDateOnly = new Date(dispatched_date)
+		.toISOString()
+		.split("T")[0];
+	const currentDate = new Date().toISOString().split("T")[0];
 
-    if (status === 'Approved' && approveDateOnly === currentDate) {
-        sendStatusChangeNotification(registrationToken, 'Approved');
-    } else if (status === 'Dispatched' && dispatchedDateOnly === currentDate) {
-        sendStatusChangeNotification(registrationToken, 'Dispatched');
-    } else {
-        // console.log('No status change detected or missing date.');
-    }
+	if (status === "Approved" && approveDateOnly === currentDate) {
+		sendStatusChangeNotification(registrationToken, "Approved");
+	} else if (status === "Dispatched" && dispatchedDateOnly === currentDate) {
+		sendStatusChangeNotification(registrationToken, "Dispatched");
+	} else {
+		// console.log('No status change detected or missing date.');
+	}
 };
 
 const push = async () => {
-    const conn = await mysql_promise.createPool({
-        connectionLimit: 10,
-        host: process.env.DB_SERVER,
-        port: process.env.DB_PORT,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        debug: false,
-        multipleStatements: true
-    });
+	const conn = await mysql_promise.createPool({
+		connectionLimit: 10,
+		host: process.env.DB_SERVER,
+		port: process.env.DB_PORT,
+		user: process.env.DB_USER,
+		password: process.env.DB_PASSWORD,
+		database: process.env.DB_NAME,
+		debug: false,
+		multipleStatements: true
+	});
 
-    try {
-        const [users] = await conn.query('SELECT id, fcm_token FROM tbl_nishauri_users');
-        for (const user of users) {
-            const userId = user.id;
-            const registrationToken = user.fcm_token;
+	try {
+		const [users] = await conn.query(
+			"SELECT id, fcm_token FROM tbl_nishauri_users"
+		);
+		for (const user of users) {
+			const userId = user.id;
+			const registrationToken = user.fcm_token;
 
-            const [results] = await conn.query('CALL sp_nishauri_drug_delivery(?)', [userId]);
+			const [results] = await conn.query("CALL sp_nishauri_drug_delivery(?)", [
+				userId
+			]);
 
-            const programs = results[0] || [];  // Ensure the correct result set is used
+			const programs = results[0] || []; // Ensure the correct result set is used
 
-            if (programs.length > 0) {
-                for (const program of programs) {
-                    checkAndSendStatusNotification(program, registrationToken);
-                }
-            } else {
-               // console.log(`User ${userId} does not have any drug delivery programs.`);
-            }
-        }
-    } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        await conn.end();
-    }
+			if (programs.length > 0) {
+				for (const program of programs) {
+					checkAndSendStatusNotification(program, registrationToken);
+				}
+			} else {
+				// console.log(`User ${userId} does not have any drug delivery programs.`);
+			}
+		}
+	} catch (error) {
+		console.error("Error:", error.message);
+	} finally {
+		await conn.end();
+	}
 };
 
 push();
 
 // appointment reschedule request status update notification
 const sendStatusRescheduleNotification = (registrationToken, r_status) => {
-    if (!registrationToken) {
-        //console.error('Error: Missing registration token.');
-        return;
-    }
+	if (!registrationToken) {
+		//console.error('Error: Missing registration token.');
+		return;
+	}
 
-    const message = {
-        notification: {
-            title: 'Appointment Reschedule Status Update',
-            body: `Your appointment reschedule request has been ${r_status}.`
-        },
-        token: registrationToken
-    };
+	const message = {
+		notification: {
+			title: "Appointment Reschedule Status Update",
+			body: `Your appointment reschedule request has been ${r_status}.`
+		},
+		token: registrationToken
+	};
 
-    messaging.send(message)
-        .then((response) => {
-            console.log('Successfully sent status change notification:', response);
-        })
-        .catch((error) => {
-            console.error('Error sending status change notification:', error);
-        });
+	messaging
+		.send(message)
+		.then((response) => {
+			console.log("Successfully sent status change notification:", response);
+		})
+		.catch((error) => {
+			console.error("Error sending status change notification:", error);
+		});
 };
 
-const checkAndSendRescheduleStatusNotification = (reschedule, registrationToken) => {
-    const { r_status, process_date } = reschedule;
-	const processDateOnly = new Date(process_date).toISOString().split('T')[0];
-	const currentDate = new Date().toISOString().split('T')[0];
+const checkAndSendRescheduleStatusNotification = (
+	reschedule,
+	registrationToken
+) => {
+	const { r_status, process_date } = reschedule;
+	const processDateOnly = new Date(process_date).toISOString().split("T")[0];
+	const currentDate = new Date().toISOString().split("T")[0];
 
-    if (r_status === '1' && processDateOnly === currentDate) {
-        sendStatusRescheduleNotification(registrationToken, 'Approved');
-    } else if (r_status === '2' && processDateOnly === currentDate) {
-        sendStatusRescheduleNotification(registrationToken, 'Rejected');
-    } else {
-        // console.log('No status change detected or missing date.');
-    }
+	if (r_status === "1" && processDateOnly === currentDate) {
+		sendStatusRescheduleNotification(registrationToken, "Approved");
+	} else if (r_status === "2" && processDateOnly === currentDate) {
+		sendStatusRescheduleNotification(registrationToken, "Rejected");
+	} else {
+		// console.log('No status change detected or missing date.');
+	}
 };
 
 const pass = async () => {
-    const conn = await mysql_promise.createPool({
-        connectionLimit: 10,
-        host: process.env.DB_SERVER,
-        port: process.env.DB_PORT,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        debug: false,
-        multipleStatements: true
-    });
+	const conn = await mysql_promise.createPool({
+		connectionLimit: 10,
+		host: process.env.DB_SERVER,
+		port: process.env.DB_PORT,
+		user: process.env.DB_USER,
+		password: process.env.DB_PASSWORD,
+		database: process.env.DB_NAME,
+		debug: false,
+		multipleStatements: true
+	});
 
-    try {
-        const [users] = await conn.query('SELECT id, fcm_token FROM tbl_nishauri_users');
-        for (const user of users) {
-            const userId = user.id;
-            const registrationToken = user.fcm_token;
+	try {
+		const [users] = await conn.query(
+			"SELECT id, fcm_token FROM tbl_nishauri_users"
+		);
+		for (const user of users) {
+			const userId = user.id;
+			const registrationToken = user.fcm_token;
 
-            const [results] = await conn.query('CALL sp_nishauri_current_appt(?)', [userId]);
+			const [results] = await conn.query("CALL sp_nishauri_current_appt(?)", [
+				userId
+			]);
 
-            const programs = results[0] || [];
+			const programs = results[0] || [];
 
-            if (programs.length > 0) {
-                for (const reschedule of programs) {
-                    checkAndSendRescheduleStatusNotification(reschedule, registrationToken);
-                }
-            } else {
-                //console.log(`No programs found for user ID ${userId}`);
-            }
-        }
-    } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        await conn.end();
-    }
+			if (programs.length > 0) {
+				for (const reschedule of programs) {
+					checkAndSendRescheduleStatusNotification(
+						reschedule,
+						registrationToken
+					);
+				}
+			} else {
+				//console.log(`No programs found for user ID ${userId}`);
+			}
+		}
+	} catch (error) {
+		console.error("Error:", error.message);
+	} finally {
+		await conn.end();
+	}
 };
 
 pass();
 
+//end appointment rechedule request notification
+
+router.post(
+	"/menstrual_cycle",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let user_id = req.body.user_id;
+		let period_start = req.body.period_start;
+		let period_end = req.body.period_end;
+		let fertile_start = req.body.fertile_start;
+		let fertile_end = req.body.fertile_end;
+		let ovulation = req.body.ovulation;
+		let predicted_period_start = req.body.predicted_period_start;
+		let predicted_period_end = req.body.predicted_period_end;
+		let cycle_length = req.body.cycle_length;
+		let period_length = req.body.period_length;
+		let status = "Active";
+		let today = moment(new Date().toDateString())
+			.tz("Africa/Nairobi")
+			.format("YYYY-MM-DD H:M:S");
+
+		let user = await NUsers.findOne({
+			where: {
+				id: base64.decode(user_id)
+			}
+		});
+
+		if (user) {
+			const new_menstrual_cycle = await NMenstrual.create({
+				period_start: period_start,
+				period_end: period_end,
+				user_id: base64.decode(user_id),
+				fertile_start: fertile_start,
+				fertile_end: fertile_end,
+				ovulation: ovulation,
+				predicted_period_start: predicted_period_start,
+				predicted_period_end: predicted_period_end,
+				cycle_length: cycle_length,
+				period_length: period_length,
+				status: status,
+				created_at: today,
+				updated_at: today
+			});
+			var log_activity_ = NLogs.create({
+				user_id: base64.decode(user_id),
+				access: "MENSTRUALCYCLE"
+			});
+			if (new_menstrual_cycle) {
+				return res.status(200).json({
+					success: true,
+					msg: "You successfully logged your cycle"
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					msg: "Could not logged your cycle please try again"
+				});
+			}
+		} else {
+			return res.status(404).json({
+				success: false,
+				msg: "User not found"
+			});
+		}
+	}
+);
+
+router.get(
+	"/get_menstrual_cycle",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			const user_id = req.query.user_id;
+
+			const menstrual_cycle = await NMenstrual.findAll({
+				where: {
+					user_id: base64.decode(user_id),
+					status: "Active"
+				}
+			});
+
+			if (menstrual_cycle) {
+				return res.status(200).json({
+					success: true,
+					message: "Menstrual cycle retrieved successfully",
+					data: {
+						menstrual_cycle,
+						user_id: user_id
+					}
+				});
+			} else {
+				return res.status(200).json({
+					success: false,
+					message: "User not found"
+				});
+			}
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({
+				success: false,
+				message: "Internal Server Error"
+			});
+		}
+	}
+);
+
+router.put(
+	"/update_menstrual_cycle/:id",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let menstrualCycleId = req.params.id;
+			let {
+				user_id,
+				period_start,
+				period_end,
+				fertile_start,
+				fertile_end,
+				ovulation,
+				predicted_period_start,
+				predicted_period_end,
+				cycle_length,
+				period_length
+			} = req.body;
+			let status = "Active";
+			let today = moment(new Date().toDateString())
+				.tz("Africa/Nairobi")
+				.format("YYYY-MM-DD H:M:S");
+
+			let user = await NUsers.findOne({
+				where: {
+					id: base64.decode(user_id)
+				}
+			});
+
+			if (user) {
+				// Find the menstrual cycle record by ID
+				let menstrualCycle = await NMenstrual.findOne({
+					where: {
+						id: menstrualCycleId,
+						user_id: base64.decode(user_id)
+					}
+				});
+
+				if (menstrualCycle) {
+					// Update the menstrual cycle record
+					await menstrualCycle.update({
+						period_start: period_start,
+						period_end: period_end,
+						fertile_start: fertile_start,
+						fertile_end: fertile_end,
+						ovulation: ovulation,
+						predicted_period_start: predicted_period_start,
+						predicted_period_end: predicted_period_end,
+						cycle_length: cycle_length,
+						period_length: period_length,
+						status: status,
+						updated_at: today
+					});
+
+					// Log the activity
+					await NLogs.create({
+						user_id: base64.decode(user_id),
+						access: "MENSTRUALCYCLE"
+					});
+
+					return res.status(200).json({
+						success: true,
+						msg: "You successfully updated your cycle"
+					});
+				} else {
+					return res.status(404).json({
+						success: false,
+						msg: "Menstrual cycle record not found"
+					});
+				}
+			} else {
+				return res.status(404).json({
+					success: false,
+					msg: "User not found"
+				});
+			}
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({
+				success: false,
+				msg: "An error occurred",
+				error: error.message
+			});
+		}
+	}
+);
+
+router.delete(
+	"/delete_menstrual_cycle/:id",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let id = req.params.id; // Get the menstrual cycle ID from URL parameters
+			let user_id = req.body.user_id;
+
+			let today = moment(new Date())
+				.tz("Africa/Nairobi")
+				.format("YYYY-MM-DD HH:mm:ss");
+
+			// Verify user exists
+			let user = await NUsers.findOne({ where: { id: base64.decode(user_id) } });
+
+			if (!user) {
+				return res.status(404).json({
+					success: false,
+					msg: "User not found"
+				});
+			}
+
+			let menstrual_cycle = await NMenstrual.findOne({
+				where: {
+					id,
+					user_id:base64.decode(user_id)
+				}
+			});
+
+			if (!menstrual_cycle) {
+				return res.status(404).json({
+					success: false,
+					msg: "Menstrual cycle record not found"
+				});
+			}
+
+			// Update the status to 'Deleted'
+			await menstrual_cycle.update({
+				status: "Deleted",
+				updated_at: today,
+				deleted_at: today
+			});
+
+			// Log the deletion activity
+			await NLogs.create({
+				user_id,
+				access: "MENSTRUALCYCLE"
+			});
+
+			return res.status(200).json({
+				success: true,
+				msg: "Menstrual cycle deleted successfully"
+			});
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				msg: "An error occurred while deleting the cycle",
+				error: error.message
+			});
+		}
+	}
+);
 
 module.exports = router;
 //module.exports = { router, users };
