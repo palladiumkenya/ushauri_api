@@ -5522,5 +5522,52 @@ router.delete(
 	}
 );
 
+const sendAppUpdateNotification = (registrationToken) => {
+	if (!registrationToken) {
+		return;
+	}
+
+	const message = {
+		notification: {
+			title: "Nishauri Update Available!",
+			body: "New features and improvements are here! Update your app now for a better experience."
+		},
+		token: registrationToken
+	};
+
+	messaging
+		.send(message)
+		.then((response) => {
+			//console.log("Successfully sent app update notification:", response);
+		})
+		.catch((error) => {
+			//console.error("Error sending app update notification:", error);
+		});
+};
+
+const notifyUsersAboutAppUpdate = async () => {
+	try {
+
+		let users = await NUsers.findAll({
+			attributes: ['id', 'fcm_token']
+		});
+
+		for (const user of users) {
+			const registrationToken = user.fcm_token;
+			sendAppUpdateNotification(registrationToken);
+		}
+	} catch (error) {
+		//console.error("Error:", error.message);
+	}
+};
+
+// Schedule the notification
+const specificDateAndTime = '30 9 14 9 *'; // September 14, 9:30 AM
+
+cron.schedule(specificDateAndTime, () => {
+	notifyUsersAboutAppUpdate();
+});
+
+
 module.exports = router;
 //module.exports = { router, users };
