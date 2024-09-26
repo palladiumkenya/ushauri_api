@@ -62,6 +62,7 @@ const { NBmiLog } = require("../../models/n_bmi_log");
 const { NBloodPressure } = require("../../models/n_blood_pressure");
 const { NBloodSugar } = require("../../models/n_blood_sugar");
 const { NMenstrual } = require("../../models/n_menstrual");
+const { Nroles } = require("../../models/n_roles");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -5483,8 +5484,7 @@ router.delete(
 
 			let menstrual_cycle = await NMenstrual.findOne({
 				where: {
-					id,
-					user_id:base64.decode(user_id)
+					[Op.and]: [{ id: id }, { user_id: base64.decode(user_id) }]
 				}
 			});
 
@@ -5521,6 +5521,74 @@ router.delete(
 		}
 	}
 );
+
+router.delete(
+    "/delete_menstrual_cycles",
+    passport.authenticate("jwt", { session: false }),
+    async (req, res) => {
+        try {
+            let user_id = req.body.user_id;
+
+            let today = moment(new Date())
+                .tz("Africa/Nairobi")
+                .format("YYYY-MM-DD HH:mm:ss");
+
+            // Verify user exists
+            let user = await NUsers.findOne({ where: { id: base64.decode(user_id) } });
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    msg: "User not found"
+                });
+            }
+
+            // Find all menstrual cycles for the user
+            let menstrual_cycles = await NMenstrual.findAll({
+                where: {
+                    user_id: base64.decode(user_id)
+                }
+            });
+
+            if (menstrual_cycles.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    msg: "No menstrual cycle records found"
+                });
+            }
+
+            // Update the status of all menstrual cycles to 'Deleted'
+            await NMenstrual.update(
+                {
+                    status: "Deleted",
+                    updated_at: today,
+                    deleted_at: today
+                },
+                {
+                    where: { user_id: base64.decode(user_id) }
+                }
+            );
+
+            // Log the deletion activity
+            await NLogs.create({
+                user_id,
+                access: "MENSTRUALCYCLE"
+            });
+
+            return res.status(200).json({
+                success: true,
+                msg: "All menstrual cycles deleted successfully"
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                msg: "An error occurred while deleting the cycles",
+                error: error.message
+            });
+        }
+    }
+);
+
 
 const sendAppUpdateNotification = (registrationToken) => {
 	if (!registrationToken) {
@@ -5566,6 +5634,27 @@ const specificDateAndTime = '30 9 14 9 *'; // September 14, 9:30 AM
 
 cron.schedule(specificDateAndTime, () => {
 	notifyUsersAboutAppUpdate();
+});
+
+router.get("/get_roles", async (req, res) => {
+	try {
+		let roles = await Nroles.findAll({
+			where: {
+				status: "Active"
+			}
+		});
+		return res.status(200).json({
+			success: true,
+			message: "Roles were successfully retrieved",
+			roles: roles
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: "Failed to retrieve roles",
+			error: error.message
+		});
+	}
 });
 
 
