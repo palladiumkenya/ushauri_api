@@ -5468,12 +5468,16 @@ router.delete(
 			let id = req.params.id; // Get the menstrual cycle ID from URL parameters
 			let user_id = req.body.user_id;
 
+
+            let decoded_user_id = base64.decode(user_id);
+
+
 			let today = moment(new Date())
 				.tz("Africa/Nairobi")
 				.format("YYYY-MM-DD HH:mm:ss");
 
 			// Verify user exists
-			let user = await NUsers.findOne({ where: { id: base64.decode(user_id) } });
+			let user = await NUsers.findOne({ where: { id: decoded_user_id } });
 
 			if (!user) {
 				return res.status(404).json({
@@ -5484,7 +5488,7 @@ router.delete(
 
 			let menstrual_cycle = await NMenstrual.findOne({
 				where: {
-					[Op.and]: [{ id: id }, { user_id: base64.decode(user_id) }]
+					[Op.and]: [{ id: id }, { user_id: decoded_user_id }]
 				}
 			});
 
