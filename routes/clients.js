@@ -9,7 +9,7 @@ const { User } = require("../models/user");
 const { masterFacility } = require("../models/master_facility");
 
 router.get("/", async (req, res) => {
-	let clients = await Client.findAll({ limit: 100 });
+	let clients = await Client.findAll({ limit: 0 });
 	if (!clients) return res.status(400).send("No Clients found");
 	res.send(
 		clients.map(
