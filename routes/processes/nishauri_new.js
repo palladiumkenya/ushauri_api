@@ -63,6 +63,7 @@ const { NBloodPressure } = require("../../models/n_blood_pressure");
 const { NBloodSugar } = require("../../models/n_blood_sugar");
 const { NMenstrual } = require("../../models/n_menstrual");
 const { Nroles } = require("../../models/n_roles");
+const { NProvider } = require("../../models/n_provider");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -99,6 +100,7 @@ router.post("/signup", async (req, res) => {
 	// Check if Terms Are Accepted
 	let boolVal;
 
+
 	// Using the JSON.parse() method
 	boolVal = JSON.parse(terms);
 	if (boolVal !== true) {
@@ -108,10 +110,11 @@ router.post("/signup", async (req, res) => {
 		});
 	}
 
+	const encryptedPhone = await NUsers.encryptData(phone);
 	// Check if Telephone Number Already Exists
 	let check_user_phone = await NUsers.findOne({
 		where: {
-			msisdn: phone
+			msisdn: encryptedPhone
 		}
 	});
 
@@ -138,7 +141,7 @@ router.post("/signup", async (req, res) => {
 			created_at: today,
 			updated_at: today
 		});
-
+		const phoneNumber = await NUsers.decryptData(new_user.msisdn);
 		// Log the new user details for debugging
 		console.log("New User:", new_user);
 
@@ -179,7 +182,7 @@ router.post("/signup", async (req, res) => {
 						token: token,
 						refreshToken: refreshToken,
 						user_id: base64.encode(new_user.id), // Use the decoded user ID
-						phone_no: new_user.msisdn,
+						phone_no: phoneNumber,
 						account_verified: new_user.is_active
 					}
 				});
@@ -308,11 +311,13 @@ router.post("/signin", async (req, res) => {
 
 	//Check If User Exists
 	//console.log(vusername);
+	const encryptedPhone = await NUsers.encryptData(vusername);
+	const encryptedEmail = await NUsers.encryptData(vusername);
 	let check_username = await NUsers.findOne({
 		where: {
 			[Op.and]: [
 				{
-					[Op.or]: [{ msisdn: vusername }, { email: vusername }]
+					[Op.or]: [{ msisdn: encryptedPhone }, { email: encryptedEmail }]
 				}
 			]
 		}
@@ -510,9 +515,11 @@ router.post("/resetpassword", async (req, res) => {
 
 	//Check If User Exists
 	//console.log(vusername);
+	const encryptedPhone = await NUsers.encryptData(vusername);
+	const encryptedEmail = await NUsers.encryptData(vusername);
 	let check_username = await NUsers.findOne({
 		where: {
-			[Op.or]: [{ msisdn: vusername }, { email: vusername }]
+			[Op.or]: [{ msisdn: encryptedPhone }, { email: encryptedEmail }]
 		}
 	});
 
@@ -626,10 +633,13 @@ router.post("/verifyresetpassotp", async (req, res) => {
 	let today = moment(new Date().toDateString())
 		.tz("Africa/Nairobi")
 		.format("YYYY-MM-DD H:M:S");
+
+	let encryptedPhone = await NUsers.encryptData(user_name);
+
 	//Check If User Exists
 	let check_username = await NUsers.findOne({
 		where: {
-			[Op.and]: [{ otp_number: otp_verify }, { msisdn: user_name }]
+			[Op.and]: [{ otp_number: otp_verify }, { msisdn: encryptedPhone }]
 		}
 	});
 
@@ -720,11 +730,12 @@ router.post("/changepassword", async (req, res) => {
 		.format("YYYY-MM-DD H:M:S");
 
 	const password_hash = bcrypt.hashSync(password_1, 10);
+	let encryptedPhone = await NUsers.encryptData(user_name);
 
 	try {
 		const log_login = await NUsers.update(
 			{ password: password_hash },
-			{ where: { msisdn: user_name } }
+			{ where: { msisdn: encryptedPhone } }
 		);
 		if (log_login) {
 			return res.status(200).json({
@@ -865,8 +876,12 @@ router.post(
 			.tz("Africa/Nairobi")
 			.format("YYYY-MM-DD H:M:S");
 
+		let encryptedcc_no = await Client.encryptData(ccc_no);
+		let encryptedfirstname = await Client.encryptData(firstname);
+
+
 		//Check if CCC is 10 digits
-		if (ccc_no.length != 10) {
+		if (encryptedcc_no.length != 10) {
 			return res.status(200).json({
 				success: false,
 				msg: `Invalid CCC Number: ${ccc_no}, The CCC must be 10 digits`
@@ -884,14 +899,14 @@ router.post(
 		//Validate Program In HIV
 		let check_program_valid = await Client.findOne({
 			where: {
-				[Op.and]: [{ f_name: firstname }, { clinic_number: ccc_no }]
+				[Op.and]: [{ f_name: encryptedfirstname }, { clinic_number: encryptedcc_no }]
 			}
 		});
 
 		if (!check_program_valid) {
 			return res.status(200).json({
 				success: false,
-				msg: `Invalid CCC Number/ First Name Match: ${ccc_no}, The CCC Number/First Name does not match in Nishauri`
+				msg: `Invalid CCC Number/ First Name Match: ${encryptedcc_no}, The CCC Number/First Name does not match in Nishauri`
 			});
 		}
 
@@ -1290,6 +1305,7 @@ router.post(
 			let allergies = req.body.allergies;
 			let chronics = req.body.chronics;
 			let disabilities = req.body.disabilities;
+			let national_id = req.body.national_id;
 			let today = moment(new Date().toDateString())
 				.tz("Africa/Nairobi")
 				.format("YYYY-MM-DD H:M:S");
@@ -1320,6 +1336,7 @@ router.post(
 						allergies: allergies,
 						chronics: chronics,
 						disabilities: disabilities,
+						national_id: national_id,
 						updated_at: today
 					},
 					{
@@ -1364,6 +1381,7 @@ router.post(
 					allergies: allergies,
 					chronics: chronics,
 					disabilities: disabilities,
+					national_id: national_id,
 					created_at: today,
 					updated_at: today
 				});
@@ -1404,7 +1422,19 @@ router.get(
 			const profile = await NUserProfile.findOne({
 				where: {
 					user_id: base64.decode(user_id)
-				}
+				},
+				// include: [
+				// 	{
+				// 		model: NUsers,
+				// 		attributes: ["role_id"],
+				// 		include: [
+				// 			{
+				// 				model: Nroles,
+				// 				attributes: ["role_name"]
+				// 			}
+				// 		]
+				// 	}
+				// ]
 			});
 
 			if (profile) {
@@ -3784,6 +3814,9 @@ router.post(
 			let upi_no = req.body.upi_no;
 			let firstname = req.body.firstname;
 
+			let encryptedcc_no = await Client.encryptData(ccc_no);
+		    let encryptedfirstname = await Client.encryptData(firstname);
+
 			//Check if CCC is 10 digits
 			if (ccc_no.length != 10) {
 				return res.status(200).json({
@@ -3793,8 +3826,9 @@ router.post(
 			}
 			//Validate Program In HIV
 			let check_program_valid = await Client.findOne({
-				where: { clinic_number: ccc_no }
+				where: { clinic_number: encryptedcc_no }
 			});
+			// let program_validencryptedphone_no = await Client.decryptData(check_program_valid.phone_no);
 
 			let check_program_new = await NUserprograms.findOne({
 				where: {
@@ -3815,19 +3849,23 @@ router.post(
 				});
 				// }
 			}
-
+			let checkByClinic = await Client.findOne({
+				where: { clinic_number: encryptedcc_no }
+			});
 			let check_valid_user = await Client.findOne({
 				where: {
-					[Op.and]: [{ f_name: firstname }, { clinic_number: ccc_no }]
+					id: checkByClinic.id,
+					f_name: encryptedfirstname
 				}
 			});
 
-			if (!check_valid_user) {
-				return res.status(200).json({
-					success: false,
-					msg: `The First Name does not match with CCC Number: ${ccc_no} in Nishauri`
-				});
-			}
+				if (!check_valid_user) {
+					return res.status(200).json({
+						success: false,
+						msg: `The First Name does not match with CCC Number: ${ccc_no} in Nishauri`
+					});
+				}
+
 
 			if (existing_other_program) {
 				//Search if Program Details Exist
@@ -4122,10 +4160,13 @@ router.post(
 				[Op.and]: [{ is_active: "1" }, { id: base64.decode(user_id) }]
 			}
 		});
+		let encryptedccc_no = await Client.encryptData(ccc_no);
 
 		let check_program_valid = await Client.findOne({
-			where: { clinic_number: ccc_no }
+			where: { clinic_number: encryptedccc_no }
 		});
+
+		let encryptedPhone = await Client.encryptData(check_program_valid.phone_no);
 
 		if (check_username) {
 			let vOTP = generateOtp(5);
@@ -5468,9 +5509,7 @@ router.delete(
 			let id = req.params.id; // Get the menstrual cycle ID from URL parameters
 			let user_id = req.body.user_id;
 
-
-            let decoded_user_id = base64.decode(user_id);
-
+			let decoded_user_id = base64.decode(user_id);
 
 			let today = moment(new Date())
 				.tz("Africa/Nairobi")
@@ -5527,72 +5566,73 @@ router.delete(
 );
 
 router.delete(
-    "/delete_menstrual_cycles",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        try {
-            let user_id = req.body.user_id;
+	"/delete_menstrual_cycles",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.body.user_id;
 
-            let today = moment(new Date())
-                .tz("Africa/Nairobi")
-                .format("YYYY-MM-DD HH:mm:ss");
+			let today = moment(new Date())
+				.tz("Africa/Nairobi")
+				.format("YYYY-MM-DD HH:mm:ss");
 
-            // Verify user exists
-            let user = await NUsers.findOne({ where: { id: base64.decode(user_id) } });
+			// Verify user exists
+			let user = await NUsers.findOne({
+				where: { id: base64.decode(user_id) }
+			});
 
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    msg: "User not found"
-                });
-            }
+			if (!user) {
+				return res.status(404).json({
+					success: false,
+					msg: "User not found"
+				});
+			}
 
-            // Find all menstrual cycles for the user
-            let menstrual_cycles = await NMenstrual.findAll({
-                where: {
-                    user_id: base64.decode(user_id)
-                }
-            });
+			// Find all menstrual cycles for the user
+			let menstrual_cycles = await NMenstrual.findAll({
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
 
-            if (menstrual_cycles.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    msg: "No menstrual cycle records found"
-                });
-            }
+			if (menstrual_cycles.length === 0) {
+				return res.status(404).json({
+					success: false,
+					msg: "No menstrual cycle records found"
+				});
+			}
 
-            // Update the status of all menstrual cycles to 'Deleted'
-            await NMenstrual.update(
-                {
-                    status: "Deleted",
-                    updated_at: today,
-                    deleted_at: today
-                },
-                {
-                    where: { user_id: base64.decode(user_id) }
-                }
-            );
+			// Update the status of all menstrual cycles to 'Deleted'
+			await NMenstrual.update(
+				{
+					status: "Deleted",
+					updated_at: today,
+					deleted_at: today
+				},
+				{
+					where: { user_id: base64.decode(user_id) }
+				}
+			);
 
-            // Log the deletion activity
-            await NLogs.create({
-                user_id,
-                access: "MENSTRUALCYCLE"
-            });
+			// Log the deletion activity
+			await NLogs.create({
+				user_id,
+				access: "MENSTRUALCYCLE"
+			});
 
-            return res.status(200).json({
-                success: true,
-                msg: "All menstrual cycles deleted successfully"
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                msg: "An error occurred while deleting the cycles",
-                error: error.message
-            });
-        }
-    }
+			return res.status(200).json({
+				success: true,
+				msg: "All menstrual cycles deleted successfully"
+			});
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				msg: "An error occurred while deleting the cycles",
+				error: error.message
+			});
+		}
+	}
 );
-
 
 const sendAppUpdateNotification = (registrationToken) => {
 	if (!registrationToken) {
@@ -5619,9 +5659,8 @@ const sendAppUpdateNotification = (registrationToken) => {
 
 const notifyUsersAboutAppUpdate = async () => {
 	try {
-
 		let users = await NUsers.findAll({
-			attributes: ['id', 'fcm_token']
+			attributes: ["id", "fcm_token"]
 		});
 
 		for (const user of users) {
@@ -5634,7 +5673,7 @@ const notifyUsersAboutAppUpdate = async () => {
 };
 
 // Schedule the notification
-const specificDateAndTime = '30 9 14 9 *'; // September 14, 9:30 AM
+const specificDateAndTime = "30 9 14 9 *"; // September 14, 9:30 AM
 
 cron.schedule(specificDateAndTime, () => {
 	notifyUsersAboutAppUpdate();
@@ -5661,6 +5700,108 @@ router.get("/get_roles", async (req, res) => {
 	}
 });
 
+// API route to fetch practitioner data by national ID
+router.post(
+	"/practitioner",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let { nationalId, user_id } = req.body;
+
+		try {
+			let user = await NUsers.findOne({
+				where: { id: base64.decode(user_id) }
+			});
+
+			if (!user) {
+				return res.status(404).json({ message: "User not found" });
+			}
+
+			let response = await axios.get(
+				`${process.env.HIE_ENDPOINT}?national-id=${nationalId}`,
+				{
+					auth: {
+						username: process.env.HIE_USERNAME,
+						password: process.env.HIE_PASSWORD
+					}
+				}
+			);
+
+			let practitioner = response.data;
+
+			let existing_provider = await NProvider.findOne({
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
+
+			let cadre = practitioner.extension.find(
+				(ext) =>
+					ext.url ===
+					"https://shr.tiberbuapps.com/fhir/StructureDefinition/professional-cadre"
+			).valueCoding.display;
+			let nationalIdValue = practitioner.identifier.find((id) =>
+				id.type.coding.some((code) => code.display === "National ID")
+			).value;
+			let boardNo = practitioner.identifier.find((id) =>
+				id.type.coding.some(
+					(code) => code.display === "Board Registration Number"
+				)
+			).value;
+			let status = practitioner.active;
+			let { family, given, prefix } = practitioner.name[0];
+			let gender = practitioner.gender;
+			let currentLicenseNumber = practitioner.qualification[0].extension.find(
+				(ext) =>
+					ext.url ===
+					"https://shr.tiberbuapps.com/fhir/StructureDefinition/current-license-number"
+			).valueString;
+
+			let providerData = {
+				family_name: family,
+				given_name: given.join(" "),
+				salutation: prefix ? prefix.join(" ") : null,
+				national_id: nationalIdValue,
+				license_number: currentLicenseNumber,
+				board_number: boardNo,
+				cadre,
+				gender,
+				user_id: base64.decode(user_id)
+			};
+
+			if (existing_provider) {
+				await NProvider.update(providerData, {
+					where: {
+						user_id: base64.decode(user_id)
+					}
+				});
+				return res.status(200).json({
+					success: true,
+					message: "Provider details updated successfully",
+					provider: await NProvider.findOne({
+						where: { user_id: base64.decode(user_id) }
+					})
+				});
+			} else {
+				let provider = await NProvider.create(providerData);
+
+				res.status(200).json({
+					message: "Provider saved successfully",
+					provider: await NProvider.findOne({
+						where: { user_id: base64.decode(user_id) }
+					})
+				});
+			}
+		} catch (error) {
+			let practitioner = error.response.data;
+			if (practitioner.resourceType === "OperationOutcome") {
+				let errorMessage = practitioner.issue[0].diagnostics;
+				let errorCode = error.response.data.issue[0].code;
+				return res.status(400).json({ code: errorCode, message: errorMessage });
+			}
+			res.status(500).json({ message: "Internal server error" });
+		}
+	}
+);
 
 module.exports = router;
 //module.exports = { router, users };
