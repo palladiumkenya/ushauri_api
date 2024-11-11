@@ -2879,6 +2879,9 @@ router.post(
 			let client_phone_no = req.body.client_phone_no;
 			let today = moment(new Date().toDateString()).format("YYYY-MM-DD");
 
+			let encryptedPhone = await NUsers.encryptData(client_phone_no);
+			let encryptedCCC_NO = await NUsers.encryptData(ccc_no);
+
 			let check_order_request = await NDrugOrder.findOne({
 				where: {
 					appointment_id: appointment_id
@@ -2887,7 +2890,7 @@ router.post(
 
 			let check_patient = await Client.findOne({
 				where: {
-					clinic_number: ccc_no
+					clinic_number: encryptedCCC_NO
 				}
 			});
 
@@ -2981,73 +2984,79 @@ router.post(
 
 // get client details for order
 router.get(
-	"/upcoming_appointment",
-	passport.authenticate("jwt", { session: false }),
-	async (req, res) => {
-		let user_id = req.query.user_id;
+    "/upcoming_appointment",
+    passport.authenticate("jwt", { session: false }),
+    async (req, res) => {
+        let user_id = req.query.user_id;
+        let encryptionKey = "encryption_key";
 
-		let check_patient_program = await NUserprograms.findOne({
-			where: {
-				user_id: base64.decode(user_id),
-				program_type: 1
-			}
-		});
-		if (!check_patient_program) {
-			return res.status(200).json({
-				success: false,
-				msg: "You are not registered in this program"
-			});
-		}
+        let check_patient_program = await NUserprograms.findOne({
+            where: {
+                user_id: base64.decode(user_id),
+                program_type: 1
+            }
+        });
+        if (!check_patient_program) {
+            return res.status(200).json({
+                success: false,
+                msg: "You are not registered in this program"
+            });
+        }
 
-		let check_patient = await Client.findOne({
-			where: {
-				id: check_patient_program.program_identifier
-			}
-		});
+        let check_patient = await Client.findOne({
+            where: {
+                id: check_patient_program.program_identifier
+            }
+        });
 
-		try {
-			const conn = mysql.createPool({
-				connectionLimit: 10,
-				host: process.env.DB_SERVER,
-				port: process.env.DB_PORT,
-				user: process.env.DB_USER,
-				password: process.env.DB_PASSWORD,
-				database: process.env.DB_NAME,
-				debug: true,
-				multipleStatements: true
-			});
+        try {
+            const conn = mysql.createPool({
+                connectionLimit: 10,
+                host: process.env.DB_SERVER,
+                port: process.env.DB_PORT,
+                user: process.env.DB_USER,
+                password: process.env.DB_PASSWORD,
+                database: process.env.DB_NAME,
+                debug: true,
+                multipleStatements: true
+            });
 
-			let sql = `CALL sp_dawa_drop_appt(?)`;
-			let todo = base64.decode(user_id);
-			conn.query(sql, todo, (error, results, fields) => {
-				if (error) {
-					return console.error(error.message);
-				}
-				if (results[0].length === 0) {
-					return res.status(200).json({
-						success: false,
-						msg: "You do not have upcoming appointment"
-					});
-				} else {
-					// Log Activity
-					// var log_activity_ = NLogs.create({ user_id: base64.decode(userid), access: 'APPOINTMENTS'});
-					return res.status(200).json({
-						success: true,
-						msg: "You have upcoming appointments",
-						data: results[0]
-					});
-				}
+            let sql = `CALL sp_dawa_drop_appt(?, ?)`;
+            let todo = base64.decode(user_id);
 
-				conn.end();
-			});
-		} catch (err) {
-			return res.status(500).json({
-				success: false,
-				msg: "Internal Server Error"
-			});
-		}
-	}
+            conn.query(sql, [todo, encryptionKey], (error, results, fields) => {
+                if (error) {
+                    return console.error(error.message);
+                }
+                if (results[0].length === 0) {
+                    return res.status(200).json({
+                        success: false,
+                        msg: "You do not have an upcoming appointment"
+                    });
+                } else {
+                    const formattedData = results[0].map(record => ({
+                        ...record,
+                        ccc_no: record.ccc_no ? record.ccc_no.toString('utf8') : null
+                    }));
+                    return res.status(200).json({
+                        success: true,
+                        msg: "You have upcoming appointments",
+                        data: formattedData
+                    });
+                }
+
+                conn.end();
+            });
+        } catch (err) {
+            return res.status(500).json({
+                success: false,
+                msg: "Internal Server Error"
+            });
+        }
+    }
 );
+
+
 
 // get courier services
 router.get(
@@ -3136,62 +3145,81 @@ router.get(
 
 // get drug delivery requests
 router.get(
-	"/drug_delivery_list",
-	passport.authenticate("jwt", { session: false }),
-	async (req, res) => {
-		let user_id = req.query.user_id;
+    "/drug_delivery_list",
+    passport.authenticate("jwt", { session: false }),
+    async (req, res) => {
+        let user_id = req.query.user_id;
+        let encryptionKey = "encryption_key";
 
-		let check_patient = await NDrugOrder.findOne({
-			where: {
-				order_by: base64.decode(user_id)
-			}
-		});
-		if (!check_patient) {
-			return res.status(200).json({
-				success: false,
-				msg: "No drug delivery request found"
-			});
-		} else {
-			try {
-				const conn = mysql.createPool({
-					connectionLimit: 10,
-					host: process.env.DB_SERVER,
-					port: process.env.DB_PORT,
-					user: process.env.DB_USER,
-					password: process.env.DB_PASSWORD,
-					database: process.env.DB_NAME,
-					debug: true,
-					multipleStatements: true
-				});
+        let check_patient = await NDrugOrder.findOne({
+            where: {
+                order_by: base64.decode(user_id)
+            }
+        });
 
-				let sql = `CALL sp_nishauri_drug_delivery(?)`;
-				let todo = [base64.decode(user_id)];
-				conn.query(sql, todo, (error, results, fields) => {
-					if (results[0].length === 0) {
-						return res.status(200).json({
-							success: false,
-							msg: "No drug delivery request found"
-						});
-					} else {
-						return res.status(200).json({
-							success: true,
-							msg: "Drug delivery request successfully found",
-							user_id: user_id,
-							programs: results[0]
-						});
-					}
+        if (!check_patient) {
+            return res.status(200).json({
+                success: false,
+                msg: "No drug delivery request found"
+            });
+        } else {
+            try {
+                const conn = mysql.createPool({
+                    connectionLimit: 10,
+                    host: process.env.DB_SERVER,
+                    port: process.env.DB_PORT,
+                    user: process.env.DB_USER,
+                    password: process.env.DB_PASSWORD,
+                    database: process.env.DB_NAME,
+                    debug: true,
+                    multipleStatements: true
+                });
 
-					conn.end();
-				});
-			} catch (err) {
-				return res.status(500).json({
-					success: false,
-					msg: "Internal Server Error"
-				});
-			}
-		}
-	}
+                let sql = `CALL sp_nishauri_drug_delivery(?, ?)`;
+                let params = [base64.decode(user_id), encryptionKey];
+
+                conn.query(sql, params, (error, results, fields) => {
+                    if (error) {
+                        console.error("Error executing stored procedure:", error);
+                        return res.status(500).json({
+                            success: false,
+                            msg: "Error retrieving drug delivery data"
+                        });
+                    }
+
+                    if (results[0].length === 0) {
+                        return res.status(200).json({
+                            success: false,
+                            msg: "No drug delivery request found"
+                        });
+                    } else {
+                        const formattedResults = results[0].map(row => ({
+                            ...row,
+                            ccc_no: row.ccc_no ? row.ccc_no.toString() : null,
+                            client_phone_no: row.client_phone_no ? row.client_phone_no.toString() : null
+                        }));
+
+                        return res.status(200).json({
+                            success: true,
+                            msg: "Drug delivery request successfully found",
+                            user_id: user_id,
+                            programs: formattedResults
+                        });
+                    }
+
+                    conn.end();
+                });
+            } catch (err) {
+                return res.status(500).json({
+                    success: false,
+                    msg: "Internal Server Error"
+                });
+            }
+        }
+    }
 );
+
+
 // confirmation receipt
 router.post(
 	"/delivery_confirmation",

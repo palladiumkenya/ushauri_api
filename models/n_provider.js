@@ -49,21 +49,27 @@ const NProvider = sequelize.sequelize.define(
 			beforeUpdate: async (user) => {
 				if (user.family_name) {
 					user.family_name = await NProvider.encryptData(user.family_name);
+                    user.changed('family_name', true);
 				}
 				if (user.given_name) {
 					user.given_name = await NProvider.encryptData(user.given_name);
+                    user.changed('given_name', true);
 				}
                 if (user.national_id) {
 					user.national_id = await NProvider.encryptData(user.national_id);
+                    user.changed('national_id', true);
 				}
                 if (user.license_number) {
 					user.license_number = await NProvider.encryptData(user.license_number);
+                    user.changed('license_number', true);
 				}
                 if (user.board_number) {
 					user.board_number = await NProvider.encryptData(user.board_number);
+                    user.changed('board_number', true);
 				}
                 if (user.gender) {
 					user.gender = await NProvider.encryptData(user.gender);
+                    user.changed('gender', true);
 				}
 			},
 			afterFind: async (result) => {

@@ -1,6 +1,8 @@
 const sequelize = require("../db_config");
 const Sequelize = require("sequelize");
 
+const ENCRYPTION_KEY = "encryption_key";
+
 const TodayAppointments = sequelize.sequelize.define(
     "todays_appointments", {
         appointment_id: {
@@ -9,152 +11,120 @@ const TodayAppointments = sequelize.sequelize.define(
             autoIncrement: false
         },
         clinic_id: Sequelize.INTEGER,
-        clinic_no: Sequelize.INTEGER,
-        client_name: Sequelize.STRING,
+        clinic_no: Sequelize.BLOB,
+        client_name: Sequelize.BLOB,
         appointment_kept: Sequelize.STRING,
-        client_phone_no: Sequelize.STRING,
+        client_phone_no: Sequelize.BLOB,
         appointment_type: Sequelize.STRING,
         appntmnt_date: Sequelize.STRING,
         file_no: Sequelize.INTEGER,
-        buddy_phone_no: Sequelize.STRING,
+        buddy_phone_no: Sequelize.BLOB,
         facility_id: Sequelize.INTEGER,
-        user_phone_no: Sequelize.STRING,
+        user_phone_no: Sequelize.BLOB,
         client_id: Sequelize.INTEGER,
         created_at: Sequelize.STRING
 
     }, {
         hooks: {
-            // Hook before creating
-            beforeCreate: async (TodayAppointments) => {
-                const ENCRYPTION_KEY = 'encryption_key';  // Define your encryption key
+			beforeCreate: async (user) => {
+				if (user.clinic_no) {
+					user.clinic_no = await TodayAppointments.encryptData(user.clinic_no);
+				}
+                if (user.client_name) {
+					user.client_name = await TodayAppointments.encryptData(user.client_name);
+				}
+                if (user.client_phone_no) {
+					user.client_phone_no = await TodayAppointments.encryptData(user.client_phone_no);
+				}
+                if (user.buddy_phone_no) {
+					user.buddy_phone_no = await TodayAppointments.encryptData(user.buddy_phone_no);
+				}
+                if (user.user_phone_no) {
+					user.user_phone_no = await TodayAppointments.encryptData(user.user_phone_no);
+				}
+			},
+			beforeUpdate: async (user) => {
+				if (user.clinic_no) {
+					user.clinic_no = await TodayAppointments.encryptData(user.clinic_no);
+				}
+                if (user.client_name) {
+					user.client_name = await TodayAppointments.encryptData(user.client_name);
+				}
+                if (user.client_phone_no) {
+					user.client_phone_no = await TodayAppointments.encryptData(user.client_phone_no);
+				}
+                if (user.buddy_phone_no) {
+					user.buddy_phone_no = await TodayAppointments.encryptData(user.buddy_phone_no);
+				}
+                if (user.user_phone_no) {
+					user.user_phone_no = await TodayAppointments.encryptData(user.user_phone_no);
+				}
+			},
+			afterFind: async (result) => {
+				const decryptFields = async (user) => {
+					if (user.getDataValue('clinic_no')) {
+						const decryptedclinic_no= await TodayAppointments.decryptData(user.getDataValue('clinic_no'));
+						user.clinic_no = decryptedclinic_no;
+					}
+                    if (user.getDataValue('client_name')) {
+						const decryptedclient_name= await TodayAppointments.decryptData(user.getDataValue('client_name'));
+						user.client_name = decryptedclient_name;
+					}
+                    if (user.getDataValue('client_phone_no')) {
+						const decryptedclient_phone_no= await TodayAppointments.decryptData(user.getDataValue('client_phone_no'));
+						user.client_phone_no = decryptedclient_phone_no;
+					}
+                    if (user.getDataValue('buddy_phone_no')) {
+						const decryptedbuddy_phone_no= await TodayAppointments.decryptData(user.getDataValue('buddy_phone_no'));
+						user.buddy_phone_no = decryptedbuddy_phone_no;
+					}
+                    if (user.getDataValue('user_phone_no')) {
+						const decrypteduser_phone_no= await TodayAppointments.decryptData(user.getDataValue('user_phone_no'));
+						user.user_phone_no = decrypteduser_phone_no;
+					}
+				};
 
-                // Encrypt clinic_no before saving
-                if (TodayAppointments.clinic_no) {
-                    const clinic_no_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:clinic_no, :ENCRYPTION_KEY) AS encrypted_clinic_no`,
-                        {
-                            replacements: { clinic_no: TodayAppointments.clinic_no.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.clinic_no = clinic_no_result[0].encrypted_clinic_no;  // Store encrypted value
-                }
-
-                // Encrypt client_name before saving
-                if (TodayAppointments.client_name) {
-                    const client_name_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:client_name, :ENCRYPTION_KEY) AS encrypted_client_name`,
-                        {
-                            replacements: { client_name: TodayAppointments.client_name.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.client_name = client_name_result[0].encrypted_client_name;  // Store encrypted value
-                }
-
-                // Encrypt client_phone_no before saving
-                if (TodayAppointments.client_phone_no) {
-                    const client_phone_no_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:client_phone_no, :ENCRYPTION_KEY) AS encrypted_client_phone_no`,
-                        {
-                            replacements: { client_phone_no: TodayAppointments.client_phone_no.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.client_phone_no = client_phone_no_result[0].encrypted_client_phone_no;  // Store encrypted value
-                }
-                // Encrypt buddy_phone_no before saving
-                if (TodayAppointments.buddy_phone_no) {
-                    const buddy_phone_no_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:buddy_phone_no, :ENCRYPTION_KEY) AS encrypted_buddy_phone_no`,
-                        {
-                            replacements: { buddy_phone_no: TodayAppointments.buddy_phone_no.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.buddy_phone_no = buddy_phone_no_result[0].encrypted_buddy_phone_no;  // Store encrypted value
-                }
-                // Encrypt user_phone_no before saving
-                if (TodayAppointments.buddy_phone_no) {
-                    const user_phone_no_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:user_phone_no, :ENCRYPTION_KEY) AS encrypted_user_phone_no`,
-                        {
-                            replacements: { user_phone_no: TodayAppointments.user_phone_no.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.user_phone_no = user_phone_no_result[0].encrypted_user_phone_no;  // Store encrypted value
-                }
-            },
-
-            // Hook before updating
-            beforeUpdate: async (TodayAppointments) => {
-                const ENCRYPTION_KEY = 'encryption_key';  // Define your encryption key
-
-                // Encrypt clinic_no if it was updated
-                if (TodayAppointments.clinic_no) {
-                    const clinic_no_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:clinic_no, :ENCRYPTION_KEY) AS encrypted_clinic_no`,
-                        {
-                            replacements: { clinic_no: TodayAppointments.clinic_no.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.clinic_no = clinic_no_result[0].encrypted_clinic_no;
-                }
-
-                // Encrypt client_name if it was updated
-                if (TodayAppointments.client_name) {
-                    const client_name_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:client_name, :ENCRYPTION_KEY) AS encrypted_client_name`,
-                        {
-                            replacements: { client_name: TodayAppointments.client_name.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.client_name = client_name_result[0].encrypted_client_name;
-                }
-
-                // Encrypt client_phone_no if it was updated
-                if (TodayAppointments.client_phone_no) {
-                    const client_phone_no_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:client_phone_no, :ENCRYPTION_KEY) AS encrypted_client_phone_no`,
-                        {
-                            replacements: { client_phone_no: TodayAppointments.client_phone_no.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.client_phone_no = client_phone_no_result[0].encrypted_client_phone_no;
-                }
-                // Encrypt buddy_phone_no if it was updated
-                if (TodayAppointments.buddy_phone_no) {
-                    const buddy_phone_no_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:buddy_phone_no, :ENCRYPTION_KEY) AS encrypted_buddy_phone_no`,
-                        {
-                            replacements: { buddy_phone_no: TodayAppointments.buddy_phone_no.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.buddy_phone_no = buddy_phone_no_result[0].encrypted_buddy_phone_no;
-                }
-                // Encrypt user_phone_no if it was updated
-                if (TodayAppointments.user_phone_no) {
-                    const user_phone_no_result = await sequelize.sequelize.query(
-                        `SELECT AES_ENCRYPT(:user_phone_no, :ENCRYPTION_KEY) AS encrypted_user_phone_no`,
-                        {
-                            replacements: { user_phone_no: TodayAppointments.user_phone_no.toString(), ENCRYPTION_KEY },
-                            type: Sequelize.QueryTypes.SELECT
-                        }
-                    );
-                    TodayAppointments.user_phone_no = user_phone_no_result[0].encrypted_user_phone_no;
-                }
-
-            }
-        },
+				if (Array.isArray(result)) {
+					await Promise.all(result.map(decryptFields));
+				} else if (result) {
+					await decryptFields(result);
+				}
+			}
+		},
         timestamps: false,
         underscored: true,
         freezeTableName: true,
         tableName: "tbl_todays_appointment"
     }
 );
+
+// Encrypt method
+TodayAppointments.encryptData = async function(value) {
+	if (value) {
+		const encrypted = await sequelize.sequelize.query(
+			`SELECT AES_ENCRYPT(?, ?) AS encrypted`,
+			{
+				replacements: [value, ENCRYPTION_KEY],
+				type: Sequelize.QueryTypes.SELECT
+			}
+		);
+		return encrypted[0].encrypted;
+	}
+	return null;
+};
+
+// Decrypt method
+TodayAppointments.decryptData = async function(encryptedValue) {
+	if (encryptedValue) {
+		const decrypted = await sequelize.sequelize.query(
+			`SELECT CONVERT(AES_DECRYPT(?, ?) USING 'utf8') AS decrypted`,
+			{
+				replacements: [encryptedValue, ENCRYPTION_KEY],
+				type: Sequelize.QueryTypes.SELECT
+			}
+		);
+		return decrypted[0].decrypted || null;
+	}
+	return null;
+};
 exports.TodayAppointments = TodayAppointments;
