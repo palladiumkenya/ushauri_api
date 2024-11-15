@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+//const sequelize = require("../../db_config");
 
 const request = require("request");
 const https = require("https");
@@ -22,11 +23,11 @@ const users = [];
 module.exports = { router, users };
 require("dotenv").config();
 //const Op = require("sequelize");
-const { Op } = require("sequelize");
+const { Op, fn, col, literal, QueryTypes } = require("sequelize");
 var bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
-//const Sequelize = require("sequelize");
+// const sequelize = require("sequelize");
 
 //const Sequelize = require('sequelize');
 
@@ -5660,6 +5661,187 @@ router.get("/get_roles", async (req, res) => {
 		});
 	}
 });
+
+router.get("/get_bmi_filter",
+	passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        let user_id = req.query.user_id;
+        let decoded_user_id = base64.decode(user_id);
+
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+
+        // weekly BMI logs
+        const weeklyLogs = await NBmiLog.findAll({
+            where: {
+                user_id: decoded_user_id,
+                created_at: {
+                    [Op.gte]: startOfWeek,
+                    [Op.lte]: today
+                }
+            },
+            attributes: [
+                [fn("DAYNAME", col("created_at")), "dayName"],
+                [fn("DATE", col("created_at")), "date"],
+                "weight",
+                "height",
+                "results"
+            ]
+        });
+
+        // Process weekly logs
+        const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const formattedWeeklyLogs = daysOfWeek.map(day => {
+            const log = weeklyLogs.find(entry => entry.dataValues.dayName === day);
+            return log ? log.dataValues : { dayName: day, date: null, weight: null, height: null, results: null };
+        });
+
+        // Get average BMI for the past six months
+        const sixMonthsAgo = new Date(today);
+        sixMonthsAgo.setMonth(today.getMonth() - 5);
+
+        const monthlyAverages = await NBmiLog.findAll({
+            where: {
+                user_id: decoded_user_id,
+                created_at: {
+                    [Op.gte]: sixMonthsAgo,
+                    [Op.lte]: today
+                }
+            },
+            attributes: [
+                [fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+                [fn("AVG", col("weight")), "avg_weight"],
+                [fn("AVG", col("height")), "avg_height"],
+                [fn("AVG", col("results")), "avg_results"]
+            ],
+            group: [literal("month")],
+            order: [[col("created_at"), "DESC"]]
+        });
+
+        res.json({
+            success: true,
+            message: "User BMI logs retrieved successfully",
+            data: {
+                weekly: formattedWeeklyLogs,
+                sixMonthly: monthlyAverages,
+                user_id: user_id
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error retrieving BMI logs"
+        });
+    }
+});
+
+router.get(
+	"/get_blood_sugar_filter",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+	  try {
+		let user_id = req.query.user_id;
+		let decoded_user_id = base64.decode(user_id);
+
+		const today = new Date();
+		const startOfWeek = new Date(today);
+		startOfWeek.setDate(today.getDate() - today.getDay());
+
+		// Retrieve hourly blood sugar data for today
+		const hourlyLogs = await NBloodSugar.findAll({
+		  where: {
+			user_id: decoded_user_id,
+			created_at: {
+			  [Op.gte]: moment().startOf('day').toDate(),
+			  [Op.lte]: moment().endOf('day').toDate(),
+			}
+		  },
+		  attributes: [
+			[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
+			[fn("AVG", col("level")), "avg_level"],
+			[fn("MIN", col("level")), "min_level"],
+			[fn("MAX", col("level")), "max_level"]
+		  ],
+		  group: [literal("hour")],
+		  order: [[col("created_at"), "ASC"]]
+		});
+
+		// Process hourly logs for today
+		const formattedHourlyLogs = hourlyLogs.map(log => {
+		  return {
+			hour: log.dataValues.hour,
+			avg_level: log.dataValues.avg_level,
+			min_level: log.dataValues.min_level,
+			max_level: log.dataValues.max_level
+		  };
+		});
+
+		// Retrieve weekly blood sugar averages
+		const weeklyLogs = await NBloodSugar.findAll({
+		  where: {
+			user_id: decoded_user_id,
+			created_at: {
+			  [Op.gte]: startOfWeek,
+			  [Op.lte]: today
+			}
+		  },
+		  attributes: [
+			[fn("DAYNAME", col("created_at")), "dayName"],
+			[fn("DATE", col("created_at")), "date"],
+			"level",
+			"condition"
+		  ]
+		});
+
+		// Process weekly logs
+		const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+		const formattedWeeklyLogs = daysOfWeek.map(day => {
+		  const log = weeklyLogs.find(entry => entry.dataValues.dayName === day);
+		  return log ? log.dataValues : { dayName: day, date: null, level: null, condition: null };
+		});
+
+		// Retrieve average blood sugar level for the past six months
+		const sixMonthsAgo = new Date(today);
+		sixMonthsAgo.setMonth(today.getMonth() - 5);
+
+		const monthlyAverages = await NBloodSugar.findAll({
+		  where: {
+			user_id: decoded_user_id,
+			created_at: {
+			  [Op.gte]: sixMonthsAgo,
+			  [Op.lte]: today
+			}
+		  },
+		  attributes: [
+			[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+			[fn("AVG", col("level")), "avg_level"]
+		  ],
+		  group: [literal("month")],
+		  order: [[col("created_at"), "DESC"]]
+		});
+
+		res.json({
+		  success: true,
+		  message: "User blood sugar logs retrieved successfully",
+		  data: {
+			hourly: formattedHourlyLogs,
+			weekly: formattedWeeklyLogs,
+			sixMonthly: monthlyAverages,
+			user_id: user_id
+		  }
+		});
+	  } catch (error) {
+		console.error(error);
+		res.status(500).json({
+		  success: false,
+		  message: "Error retrieving blood sugar logs"
+		});
+	  }
+	}
+  );
+
+
 
 
 module.exports = router;
