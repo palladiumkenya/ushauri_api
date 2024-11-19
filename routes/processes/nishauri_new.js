@@ -5759,9 +5759,9 @@ router.get(
 		  },
 		  attributes: [
 			[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
-			[fn("AVG", col("level")), "avg_level"],
-			[fn("MIN", col("level")), "min_level"],
-			[fn("MAX", col("level")), "max_level"]
+			[fn("AVG", col("level")), "avg_level"]
+			// [fn("MIN", col("level")), "min_level"],
+			// [fn("MAX", col("level")), "max_level"]
 		  ],
 		  group: [literal("hour")],
 		  order: [[col("created_at"), "ASC"]]
@@ -5836,6 +5836,119 @@ router.get(
 		res.status(500).json({
 		  success: false,
 		  message: "Error retrieving blood sugar logs"
+		});
+	  }
+	}
+  );
+  router.get(
+	"/get_blood_pressure_filter",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+	  try {
+		let user_id = req.query.user_id;
+		let decoded_user_id = base64.decode(user_id);
+
+		const today = new Date();
+		const startOfWeek = new Date(today);
+		startOfWeek.setDate(today.getDate() - today.getDay());
+
+		// Retrieve hourly blood pressure data for today
+		const hourlyLogs = await NBloodPressure.findAll({
+		  where: {
+			user_id: decoded_user_id,
+			created_at: {
+			  [Op.gte]: moment().startOf('day').toDate(),
+			  [Op.lte]: moment().endOf('day').toDate(),
+			}
+		  },
+		  attributes: [
+			[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
+			[fn("AVG", col("systolic")), "avg_systolic"],
+			[fn("AVG", col("diastolic")), "avg_diastolic"],
+			[fn("AVG", col("pulse_rate")), "pulse_rate"]
+		  ],
+		  group: [literal("hour")],
+		  order: [[col("created_at"), "ASC"]]
+		});
+
+		// Process hourly logs for today
+		const formattedHourlyLogs = hourlyLogs.map(log => {
+		  return {
+			hour: log.dataValues.hour,
+			avg_systolic: log.dataValues.avg_systolic,
+			min_systolic: log.dataValues.min_systolic,
+			max_systolic: log.dataValues.max_systolic,
+			avg_diastolic: log.dataValues.avg_diastolic,
+			min_diastolic: log.dataValues.min_diastolic,
+			max_diastolic: log.dataValues.max_diastolic,
+			pulse_rate: log.dataValues.pulse_rate,
+			pulse_rate: log.dataValues.pulse_rate,
+			pulse_rate: log.dataValues.pulse_rate
+		  };
+		});
+
+		// Retrieve weekly blood pressure averages
+		const weeklyLogs = await NBloodPressure.findAll({
+		  where: {
+			user_id: decoded_user_id,
+			created_at: {
+			  [Op.gte]: startOfWeek,
+			  [Op.lte]: today
+			}
+		  },
+		  attributes: [
+			[fn("DAYNAME", col("created_at")), "dayName"],
+			[fn("DATE", col("created_at")), "date"],
+			"systolic",
+			"diastolic",
+			"pulse_rate"
+		  ]
+		});
+
+		// Process weekly logs
+		const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+		const formattedWeeklyLogs = daysOfWeek.map(day => {
+		  const log = weeklyLogs.find(entry => entry.dataValues.dayName === day);
+		  return log ? log.dataValues : { dayName: day, date: null, systolic: null, diastolic: null, pulse_rate: null };
+		});
+
+		// Retrieve average blood sugar level for the past six months
+		const sixMonthsAgo = new Date(today);
+		sixMonthsAgo.setMonth(today.getMonth() - 5);
+
+		const monthlyAverages = await NBloodPressure.findAll({
+		  where: {
+			user_id: decoded_user_id,
+			created_at: {
+			  [Op.gte]: sixMonthsAgo,
+			  [Op.lte]: today
+			}
+		  },
+		  attributes: [
+			[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+			[fn("AVG", col("systolic")), "avg_systolic"],
+			[fn("AVG", col("diastolic")), "avg_diastolic"],
+			[fn("AVG", col("pulse_rate")), "avg_pulse_rate"]
+		  ],
+		  group: [literal("month")],
+		  order: [[col("created_at"), "DESC"]]
+		});
+
+		res.json({
+		  success: true,
+		  message: "User blood pressure logs retrieved successfully",
+		  data: {
+			hourly: formattedHourlyLogs,
+			weekly: formattedWeeklyLogs,
+			sixMonthly: monthlyAverages,
+			user_id: user_id
+		  }
+		});
+	  } catch (error) {
+		console.error(error);
+		res.status(500).json({
+		  success: false,
+		  message: "Error retrieving blood pressure logs"
 		});
 	  }
 	}
