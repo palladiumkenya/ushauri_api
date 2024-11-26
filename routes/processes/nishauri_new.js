@@ -5759,7 +5759,7 @@ router.get(
 		  },
 		  attributes: [
 			[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
-			[fn("AVG", col("level")), "avg_level"]
+			[fn("ROUND", fn("AVG", col("level")), 1), "avg_level"]
 			// [fn("MIN", col("level")), "min_level"],
 			// [fn("MAX", col("level")), "max_level"]
 		  ],
@@ -5815,7 +5815,7 @@ router.get(
 		  },
 		  attributes: [
 			[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
-			[fn("AVG", col("level")), "avg_level"]
+			[fn("ROUND", fn("AVG", col("level")), 1), "avg_level"]
 		  ],
 		  group: [literal("month")],
 		  order: [[col("created_at"), "DESC"]]
@@ -5863,9 +5863,9 @@ router.get(
 		  },
 		  attributes: [
 			[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
-			[fn("AVG", col("systolic")), "avg_systolic"],
-			[fn("AVG", col("diastolic")), "avg_diastolic"],
-			[fn("AVG", col("pulse_rate")), "pulse_rate"]
+			[fn("ROUND", fn("AVG", col("systolic")), 1), "avg_systolic"],
+			[fn("ROUND", fn("AVG", col("diastolic")), 1), "avg_diastolic"],
+			[fn("ROUND", fn("AVG", col("pulse_rate")), 1), "pulse_rate"]
 		  ],
 		  group: [literal("hour")],
 		  order: [[col("created_at"), "ASC"]]
@@ -5926,9 +5926,9 @@ router.get(
 		  },
 		  attributes: [
 			[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
-			[fn("AVG", col("systolic")), "avg_systolic"],
-			[fn("AVG", col("diastolic")), "avg_diastolic"],
-			[fn("AVG", col("pulse_rate")), "avg_pulse_rate"]
+			[fn("ROUND", fn("AVG", col("systolic")), 1), "avg_systolic"],
+			[fn("ROUND", fn("AVG", col("diastolic")), 1), "avg_diastolic"],
+			[fn("ROUND",fn("AVG", col("pulse_rate")), 1), "avg_pulse_rate"]
 		  ],
 		  group: [literal("month")],
 		  order: [[col("created_at"), "DESC"]]
