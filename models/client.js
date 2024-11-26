@@ -4,7 +4,7 @@ const Joi = require("joi");
 const {
     Appointment
 } = require("./appointment");
-const ENCRYPTION_KEY = "encryption_key";
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 const Client = sequelize.sequelize.define(
     "tbl_client", {
         id: {

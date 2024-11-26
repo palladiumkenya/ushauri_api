@@ -1,7 +1,7 @@
 const sequelize = require("../db_config");
 const { Sequelize, DataTypes } = require("sequelize");
 
-const ENCRYPTION_KEY = "encryption_key";
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 
 const NUsers = sequelize.sequelize.define(
 	"tbl_nishauri_users",

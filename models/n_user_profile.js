@@ -3,7 +3,7 @@ const Sequelize = require("sequelize");
 const Joi = require("joi");
 const { encrypt, decrypt } = require('../routes/encrypt_service');
 
-const ENCRYPTION_KEY = "encryption_key";
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 
 const NUserProfile = sequelize.sequelize.define(
     "tbl_nishauri_user_profile", {
