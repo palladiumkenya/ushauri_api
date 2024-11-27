@@ -40,9 +40,9 @@ const NUsers = sequelize.sequelize.define(
 		app_version: Sequelize.STRING,
 		chatbot_consent: Sequelize.STRING,
 		chatbot_consent_date: Sequelize.DATE,
-		fcm_token: Sequelize.STRING,
-		role_id: Sequelize.INTEGER,
-		facility_mflcode: Sequelize.INTEGER
+		fcm_token: Sequelize.STRING
+		//role_id: Sequelize.INTEGER,
+		//facility_mflcode: Sequelize.INTEGER
 	},
 	{
 		hooks: {
