@@ -19,6 +19,8 @@ const calendarupi = require("./routes/processes/calendar");
 const pmtct_new = require("./routes/processes/pmtct");
 const nishauri_new = require("./routes/processes/nishauri");
 const nishauri_new_v2 = require("./routes/processes/nishauri_new");
+const fhir_engine = require("./routes/processes/fhir");
+
 const locator_info = require("./routes/processes/locator");
 const mlab = require("./routes/processes/mlab");
 const dfc = require("./routes/processes/process_dfc");
@@ -52,6 +54,7 @@ app.use('/nishauri',nishauri_new);
 
 app.use('/nishauri_new',nishauri_new_v2);
 
+app.use('/fhir',fhir_engine);
 
 //locator information
 app.use('/locator',locator_info);
