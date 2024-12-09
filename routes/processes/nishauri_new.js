@@ -5469,9 +5469,7 @@ router.delete(
 			let id = req.params.id; // Get the menstrual cycle ID from URL parameters
 			let user_id = req.body.user_id;
 
-
-            let decoded_user_id = base64.decode(user_id);
-
+			let decoded_user_id = base64.decode(user_id);
 
 			let today = moment(new Date())
 				.tz("Africa/Nairobi")
@@ -5528,72 +5526,73 @@ router.delete(
 );
 
 router.delete(
-    "/delete_menstrual_cycles",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        try {
-            let user_id = req.body.user_id;
+	"/delete_menstrual_cycles",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.body.user_id;
 
-            let today = moment(new Date())
-                .tz("Africa/Nairobi")
-                .format("YYYY-MM-DD HH:mm:ss");
+			let today = moment(new Date())
+				.tz("Africa/Nairobi")
+				.format("YYYY-MM-DD HH:mm:ss");
 
-            // Verify user exists
-            let user = await NUsers.findOne({ where: { id: base64.decode(user_id) } });
+			// Verify user exists
+			let user = await NUsers.findOne({
+				where: { id: base64.decode(user_id) }
+			});
 
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    msg: "User not found"
-                });
-            }
+			if (!user) {
+				return res.status(404).json({
+					success: false,
+					msg: "User not found"
+				});
+			}
 
-            // Find all menstrual cycles for the user
-            let menstrual_cycles = await NMenstrual.findAll({
-                where: {
-                    user_id: base64.decode(user_id)
-                }
-            });
+			// Find all menstrual cycles for the user
+			let menstrual_cycles = await NMenstrual.findAll({
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
 
-            if (menstrual_cycles.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    msg: "No menstrual cycle records found"
-                });
-            }
+			if (menstrual_cycles.length === 0) {
+				return res.status(404).json({
+					success: false,
+					msg: "No menstrual cycle records found"
+				});
+			}
 
-            // Update the status of all menstrual cycles to 'Deleted'
-            await NMenstrual.update(
-                {
-                    status: "Deleted",
-                    updated_at: today,
-                    deleted_at: today
-                },
-                {
-                    where: { user_id: base64.decode(user_id) }
-                }
-            );
+			// Update the status of all menstrual cycles to 'Deleted'
+			await NMenstrual.update(
+				{
+					status: "Deleted",
+					updated_at: today,
+					deleted_at: today
+				},
+				{
+					where: { user_id: base64.decode(user_id) }
+				}
+			);
 
-            // Log the deletion activity
-            await NLogs.create({
-                user_id,
-                access: "MENSTRUALCYCLE"
-            });
+			// Log the deletion activity
+			await NLogs.create({
+				user_id,
+				access: "MENSTRUALCYCLE"
+			});
 
-            return res.status(200).json({
-                success: true,
-                msg: "All menstrual cycles deleted successfully"
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                msg: "An error occurred while deleting the cycles",
-                error: error.message
-            });
-        }
-    }
+			return res.status(200).json({
+				success: true,
+				msg: "All menstrual cycles deleted successfully"
+			});
+		} catch (error) {
+			return res.status(500).json({
+				success: false,
+				msg: "An error occurred while deleting the cycles",
+				error: error.message
+			});
+		}
+	}
 );
-
 
 const sendAppUpdateNotification = (registrationToken) => {
 	if (!registrationToken) {
@@ -5620,9 +5619,8 @@ const sendAppUpdateNotification = (registrationToken) => {
 
 const notifyUsersAboutAppUpdate = async () => {
 	try {
-
 		let users = await NUsers.findAll({
-			attributes: ['id', 'fcm_token']
+			attributes: ["id", "fcm_token"]
 		});
 
 		for (const user of users) {
@@ -5635,7 +5633,7 @@ const notifyUsersAboutAppUpdate = async () => {
 };
 
 // Schedule the notification
-const specificDateAndTime = '30 9 14 9 *'; // September 14, 9:30 AM
+const specificDateAndTime = "30 9 14 9 *"; // September 14, 9:30 AM
 
 cron.schedule(specificDateAndTime, () => {
 	notifyUsersAboutAppUpdate();
@@ -5662,300 +5660,471 @@ router.get("/get_roles", async (req, res) => {
 	}
 });
 
-router.get("/get_bmi_filter",
-	passport.authenticate("jwt", { session: false }), async (req, res) => {
-    try {
-        let user_id = req.query.user_id;
-        let decoded_user_id = base64.decode(user_id);
+router.get(
+	"/get_bmi_filter",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		try {
+			let user_id = req.query.user_id;
+			let decoded_user_id = base64.decode(user_id);
 
-        const today = new Date();
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
+			const today = new Date();
+			const startOfWeek = new Date(today);
+			startOfWeek.setDate(today.getDate() - today.getDay());
 
-        // weekly BMI logs
-        const weeklyLogs = await NBmiLog.findAll({
-            where: {
-                user_id: decoded_user_id,
-                created_at: {
-                    [Op.gte]: startOfWeek,
-                    [Op.lte]: today
-                }
-            },
-            attributes: [
-                [fn("DAYNAME", col("created_at")), "dayName"],
-                [fn("DATE", col("created_at")), "date"],
-                "weight",
-                "height",
-                "results"
-            ]
-        });
+			// weekly BMI logs
+			const weeklyLogs = await NBmiLog.findAll({
+				where: {
+					user_id: decoded_user_id,
+					created_at: {
+						[Op.gte]: startOfWeek,
+						[Op.lte]: today
+					}
+				},
+				attributes: [
+					[fn("DAYNAME", col("created_at")), "dayName"],
+					[fn("DATE", col("created_at")), "date"],
+					"weight",
+					"height",
+					"results"
+				]
+			});
 
-        // Process weekly logs
-        const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const formattedWeeklyLogs = daysOfWeek.map(day => {
-            const log = weeklyLogs.find(entry => entry.dataValues.dayName === day);
-            return log ? log.dataValues : { dayName: day, date: null, weight: null, height: null, results: null };
-        });
+			// Process weekly logs
+			const daysOfWeek = [
+				"Sun",
+				"Mon",
+				"Tue",
+				"Wed",
+				"Thur",
+				"Fri",
+				"Sat"
+			];
+			const getDateForDay = (dayName) => {
+				const today = new Date();
+				const currentDayIndex = today.getDay(); // 0 (Sunday) to 6 (Saturday)
+				const targetDayIndex = daysOfWeek.indexOf(dayName); // Get index of the target day
+				const difference = targetDayIndex - currentDayIndex;
 
-        // Get average BMI for the past six months
-        const sixMonthsAgo = new Date(today);
-        sixMonthsAgo.setMonth(today.getMonth() - 5);
+				// Calculate the target date
+				const targetDate = new Date();
+				targetDate.setDate(today.getDate() + difference);
 
-        const monthlyAverages = await NBmiLog.findAll({
-            where: {
-                user_id: decoded_user_id,
-                created_at: {
-                    [Op.gte]: sixMonthsAgo,
-                    [Op.lte]: today
-                }
-            },
-            attributes: [
-                [fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
-                [fn("AVG", col("weight")), "avg_weight"],
-                [fn("AVG", col("height")), "avg_height"],
-                [fn("AVG", col("results")), "avg_results"]
-            ],
-            group: [literal("month")],
-            order: [[col("created_at"), "DESC"]]
-        });
+				// Format the date as YYYY-MM-DD
+				return targetDate.toISOString().split("T")[0];
+			};
+			const formattedWeeklyLogs = daysOfWeek.map((day) => {
+				const log = weeklyLogs.find(
+					(entry) => entry.dataValues.dayName === day
+				);
+				return log
+					? log.dataValues
+					: {
+							dayName: day,
+							date: getDateForDay(day),
+							weight: null,
+							height: null,
+							results: null
+					  };
+			});
 
-        res.json({
-            success: true,
-            message: "User BMI logs retrieved successfully",
-            data: {
-                weekly: formattedWeeklyLogs,
-                sixMonthly: monthlyAverages,
-                user_id: user_id
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Error retrieving BMI logs"
-        });
-    }
-});
+			// Get average BMI for the past six months
+			const sixMonthsAgo = new Date(today);
+			sixMonthsAgo.setMonth(today.getMonth() - 5);
+
+			const monthlyAverages = await NBmiLog.findAll({
+				where: {
+					user_id: decoded_user_id,
+					created_at: {
+						[Op.gte]: sixMonthsAgo,
+						[Op.lte]: today
+					}
+				},
+				attributes: [
+					[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+					[fn("AVG", col("weight")), "avg_weight"],
+					[fn("AVG", col("height")), "avg_height"],
+					[fn("AVG", col("results")), "avg_results"]
+				],
+				group: [literal("month")],
+				order: [[col("created_at"), "DESC"]]
+			});
+
+			res.json({
+				success: true,
+				message: "User BMI logs retrieved successfully",
+				data: {
+					weekly: formattedWeeklyLogs,
+					sixMonthly: monthlyAverages,
+					user_id: user_id
+				}
+			});
+		} catch (error) {
+			res.status(500).json({
+				success: false,
+				message: "Error retrieving BMI logs"
+			});
+		}
+	}
+);
 
 router.get(
 	"/get_blood_sugar_filter",
 	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
-	  try {
-		let user_id = req.query.user_id;
-		let decoded_user_id = base64.decode(user_id);
+		try {
+			let user_id = req.query.user_id;
+			let decoded_user_id = base64.decode(user_id);
 
-		const today = new Date();
-		const startOfWeek = new Date(today);
-		startOfWeek.setDate(today.getDate() - today.getDay());
+			const today = new Date();
+			const startOfWeek = new Date(today);
+			startOfWeek.setDate(today.getDate() - today.getDay());
 
-		// Retrieve hourly blood sugar data for today
-		const hourlyLogs = await NBloodSugar.findAll({
-		  where: {
-			user_id: decoded_user_id,
-			created_at: {
-			  [Op.gte]: moment().startOf('day').toDate(),
-			  [Op.lte]: moment().endOf('day').toDate(),
-			}
-		  },
-		  attributes: [
-			[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
-			[fn("ROUND", fn("AVG", col("level")), 1), "avg_level"]
-			// [fn("MIN", col("level")), "min_level"],
-			// [fn("MAX", col("level")), "max_level"]
-		  ],
-		  group: [literal("hour")],
-		  order: [[col("created_at"), "ASC"]]
-		});
+			// Retrieve hourly blood sugar data for today
+			const hourlyLogs = await NBloodSugar.findAll({
+				where: {
+					user_id: decoded_user_id,
+					created_at: {
+						[Op.gte]: moment().startOf("day").toDate(),
+						[Op.lte]: moment().endOf("day").toDate()
+					}
+				},
+				attributes: [
+					[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
+					[fn("ROUND", fn("AVG", col("level")), 1), "avg_level"]
+					// [fn("MIN", col("level")), "min_level"],
+					// [fn("MAX", col("level")), "max_level"]
+				],
+				group: [literal("hour")],
+				order: [[col("created_at"), "ASC"]]
+			});
 
-		// Process hourly logs for today
-		const formattedHourlyLogs = hourlyLogs.map(log => {
-		  return {
-			hour: log.dataValues.hour,
-			avg_level: log.dataValues.avg_level,
-			min_level: log.dataValues.min_level,
-			max_level: log.dataValues.max_level
-		  };
-		});
+			// Process hourly logs for today
+			const formattedHourlyLogs = hourlyLogs.map((log) => {
+				return {
+					hour: log.dataValues.hour,
+					avg_level: log.dataValues.avg_level,
+					min_level: log.dataValues.min_level,
+					max_level: log.dataValues.max_level
+				};
+			});
 
-		// Retrieve weekly blood sugar averages
-		const weeklyLogs = await NBloodSugar.findAll({
-		  where: {
-			user_id: decoded_user_id,
-			created_at: {
-			  [Op.gte]: startOfWeek,
-			  [Op.lte]: today
-			}
-		  },
-		  attributes: [
-			[fn("DAYNAME", col("created_at")), "dayName"],
-			[fn("DATE", col("created_at")), "date"],
-			"level",
-			"condition"
-		  ]
-		});
+			// Retrieve weekly blood sugar averages
+			const weeklyLogs = await NBloodSugar.findAll({
+				where: {
+					user_id: decoded_user_id,
+					created_at: {
+						[Op.gte]: startOfWeek,
+						[Op.lte]: today
+					}
+				},
+				attributes: [
+					[fn("DAYNAME", col("created_at")), "dayName"],
+					[fn("DATE", col("created_at")), "date"],
+					"level",
+					"condition"
+				]
+			});
 
-		// Process weekly logs
-		const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-		const formattedWeeklyLogs = daysOfWeek.map(day => {
-		  const log = weeklyLogs.find(entry => entry.dataValues.dayName === day);
-		  return log ? log.dataValues : { dayName: day, date: null, level: null, condition: null };
-		});
+			// Process weekly logs
+			const daysOfWeek = [
+				"Sun",
+				"Mon",
+				"Tue",
+				"Wed",
+				"Thu",
+				"Fri",
+				"Sat"
+			];
 
-		// Retrieve average blood sugar level for the past six months
-		const sixMonthsAgo = new Date(today);
-		sixMonthsAgo.setMonth(today.getMonth() - 5);
+			const getDateForDay = (dayName) => {
+				const today = new Date();
+				const currentDayIndex = today.getDay(); // 0 (Sunday) to 6 (Saturday)
+				const targetDayIndex = daysOfWeek.indexOf(dayName); // Get index of the target day
+				const difference = targetDayIndex - currentDayIndex;
 
-		const monthlyAverages = await NBloodSugar.findAll({
-		  where: {
-			user_id: decoded_user_id,
-			created_at: {
-			  [Op.gte]: sixMonthsAgo,
-			  [Op.lte]: today
-			}
-		  },
-		  attributes: [
-			[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
-			[fn("ROUND", fn("AVG", col("level")), 1), "avg_level"]
-		  ],
-		  group: [literal("month")],
-		  order: [[col("created_at"), "DESC"]]
-		});
+				// Calculate the target date
+				const targetDate = new Date();
+				targetDate.setDate(today.getDate() + difference);
 
-		res.json({
-		  success: true,
-		  message: "User blood sugar logs retrieved successfully",
-		  data: {
-			hourly: formattedHourlyLogs,
-			weekly: formattedWeeklyLogs,
-			sixMonthly: monthlyAverages,
-			user_id: user_id
-		  }
-		});
-	  } catch (error) {
-		console.error(error);
-		res.status(500).json({
-		  success: false,
-		  message: "Error retrieving blood sugar logs"
-		});
-	  }
+				// Format the date as YYYY-MM-DD
+				return targetDate.toISOString().split("T")[0];
+			};
+			const formattedWeeklyLogs = daysOfWeek.map((day) => {
+				const log = weeklyLogs.find(
+					(entry) => entry.dataValues.dayName === day
+				);
+				return log
+					? log.dataValues
+					: { dayName: day, date: getDateForDay(day), level: null, condition: null };
+			});
+
+			// Retrieve average blood sugar level for the past six months
+			const sixMonthsAgo = new Date(today);
+			sixMonthsAgo.setMonth(today.getMonth() - 5);
+
+			const monthlyAverages = await NBloodSugar.findAll({
+				where: {
+					user_id: decoded_user_id,
+					created_at: {
+						[Op.gte]: sixMonthsAgo,
+						[Op.lte]: today
+					}
+				},
+				attributes: [
+					[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+					[fn("ROUND", fn("AVG", col("level")), 1), "avg_level"]
+				],
+				group: [literal("month")],
+				order: [[col("created_at"), "DESC"]]
+			});
+
+			res.json({
+				success: true,
+				message: "User blood sugar logs retrieved successfully",
+				data: {
+					hourly: formattedHourlyLogs,
+					weekly: formattedWeeklyLogs,
+					sixMonthly: monthlyAverages,
+					user_id: user_id
+				}
+			});
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({
+				success: false,
+				message: "Error retrieving blood sugar logs"
+			});
+		}
 	}
-  );
-  router.get(
+);
+router.get(
 	"/get_blood_pressure_filter",
 	passport.authenticate("jwt", { session: false }),
 	async (req, res) => {
-	  try {
-		let user_id = req.query.user_id;
-		let decoded_user_id = base64.decode(user_id);
+		try {
+			let user_id = req.query.user_id;
+			let decoded_user_id = base64.decode(user_id);
 
-		const today = new Date();
-		const startOfWeek = new Date(today);
-		startOfWeek.setDate(today.getDate() - today.getDay());
+			const today = new Date();
+			const startOfWeek = new Date(today);
+			startOfWeek.setDate(today.getDate() - today.getDay());
 
-		// Retrieve hourly blood pressure data for today
-		const hourlyLogs = await NBloodPressure.findAll({
-		  where: {
-			user_id: decoded_user_id,
-			created_at: {
-			  [Op.gte]: moment().startOf('day').toDate(),
-			  [Op.lte]: moment().endOf('day').toDate(),
-			}
-		  },
-		  attributes: [
-			[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
-			[fn("ROUND", fn("AVG", col("systolic")), 1), "avg_systolic"],
-			[fn("ROUND", fn("AVG", col("diastolic")), 1), "avg_diastolic"],
-			[fn("ROUND", fn("AVG", col("pulse_rate")), 1), "pulse_rate"]
-		  ],
-		  group: [literal("hour")],
-		  order: [[col("created_at"), "ASC"]]
-		});
+			// Retrieve hourly blood pressure data for today
+			const hourlyLogs = await NBloodPressure.findAll({
+				where: {
+					user_id: decoded_user_id,
+					created_at: {
+						[Op.gte]: moment().startOf("day").toDate(),
+						[Op.lte]: moment().endOf("day").toDate()
+					}
+				},
+				attributes: [
+					[fn("DATE_FORMAT", col("created_at"), "%Y-%m-%d %H:00:00"), "hour"],
+					[fn("ROUND", fn("AVG", col("systolic")), 1), "avg_systolic"],
+					[fn("ROUND", fn("AVG", col("diastolic")), 1), "avg_diastolic"],
+					[fn("ROUND", fn("AVG", col("pulse_rate")), 1), "pulse_rate"]
+				],
+				group: [literal("hour")],
+				order: [[col("created_at"), "ASC"]]
+			});
 
-		// Process hourly logs for today
-		const formattedHourlyLogs = hourlyLogs.map(log => {
-		  return {
-			hour: log.dataValues.hour,
-			avg_systolic: log.dataValues.avg_systolic,
-			min_systolic: log.dataValues.min_systolic,
-			max_systolic: log.dataValues.max_systolic,
-			avg_diastolic: log.dataValues.avg_diastolic,
-			min_diastolic: log.dataValues.min_diastolic,
-			max_diastolic: log.dataValues.max_diastolic,
-			pulse_rate: log.dataValues.pulse_rate,
-			pulse_rate: log.dataValues.pulse_rate,
-			pulse_rate: log.dataValues.pulse_rate
-		  };
-		});
+			// Process hourly logs for today
+			const formattedHourlyLogs = hourlyLogs.map((log) => {
+				return {
+					hour: log.dataValues.hour,
+					avg_systolic: log.dataValues.avg_systolic,
+					min_systolic: log.dataValues.min_systolic,
+					max_systolic: log.dataValues.max_systolic,
+					avg_diastolic: log.dataValues.avg_diastolic,
+					min_diastolic: log.dataValues.min_diastolic,
+					max_diastolic: log.dataValues.max_diastolic,
+					pulse_rate: log.dataValues.pulse_rate,
+					pulse_rate: log.dataValues.pulse_rate,
+					pulse_rate: log.dataValues.pulse_rate
+				};
+			});
 
-		// Retrieve weekly blood pressure averages
-		const weeklyLogs = await NBloodPressure.findAll({
-		  where: {
-			user_id: decoded_user_id,
-			created_at: {
-			  [Op.gte]: startOfWeek,
-			  [Op.lte]: today
-			}
-		  },
-		  attributes: [
-			[fn("DAYNAME", col("created_at")), "dayName"],
-			[fn("DATE", col("created_at")), "date"],
-			"systolic",
-			"diastolic",
-			"pulse_rate"
-		  ]
-		});
+			// Retrieve weekly blood pressure averages
+			const weeklyLogs = await NBloodPressure.findAll({
+				where: {
+					user_id: decoded_user_id,
+					created_at: {
+						[Op.gte]: startOfWeek,
+						[Op.lte]: today
+					}
+				},
+				attributes: [
+					[fn("DAYNAME", col("created_at")), "dayName"],
+					[fn("DATE", col("created_at")), "date"],
+					"systolic",
+					"diastolic",
+					"pulse_rate"
+				]
+			});
 
-		// Process weekly logs
-		const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-		const formattedWeeklyLogs = daysOfWeek.map(day => {
-		  const log = weeklyLogs.find(entry => entry.dataValues.dayName === day);
-		  return log ? log.dataValues : { dayName: day, date: null, systolic: null, diastolic: null, pulse_rate: null };
-		});
+			// Process weekly logs
+			const daysOfWeek = [
+				"Sun",
+				"Mon",
+				"Tue",
+				"Wed",
+				"Thur",
+				"Fri",
+				"Sat"
+			];
 
-		// Retrieve average blood sugar level for the past six months
-		const sixMonthsAgo = new Date(today);
-		sixMonthsAgo.setMonth(today.getMonth() - 5);
+			const getDateForDay = (dayName) => {
+				const today = new Date();
+				const currentDayIndex = today.getDay(); // 0 (Sunday) to 6 (Saturday)
+				const targetDayIndex = daysOfWeek.indexOf(dayName); // Get index of the target day
+				const difference = targetDayIndex - currentDayIndex;
 
-		const monthlyAverages = await NBloodPressure.findAll({
-		  where: {
-			user_id: decoded_user_id,
-			created_at: {
-			  [Op.gte]: sixMonthsAgo,
-			  [Op.lte]: today
-			}
-		  },
-		  attributes: [
-			[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
-			[fn("ROUND", fn("AVG", col("systolic")), 1), "avg_systolic"],
-			[fn("ROUND", fn("AVG", col("diastolic")), 1), "avg_diastolic"],
-			[fn("ROUND",fn("AVG", col("pulse_rate")), 1), "avg_pulse_rate"]
-		  ],
-		  group: [literal("month")],
-		  order: [[col("created_at"), "DESC"]]
-		});
+				// Calculate the target date
+				const targetDate = new Date();
+				targetDate.setDate(today.getDate() + difference);
 
-		res.json({
-		  success: true,
-		  message: "User blood pressure logs retrieved successfully",
-		  data: {
-			hourly: formattedHourlyLogs,
-			weekly: formattedWeeklyLogs,
-			sixMonthly: monthlyAverages,
-			user_id: user_id
-		  }
-		});
-	  } catch (error) {
-		console.error(error);
-		res.status(500).json({
-		  success: false,
-		  message: "Error retrieving blood pressure logs"
-		});
-	  }
+				// Format the date as YYYY-MM-DD
+				return targetDate.toISOString().split("T")[0];
+			};
+			const formattedWeeklyLogs = daysOfWeek.map((day) => {
+				const log = weeklyLogs.find(
+					(entry) => entry.dataValues.dayName === day
+				);
+				return log
+					? log.dataValues
+					: {
+							dayName: day,
+							date: getDateForDay(day),
+							systolic: null,
+							diastolic: null,
+							pulse_rate: null
+					  };
+			});
+
+			// Retrieve average blood sugar level for the past six months
+			const sixMonthsAgo = new Date(today);
+			sixMonthsAgo.setMonth(today.getMonth() - 5);
+
+			const monthlyAverages = await NBloodPressure.findAll({
+				where: {
+					user_id: decoded_user_id,
+					created_at: {
+						[Op.gte]: sixMonthsAgo,
+						[Op.lte]: today
+					}
+				},
+				attributes: [
+					[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+					[fn("ROUND", fn("AVG", col("systolic")), 1), "avg_systolic"],
+					[fn("ROUND", fn("AVG", col("diastolic")), 1), "avg_diastolic"],
+					[fn("ROUND", fn("AVG", col("pulse_rate")), 1), "avg_pulse_rate"]
+				],
+				group: [literal("month")],
+				order: [[col("created_at"), "DESC"]]
+			});
+
+			res.json({
+				success: true,
+				message: "User blood pressure logs retrieved successfully",
+				data: {
+					hourly: formattedHourlyLogs,
+					weekly: formattedWeeklyLogs,
+					sixMonthly: monthlyAverages,
+					user_id: user_id
+				}
+			});
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({
+				success: false,
+				message: "Error retrieving blood pressure logs"
+			});
+		}
 	}
-  );
+);
+
+router.get(
+	"/fetch-patient",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		const { identifierType, identifierNumber } = req.query;
+
+		if (!identifierType || !identifierNumber) {
+			return res
+				.status(400)
+				.json({
+					error:
+						"identifierType and identifierNumber are required query parameters."
+				});
+		}
+
+		try {
+			// Step 1: Generate token
+			const authResponse = await axios.get(
+				process.env.PATIENT_REGISTRY_TOKEN_URL,
+				{
+					auth: {
+						username: process.env.PATIENT_REGISTRY_TOKEN_USERNAME,
+						password: process.env.PATIENT_REGISTRY_TOKEN_PASSWORD
+					}
+				}
+			);
+			const token = authResponse.data.token;
+
+			// Step 2: Use the token to fetch patient data
+			const fhirResponse = await axios.get(`${process.env.PATIENT_REGISTRY_URL}?identifierType=${identifierType}&identifierNumber=${encodeURIComponent(identifierNumber)}`
+,
+				{
+					headers: {
+						Authorization: `Bearer ${authResponse.data}`,
+						Accept: "application/json",
+                       "Content-Type": "application/json"
+					}
+				}
+			);
+
+			const patientData = fhirResponse.data.entry[0]?.resource;
 
 
+			if (!patientData) {
+				return res.status(404).json({ error: "Patient data not found." });
+			}
 
+			// Step 3: Extract required fields
+			const shaNumber = patientData.identifier.find(
+				(id) => id.type.coding[0].code === "sha-number"
+			)?.value;
+			const name = patientData.name[0]?.text;
+			const gender = patientData.gender;
+			const birthDate = patientData.birthDate;
+			const maritalStatus = patientData.maritalStatus?.coding[0]?.display;
+			const phone_no = patientData.telecom[1]?.value;
 
+			// Step 4: Construct the output JSON
+			const result = {
+				shaNumber,
+				name,
+				gender,
+				birthDate,
+				maritalStatus,
+				phone_no
+			};
+
+			return res.json({
+				success: true,
+				message: "SHA Records Retrieved Successfully",
+				data: result
+			});
+		} catch (error) {
+			// console.error("Error fetching patient data:", error.message);
+			// console.error("Full error:", error.response?.data || error);
+			return res.status(500).json({
+				error: "An error occurred while fetching patient data."
+			});
+		}
+
+	}
+);
 module.exports = router;
 //module.exports = { router, users };
