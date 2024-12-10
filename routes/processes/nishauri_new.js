@@ -5741,13 +5741,13 @@ router.get(
 					}
 				},
 				attributes: [
-					[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+					[fn("DATE_FORMAT", col("created_at"), "%b-%Y"), "month"],
 					[fn("AVG", col("weight")), "avg_weight"],
 					[fn("AVG", col("height")), "avg_height"],
 					[fn("AVG", col("results")), "avg_results"]
 				],
 				group: [literal("month")],
-				order: [[col("created_at"), "DESC"]]
+				order: [[col("created_at"), "ASC"]]
 			});
 
 			res.json({
@@ -5872,11 +5872,11 @@ router.get(
 					}
 				},
 				attributes: [
-					[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+					[fn("DATE_FORMAT", col("created_at"), "%b-%Y"), "month"],
 					[fn("ROUND", fn("AVG", col("level")), 1), "avg_level"]
 				],
 				group: [literal("month")],
-				order: [[col("created_at"), "DESC"]]
+				order: [[col("created_at"), "ASC"]]
 			});
 
 			res.json({
@@ -6015,13 +6015,13 @@ router.get(
 					}
 				},
 				attributes: [
-					[fn("DATE_FORMAT", col("created_at"), "%M-%Y"), "month"],
+					[fn("DATE_FORMAT", col("created_at"), "%b-%Y"), "month"],
 					[fn("ROUND", fn("AVG", col("systolic")), 1), "avg_systolic"],
 					[fn("ROUND", fn("AVG", col("diastolic")), 1), "avg_diastolic"],
 					[fn("ROUND", fn("AVG", col("pulse_rate")), 1), "avg_pulse_rate"]
 				],
 				group: [literal("month")],
-				order: [[col("created_at"), "DESC"]]
+				order: [[col("created_at"), "ASC"]]
 			});
 
 			res.json({
