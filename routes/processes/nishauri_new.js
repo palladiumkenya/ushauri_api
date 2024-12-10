@@ -64,6 +64,7 @@ const { NBloodPressure } = require("../../models/n_blood_pressure");
 const { NBloodSugar } = require("../../models/n_blood_sugar");
 const { NMenstrual } = require("../../models/n_menstrual");
 const { Nroles } = require("../../models/n_roles");
+const { NProvider } = require("../../models/n_provider");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -6126,5 +6127,109 @@ router.get(
 
 	}
 );
+
+// API route to fetch practitioner data by national ID
+router.post(
+	"/practitioner",
+	passport.authenticate("jwt", { session: false }),
+	async (req, res) => {
+		let { nationalId, user_id } = req.body;
+
+		try {
+			let user = await NUsers.findOne({
+				where: { id: base64.decode(user_id) }
+			});
+
+			if (!user) {
+				return res.status(404).json({ message: "User not found" });
+			}
+
+			let response = await axios.get(
+				`${process.env.HIE_ENDPOINT}?national-id=${nationalId}`,
+				{
+					auth: {
+						username: process.env.HIE_USERNAME,
+						password: process.env.HIE_PASSWORD
+					}
+				}
+			);
+
+			let practitioner = response.data;
+
+			let existing_provider = await NProvider.findOne({
+				where: {
+					user_id: base64.decode(user_id)
+				}
+			});
+
+			let cadre = practitioner.extension.find(
+				(ext) =>
+					ext.url ===
+					"https://shr.tiberbuapps.com/fhir/StructureDefinition/professional-cadre"
+			).valueCoding.display;
+			let nationalIdValue = practitioner.identifier.find((id) =>
+				id.type.coding.some((code) => code.display === "National ID")
+			).value;
+			let boardNo = practitioner.identifier.find((id) =>
+				id.type.coding.some(
+					(code) => code.display === "Board Registration Number"
+				)
+			).value;
+			let status = practitioner.active;
+			let { family, given, prefix } = practitioner.name[0];
+			let gender = practitioner.gender;
+			let currentLicenseNumber = practitioner.qualification[0].extension.find(
+				(ext) =>
+					ext.url ===
+					"https://shr.tiberbuapps.com/fhir/StructureDefinition/current-license-number"
+			).valueString;
+
+			let providerData = {
+				family_name: family,
+				given_name: given.join(" "),
+				salutation: prefix ? prefix.join(" ") : null,
+				national_id: nationalIdValue,
+				license_number: currentLicenseNumber,
+				board_number: boardNo,
+				cadre,
+				gender,
+				user_id: base64.decode(user_id)
+			};
+
+			if (existing_provider) {
+				await NProvider.update(providerData, {
+					where: {
+						user_id: base64.decode(user_id)
+					}
+				});
+				return res.status(200).json({
+					success: true,
+					message: "Provider details updated successfully",
+					provider: await NProvider.findOne({
+						where: { user_id: base64.decode(user_id) }
+					})
+				});
+			} else {
+				let provider = await NProvider.create(providerData);
+
+				res.status(200).json({
+					message: "Provider saved successfully",
+					provider: await NProvider.findOne({
+						where: { user_id: base64.decode(user_id) }
+					})
+				});
+			}
+		} catch (error) {
+			let practitioner = error.response.data;
+			if (practitioner.resourceType === "OperationOutcome") {
+				let errorMessage = practitioner.issue[0].diagnostics;
+				let errorCode = error.response.data.issue[0].code;
+				return res.status(400).json({ code: errorCode, message: errorMessage });
+			}
+			res.status(500).json({ message: "Internal server error" });
+		}
+	}
+);
+
 module.exports = router;
 //module.exports = { router, users };
