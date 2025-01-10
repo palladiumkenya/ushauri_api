@@ -5730,14 +5730,28 @@ router.get(
 			});
 
 			// Get average BMI for the past six months
-			const sixMonthsAgo = new Date(today);
-			sixMonthsAgo.setMonth(today.getMonth() - 5);
+			const generateMonths = (start, end) => {
+				const months = [];
+				const current = moment(start).startOf('month');
+
+				while (current.isSameOrBefore(end, 'month')) {
+				  months.push(current.format('MMM-YYYY'));
+				  current.add(1, 'month');
+				}
+
+				return months;
+			  };
+
+			// Retrieve average blood sugar level for the past six months
+			const sixMonthsAgo = moment().subtract(5, 'months').startOf('month').toDate();
+            const todays = moment().endOf('month').toDate();
+            const allMonths = generateMonths(sixMonthsAgo, todays);
 
 			const monthlyAverages = await NBmiLog.findAll({
 				where: {
 					user_id: decoded_user_id,
 					created_at: {
-						[Op.gte]: sixMonthsAgo,
+						[Op.gte]: allMonths,
 						[Op.lte]: today
 					}
 				},
@@ -5751,12 +5765,28 @@ router.get(
 				order: [[col("created_at"), "ASC"]]
 			});
 
+			const monthlyDataMap = monthlyAverages.reduce((acc, record) => {
+				acc[record.dataValues.month] = {
+					avg_weight: parseFloat(record.dataValues.avg_weight),
+					avg_height: parseFloat(record.dataValues.avg_height),
+					avg_results: parseFloat(record.dataValues.avg_results),
+				};
+				return acc;
+			  }, {});
+
+			  const completeMonthlyData = allMonths.map((month) => ({
+				month,
+				avg_weight: monthlyDataMap[month]?.avg_weight || 0,
+				avg_height: monthlyDataMap[month]?.avg_height || 0,
+				avg_results: monthlyDataMap[month]?.avg_results || 0,
+			  }));
+			 
 			res.json({
 				success: true,
 				message: "User BMI logs retrieved successfully",
 				data: {
 					weekly: formattedWeeklyLogs,
-					sixMonthly: monthlyAverages,
+					sixMonthly: completeMonthlyData,
 					user_id: user_id
 				}
 			});
@@ -5861,8 +5891,22 @@ router.get(
 			});
 
 			// Retrieve average blood sugar level for the past six months
-			const sixMonthsAgo = new Date(today);
-			sixMonthsAgo.setMonth(today.getMonth() - 5);
+			const generateMonths = (start, end) => {
+				const months = [];
+				const current = moment(start).startOf('month');
+
+				while (current.isSameOrBefore(end, 'month')) {
+				  months.push(current.format('MMM-YYYY'));
+				  current.add(1, 'month');
+				}
+
+				return months;
+			  };
+
+			// Retrieve average blood sugar level for the past six months
+			const sixMonthsAgo = moment().subtract(5, 'months').startOf('month').toDate();
+            const todays = moment().endOf('month').toDate();
+            const allMonths = generateMonths(sixMonthsAgo, todays);
 
 			const monthlyAverages = await NBloodSugar.findAll({
 				where: {
@@ -5880,13 +5924,25 @@ router.get(
 				order: [[col("created_at"), "ASC"]]
 			});
 
+			const monthlyDataMap = monthlyAverages.reduce((acc, record) => {
+				acc[record.dataValues.month] = {
+					avg_level: parseFloat(record.dataValues.avg_level),
+				};
+				return acc;
+			  }, {});
+
+			  const completeMonthlyData = allMonths.map((month) => ({
+				month,
+				avg_level: monthlyDataMap[month]?.avg_level || 0,
+			  }));
+
 			res.json({
 				success: true,
 				message: "User blood sugar logs retrieved successfully",
 				data: {
 					hourly: formattedHourlyLogs,
 					weekly: formattedWeeklyLogs,
-					sixMonthly: monthlyAverages,
+					sixMonthly: completeMonthlyData,
 					user_id: user_id
 				}
 			});
@@ -6003,9 +6059,22 @@ router.get(
 					  };
 			});
 
+			const generateMonths = (start, end) => {
+				const months = [];
+				const current = moment(start).startOf('month');
+
+				while (current.isSameOrBefore(end, 'month')) {
+				  months.push(current.format('MMM-YYYY'));
+				  current.add(1, 'month');
+				}
+
+				return months;
+			  };
+
 			// Retrieve average blood sugar level for the past six months
-			const sixMonthsAgo = new Date(today);
-			sixMonthsAgo.setMonth(today.getMonth() - 5);
+			const sixMonthsAgo = moment().subtract(5, 'months').startOf('month').toDate();
+            const todays = moment().endOf('month').toDate();
+            const allMonths = generateMonths(sixMonthsAgo, todays);
 
 			const monthlyAverages = await NBloodPressure.findAll({
 				where: {
@@ -6024,6 +6093,21 @@ router.get(
 				group: [literal("month")],
 				order: [[col("created_at"), "ASC"]]
 			});
+			const monthlyDataMap = monthlyAverages.reduce((acc, record) => {
+				acc[record.dataValues.month] = {
+				  avg_systolic: parseFloat(record.dataValues.avg_systolic),
+				  avg_diastolic: parseFloat(record.dataValues.avg_diastolic),
+				  avg_pulse_rate: parseFloat(record.dataValues.avg_pulse_rate),
+				};
+				return acc;
+			  }, {});
+
+			  const completeMonthlyData = allMonths.map((month) => ({
+				month,
+				avg_systolic: monthlyDataMap[month]?.avg_systolic || 0,
+				avg_diastolic: monthlyDataMap[month]?.avg_diastolic || 0,
+				avg_pulse_rate: monthlyDataMap[month]?.avg_pulse_rate || 0,
+			  }));
 
 			res.json({
 				success: true,
@@ -6031,7 +6115,7 @@ router.get(
 				data: {
 					hourly: formattedHourlyLogs,
 					weekly: formattedWeeklyLogs,
-					sixMonthly: monthlyAverages,
+					sixMonthly: completeMonthlyData,
 					user_id: user_id
 				}
 			});
