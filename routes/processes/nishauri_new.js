@@ -65,6 +65,7 @@ const { NBloodSugar } = require("../../models/n_blood_sugar");
 const { NMenstrual } = require("../../models/n_menstrual");
 const { Nroles } = require("../../models/n_roles");
 const { NProvider } = require("../../models/n_provider");
+const { ScreeningForm } = require("../../models/n_cpm_screening");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -5780,7 +5781,7 @@ router.get(
 				avg_height: monthlyDataMap[month]?.avg_height || 0,
 				avg_results: monthlyDataMap[month]?.avg_results || 0,
 			  }));
-			 
+
 			res.json({
 				success: true,
 				message: "User BMI logs retrieved successfully",
@@ -6314,6 +6315,47 @@ router.post(
 		}
 	}
 );
+
+router.post("/save_screening_form", async (req, res) => {
+	try {
+	  const { name, description, version, published, uuid, retired, encounter, pages } = req.body;
+
+	  const formData = await ScreeningForm.create({
+		name,
+		description,
+		version,
+		published,
+		uuid,
+		retired,
+		encounter,
+		json_data: pages,
+	  });
+
+	  res.status(200).json({ message: "Form saved successfully", data: formData });
+	} catch (error) {
+	  res.status(500).json({ message: "Error saving form", error: error.message });
+	}
+  });
+
+  router.get("/get_screening_form", async (req, res) => {
+	try {
+	  const form = await ScreeningForm.findOne();
+	  if (!form) return res.status(404).json({ message: "Form not found" });
+
+	  res.json({
+		name: form.name,
+		description: form.description,
+		version: form.version,
+		published: form.published,
+		uuid: form.uuid,
+		retired: form.retired,
+		encounter: form.encounter,
+		pages: typeof form.json_data === "string" ? JSON.parse(form.json_data) : form.json_data,
+	  });
+	} catch (error) {
+	  res.status(500).json({ message: "Error fetching form", error: error.message });
+	}
+  });
 
 module.exports = router;
 //module.exports = { router, users };
