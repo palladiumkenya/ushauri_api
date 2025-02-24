@@ -6318,7 +6318,7 @@ router.post(
 
 router.post("/save_screening_form", async (req, res) => {
 	try {
-	  const { name, description, version, published, uuid, retired, encounter, pages } = req.body;
+	  const { name, description, version, published, uuid, retired, encounter, pages, encounterType } = req.body;
 
 	  const formData = await ScreeningForm.create({
 		name,
@@ -6329,7 +6329,11 @@ router.post("/save_screening_form", async (req, res) => {
 		retired,
 		encounter,
 		json_data: pages,
+		encounter_type: encounterType,
+
 	  });
+
+	  console.log("This works", formData);
 
 	  res.status(200).json({ message: "Form saved successfully", data: formData });
 	} catch (error) {
@@ -6351,6 +6355,7 @@ router.post("/save_screening_form", async (req, res) => {
 		retired: form.retired,
 		encounter: form.encounter,
 		pages: typeof form.json_data === "string" ? JSON.parse(form.json_data) : form.json_data,
+		encounterType: form.encounter_type
 	  });
 	} catch (error) {
 	  res.status(500).json({ message: "Error fetching form", error: error.message });

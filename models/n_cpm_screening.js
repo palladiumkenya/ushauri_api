@@ -37,6 +37,9 @@ const ScreeningForm = sequelize.sequelize.define("tbl_nishauri_cpm_screening", {
       type: Sequelize.JSON,
       allowNull: false,
     },
+    encounter_type: {
+      type: Sequelize.STRING,
+    },
   },
   {
     timestamps: true,
