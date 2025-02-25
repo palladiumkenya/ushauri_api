@@ -66,6 +66,8 @@ const { NMenstrual } = require("../../models/n_menstrual");
 const { Nroles } = require("../../models/n_roles");
 const { NProvider } = require("../../models/n_provider");
 const { ScreeningForm } = require("../../models/n_cpm_screening");
+const { CPMObservation } = require("../../models/n_cpm_observation");
+const { CPMEncounter } = require("../../models/n_cpm_encounter");
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -6361,6 +6363,40 @@ router.post("/save_screening_form", async (req, res) => {
 	  res.status(500).json({ message: "Error fetching form", error: error.message });
 	}
   });
+
+  router.post("/post_screening_quiz", async (req, res) => {
+	try {
+		const { patient_id, provider_id, location_id, encounter_date, notes, questions } = req.body;
+
+		if (!patient_id || !provider_id || !location_id || !Array.isArray(questions)) {
+		  return res.status(400).json({ message: "Invalid input data" });
+		}
+
+		// Create an encounter record
+		const encounter = await CPMEncounter.create({
+		  patient_id,
+		  provider_id,
+		  location_id,
+		  encounter_date,
+		  notes,
+		});
+
+		// Prepare responses for bulk insert
+		const responses = questions.map((q) => ({
+		  encounter_id: encounter.id,
+		  question: q.question,
+		  answer: q.answer,
+		}));
+
+		// Save encounter responses
+		await CPMObservation.bulkCreate(responses);
+
+		res.status(200).json({ message: "Encounter saved successfully", encounter_id: encounter.id });
+	  } catch (error) {
+		console.error("Error saving encounter:", error);
+		res.status(500).json({ message: "Server error" });
+	  }
+	});
 
 module.exports = router;
 //module.exports = { router, users };
