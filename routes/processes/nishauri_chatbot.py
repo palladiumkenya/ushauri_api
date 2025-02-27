@@ -5,7 +5,7 @@ from gradio_client import Client
 def chat_nishauri(question):
     """Send JSON data to Gradio API and return response."""
     try:
-        client = Client("http://172.17.0.1:7861", verbose=False)
+        client = Client("http://172.17.0.1:7862", verbose=False)
 
         # JSON request structure
         payload = {
