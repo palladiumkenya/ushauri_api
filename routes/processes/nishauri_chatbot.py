@@ -1,41 +1,47 @@
 import sys
 import json
-from gradio_client import Client
+import requests
 
-def chat_nishauri(question):
-    """Send JSON data to Gradio API and return response."""
-    try:
-        client = Client("http://172.17.0.1:7862", verbose=False)
+# Take passed variable values
+question_ = sys.argv[1]
 
-        # JSON request structure
-        payload = {
-            "CONSENT": "NO",
-            "PERSON_INFO": {
-                "GENDER": "",
-                "AGE": '',
-                "REGIMEN": "",
-                "APPOINTMENT_DATETIME": "",
-                "VIRAL_LOAD": "",
-                "VIRAL_LOAD_DATETIME": ""
-            },
-            "QUESTION": question
-        }
+# Construct patient data JSON
+patient_data = {
+    "CONSENT": "NO",
+    "PERSON_INFO": {
+        "GENDER": "MALE",
+        "AGE": 24,  # Ensure this is an integer, not a string
+        "REGIMEN": "TDF/3TC/DTG",
+        "APPOINTMENT_DATETIME": "20240729",
+        "VIRAL_LOAD": "< LDL copies/ml",
+        "VIRAL_LOAD_DATETIME": "20240130"
+    },
+    "QUESTION": question_
+}
 
-        # Send JSON data to Gradio
-        result = client.predict(json.dumps(payload), api_name="/predict")
+# Ensure Gradio receives TWO inputs
+data_payload = [
+    json.dumps(patient_data),  # First input (Question + Patient Info as JSON)
+    ""  # Second input (State or session, send an empty string if not used)
+]
 
-        # Ensure response is valid JSON
-        response_data = json.loads(result)
-        print(json.dumps(response_data, indent=4))
+# API Endpoint
+API_URL = "http://172.17.0.1:7862/run/predict"  # Update this URL if needed
 
-    except Exception as e:
-        print(json.dumps({"error": f"🚨 Error: {str(e)}"}))
+# Send POST request
+def chat_nishauri(data):
+    headers = {"Content-Type": "application/json"}  # Set correct headers
+    response = requests.post(API_URL, json={"data": data}, headers=headers)  # Send JSON request
 
-# Ensure argument is passed
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(json.dumps({"error": " Missing question argument"}))
-        sys.exit(1)
-    
-    question = sys.argv[1]
-    chat_nishauri(question)
+    # Print response
+    if response.status_code == 200:
+       # print(response.json())  # Print JSON response
+        json_response = response.json()  # Convert response to JSON
+        text_response = "\n".join([str(item) for item in json_response.get('data', []) if item is not None])
+
+        print(text_response)        
+    else:
+        print(f"Error {response.status_code}: {response.text}")  # Debugging
+
+# Call function
+chat_nishauri(data_payload)
