@@ -26,7 +26,7 @@ data_payload = [
 ]
 
 # API Endpoint
-API_URL = "http://192.168.1.44:7862/run/predict"  # Update this URL if needed
+API_URL = "http://172.17.0.1:7862/run/predict"  # Update this URL if needed
 
 # Send POST request
 def chat_nishauri(data):
