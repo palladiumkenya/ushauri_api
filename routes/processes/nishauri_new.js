@@ -68,6 +68,8 @@ const { NProvider } = require("../../models/n_provider");
 const { ScreeningForm } = require("../../models/n_cpm_screening");
 const { CPMObservation } = require("../../models/n_cpm_observation");
 const { CPMEncounter } = require("../../models/n_cpm_encounter");
+const { CPMPrescription } = require("../../models/n_cpm_prescription");
+
 
 generateOtp = function (size) {
 	const zeros = "0".repeat(size - 1);
@@ -6396,6 +6398,113 @@ router.post("/save_screening_form", async (req, res) => {
 		console.error("Error saving encounter:", error);
 		res.status(500).json({ message: "Server error" });
 	  }
+	});
+
+	router.post("/prescriptions", async (req, res) => {
+		try {
+			const prescriptions = req.body; 
+
+			if (!Array.isArray(prescriptions) || prescriptions.length === 0) {
+				return res.status(400).json({ error: "Invalid request: Must provide an array of prescriptions" });
+			}
+
+			const newPrescriptions = [];
+			const fhirPrescriptions = [];
+
+			for (const prescription of prescriptions) {
+				const {
+					patient_id,
+					drug_name,
+					unit,
+					duration,
+					medicine_time,
+					to_be_taken,
+					prescription_notes,
+					appointment_id
+				} = prescription;
+
+				if (!patient_id || !drug_name || !unit || !duration || !medicine_time || !to_be_taken) {
+					return res.status(400).json({ error: "Missing required fields in one or more prescriptions" });
+				}
+
+				const fhirPrescription = {
+					resourceType: "MedicationRequest",
+					status: "active",
+					intent: "order",
+					medicationCodeableConcept: {
+						text: `${drug_name} ${unit}`
+					},
+					subject: {
+						reference: `Patient/${patient_id}`
+					},
+					authoredOn: new Date().toISOString(),
+					dosageInstruction: [
+						{
+							text: `Take ${drug_name} ${unit}, ${medicine_time.join(", ")} - ${to_be_taken}`,
+							timing: {
+								repeat: {
+									frequency: medicine_time.length,
+									period: 1,
+									periodUnit: "d",
+									timeOfDay: medicine_time
+								}
+							},
+							doseAndRate: [
+								{
+									doseQuantity: {
+										value: unit.replace(/[^0-9]/g, ""),
+										unit: unit.replace(/[0-9]/g, ""),
+										system: "http://unitsofmeasure.org"
+									}
+								}
+							],
+							additionalInstruction: [{ text: to_be_taken }]
+						}
+					],
+					dispenseRequest: {
+						validityPeriod: {
+							start: new Date().toISOString(),
+							end: new Date(new Date().setDate(new Date().getDate() + duration * 7)).toISOString()
+						},
+						expectedSupplyDuration: {
+							value: duration,
+							unit: "weeks",
+							system: "http://unitsofmeasure.org"
+						}
+					},
+					note: [
+						{
+							text: prescription_notes
+						}
+					]
+				};
+
+				const newPrescription = await CPMPrescription.create({
+					patient_id,
+					drug_name,
+					unit,
+					duration,
+					medicine_time: JSON.stringify(medicine_time),
+					to_be_taken,
+					prescription_notes,
+					appointment_id,
+					fhir_data: JSON.stringify(fhirPrescription)
+				});
+
+				// Collect responses
+				newPrescriptions.push(newPrescription);
+				fhirPrescriptions.push(fhirPrescription);
+			}
+
+			return res.status(200).json({
+				message: "Prescriptions created successfully",
+				prescriptions: fhirPrescriptions
+			});
+
+		} catch (error) {
+			console.error("Error creating prescriptions:", error);
+			res.status(500).json({ error: "Internal server error" });
+		}
 	});
 
 module.exports = router;
