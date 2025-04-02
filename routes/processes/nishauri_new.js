@@ -6402,7 +6402,7 @@ router.post("/save_screening_form", async (req, res) => {
 
 	router.post("/prescriptions", async (req, res) => {
 		try {
-			const prescriptions = req.body; 
+			const prescriptions = req.body;
 
 			if (!Array.isArray(prescriptions) || prescriptions.length === 0) {
 				return res.status(400).json({ error: "Invalid request: Must provide an array of prescriptions" });
@@ -6491,14 +6491,14 @@ router.post("/save_screening_form", async (req, res) => {
 					fhir_data: JSON.stringify(fhirPrescription)
 				});
 
-				// Collect responses
 				newPrescriptions.push(newPrescription);
 				fhirPrescriptions.push(fhirPrescription);
 			}
 
 			return res.status(200).json({
 				message: "Prescriptions created successfully",
-				prescriptions: fhirPrescriptions
+				success: true,
+				drug_prescriptions: fhirPrescriptions
 			});
 
 		} catch (error) {
