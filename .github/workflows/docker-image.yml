@@ -21,7 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build -t ushauri_api:latest . 
+      run: docker build -t ushauri_api:${{ github.ref_name }} . 
   test:
     needs: build
     runs-on: ubuntu-latest
@@ -59,4 +59,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
