@@ -6484,7 +6484,7 @@ router.post("/save_screening_form", async (req, res) => {
 					drug_name,
 					unit,
 					duration,
-					medicine_time: JSON.stringify(medicine_time),
+					medicine_time: medicine_time.join(", "),
 					to_be_taken,
 					prescription_notes,
 					appointment_id,
