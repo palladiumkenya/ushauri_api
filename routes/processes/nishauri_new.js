@@ -6386,6 +6386,7 @@ router.post("/save_screening_form", async (req, res) => {
 		// Prepare responses for bulk insert
 		const responses = questions.map((q) => ({
 		  encounter_id: encounter.id,
+		  concept_id: q.concept_id,
 		  question: q.question,
 		  answer: q.answer,
 		}));
